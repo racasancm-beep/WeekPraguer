@@ -1,26 +1,37 @@
 import { SpaceFilters } from "@/components/explore/space-filters";
 import { SpaceGrid } from "@/components/explore/space-grid";
 
-// Helper to fetch spaces on the server
+import { prisma } from "@/lib/prisma";
+
 async function getSpaces(searchParams: { [key: string]: string | string[] | undefined }) {
-    const params = new URLSearchParams();
-    if (searchParams.city) params.append("city", searchParams.city as string);
-    if (searchParams.minPrice) params.append("minPrice", searchParams.minPrice as string);
-    if (searchParams.maxPrice) params.append("maxPrice", searchParams.maxPrice as string);
-    if (searchParams.capacity) params.append("capacity", searchParams.capacity as string);
-    if (searchParams.hasWifi) params.append("hasWifi", searchParams.hasWifi as string);
+    const city = searchParams.city as string | undefined;
+    const minPrice = searchParams.minPrice as string | undefined;
+    const maxPrice = searchParams.maxPrice as string | undefined;
+    const capacity = searchParams.capacity as string | undefined;
 
-    // We need an absolute URL for server-side fetching, or we can use the Prisma client directly
-    // Using Prisma directly is better for Server Components
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/spaces?${params.toString()}`, {
-        cache: 'no-store'
-    });
+    const where: any = {};
 
-    if (!res.ok) {
-        throw new Error('Failed to fetch spaces');
+    if (city) {
+        where.city = { contains: city, mode: 'insensitive' };
     }
 
-    return res.json();
+    if (minPrice || maxPrice) {
+        where.weekendRate = {};
+        if (minPrice) where.weekendRate.gte = parseFloat(minPrice);
+        if (maxPrice) where.weekendRate.lte = parseFloat(maxPrice);
+    }
+
+    if (capacity) {
+        where.capacity = { gte: parseInt(capacity) };
+    }
+
+    return await prisma.space.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        include: {
+            photos: true,
+        }
+    });
 }
 
 export default async function ExploreSpacesPage({
