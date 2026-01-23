@@ -1,15 +1,5 @@
 {
     "buildCommand": "prisma generate && next build",
     "framework": "nextjs",
-    "installCommand": "npm install",
-    "env": {
-        "NEXTAUTH_SECRET": {
-            "type": "secret",
-            "description": "NextAuth secret key"
-        },
-        "DATABASE_URL": {
-            "type": "secret",
-            "description": "PostgreSQL connection string"
-        }
-    }
+    "installCommand": "npm install"
 }
