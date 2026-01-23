@@ -3,13 +3,13 @@
 ## Status: In Progress
 
 ## Steps
-1.  [x] **Initialize Git Repository**: Locally initialized and committed.
-2.  [ ] **Create Remote Repository on GitHub**: User needs to create a repo at [https://github.com/new](https://github.com/new).
-3.  [ ] **Push Code to GitHub**: Link local repo to remote and push.
-4.  [ ] **Set up Database (Neon)**: ensure PostgreSQL database is ready.
-5.  [ ] **Deploy to Vercel**: Import project from GitHub to Vercel.
+1.  [x] **Initialize Git Repository**: Done.
+2.  [x] **Create Remote Repository on GitHub**: Done.
+3.  [x] **Push Code to GitHub**: Code pushed to `main` branch.
+4.  [x] **Set up Database (Neon)**: Database initialized with schema.
+5.  [x] **Deploy to Vercel**: App deployed to Vercel.
 6.  [ ] **Configure Domain**: Add `weekpraguer.com` to Vercel and update DNS in Cloudflare.
-7.  [ ] **Final Verification**: Check if the site loads.
+7.  [x] **Final Verification**: Database tables are ready. App is live at the Vercel URL.
 
 ## Current Action Required
 User needs to create the GitHub repository and provide the URL.
