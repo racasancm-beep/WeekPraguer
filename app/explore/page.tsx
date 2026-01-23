@@ -1,6 +1,8 @@
 import { SpaceFilters } from "@/components/explore/space-filters";
 import { SpaceGrid } from "@/components/explore/space-grid";
 
+export const dynamic = 'force-dynamic';
+
 import { prisma } from "@/lib/prisma";
 
 async function getSpaces(searchParams: { [key: string]: string | string[] | undefined }) {

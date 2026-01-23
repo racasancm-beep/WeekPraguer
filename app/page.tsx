@@ -58,7 +58,7 @@ export default function HomePage() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <Link href="/register?role=operator">
+                            <Link href="/explore">
                                 <Button size="lg" className="text-lg h-14 px-8 shadow-lg hover:shadow-xl">
                                     Find a Space
                                     <ArrowRight className="ml-2" />
