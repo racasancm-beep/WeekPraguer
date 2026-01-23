@@ -1,0 +1,26 @@
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+    return twMerge(clsx(inputs));
+}
+
+export function formatPrice(amount: number, currency: string = "CZK"): string {
+    return new Intl.NumberFormat("cs-CZ", {
+        style: "currency",
+        currency: currency,
+    }).format(amount);
+}
+
+export function formatDate(date: Date | string): string {
+    return new Intl.DateTimeFormat("cs-CZ", {
+        dateStyle: "medium",
+        timeStyle: "short",
+    }).format(new Date(date));
+}
+
+export function formatDateOnly(date: Date | string): string {
+    return new Intl.DateTimeFormat("cs-CZ", {
+        dateStyle: "medium",
+    }).format(new Date(date));
+}

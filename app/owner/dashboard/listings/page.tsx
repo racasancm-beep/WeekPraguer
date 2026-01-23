@@ -1,0 +1,111 @@
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { PrismaClient } from "@prisma/client";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Plus, MapPin, Users, Ruler } from "lucide-react";
+import { redirect } from "next/navigation";
+
+const prisma = new PrismaClient();
+
+async function getOwnerSpaces(ownerId: string) {
+    return await prisma.space.findMany({
+        where: { ownerId },
+        include: { photos: true },
+        orderBy: { createdAt: "desc" },
+    });
+}
+
+export default async function MyListingsPage() {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user as any).role !== "OWNER") {
+        redirect("/login");
+    }
+
+    const spaces = await getOwnerSpaces((session.user as any).id);
+
+    return (
+        <div className="space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">My Listings</h1>
+                    <p className="text-gray-500 mt-2">Manage your office spaces and availability.</p>
+                </div>
+                <Link href="/owner/dashboard/listings/create">
+                    <Button>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add New Space
+                    </Button>
+                </Link>
+            </div>
+
+            {spaces.length === 0 ? (
+                <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-dashed">
+                    <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                        <Plus className="w-6 h-6 text-gray-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No spaces listed yet</h3>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                        Get started by adding your first office space for weekend rentals.
+                    </p>
+                    <div className="mt-6">
+                        <Link href="/owner/dashboard/listings/create">
+                            <Button>Add Listing</Button>
+                        </Link>
+                    </div>
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {spaces.map((space) => (
+                        <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+                            <div className="aspect-video w-full bg-gray-200 relative">
+                                {space.photos[0] ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                        src={space.photos[0].url}
+                                        alt={space.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                        No Image
+                                    </div>
+                                )}
+                                <div className="absolute top-2 right-2 bg-white/90 dark:bg-black/90 px-2 py-1 rounded text-xs font-medium">
+                                    {space.active ? "Active" : "Inactive"}
+                                </div>
+                            </div>
+
+                            <div className="p-4">
+                                <h3 className="font-semibold text-lg truncate mb-1">{space.name}</h3>
+                                <div className="flex items-center text-sm text-gray-500 mb-4">
+                                    <MapPin className="w-4 h-4 mr-1" />
+                                    {space.city}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                    <div className="flex items-center text-gray-600 dark:text-gray-300">
+                                        <Users className="w-4 h-4 mr-2 text-gray-400" />
+                                        {space.capacity} ppl
+                                    </div>
+                                    <div className="flex items-center text-gray-600 dark:text-gray-300">
+                                        <Ruler className="w-4 h-4 mr-2 text-gray-400" />
+                                        {space.size} m²
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between pt-4 border-t">
+                                    <span className="font-bold text-lg">
+                                        {space.dailyRate} CZK
+                                        <span className="text-sm font-normal text-gray-500">/day</span>
+                                    </span>
+                                    <Button variant="outline" size="sm">Manage</Button>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}

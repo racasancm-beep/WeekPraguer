@@ -1,0 +1,304 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  OWNER
+  RENTER
+  CLEANER
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SubscriptionTier {
+  FREE
+  PREMIUM
+  ULTIMATE
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  role          UserRole
+  emailVerified DateTime?
+  image         String?
+  phone         String?
+  verified      Boolean   @default(false)
+  idDocument    String?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Subscription fields
+  subscriptionTier   SubscriptionTier @default(FREE)
+  stripeCustomerId   String?          @unique
+  stripeSubscriptionId String?        @unique
+  subscriptionActive Boolean          @default(false)
+  subscriptionEnd    DateTime?
+  
+  // AI Usage tracking
+  aiUsageCount       Int              @default(0)
+  lastAiUsageDate    DateTime?
+
+  // Onboarding Fields
+  companyName        String?
+  vatId              String?
+  billingAddress     String?
+  serviceRadius      Int?
+  availabilitySlots  String? // JSON for cleaner availability
+
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  
+  // Role-specific relations
+  ownedSpaces   Space[]   @relation("SpaceOwner")
+  bookings      Booking[] @relation("BookingRenter")
+  cleaningLogs  CleaningLog[]
+  reviews       Review[]  @relation("ReviewAuthor")
+  receivedReviews Review[] @relation("ReviewSubject")
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Space {
+  id          String   @id @default(cuid())
+  ownerId     String
+  name        String
+  description String
+  address     String
+  city        String   @default("Prague")
+  district    String?
+  latitude    Float
+  longitude   Float
+  
+  size        Int      // in square meters
+  capacity    Int      // number of people
+  officeCount Int?     // number of individual offices
+  
+  // Amenities
+  hasWifi     Boolean  @default(true)
+  hasProjector Boolean @default(false)
+  hasKitchen  Boolean  @default(false)
+  hasParking  Boolean  @default(false)
+  hasAC       Boolean  @default(false)
+  amenitiesList String?  // JSON array of selected amenities
+  
+  // Pricing
+  hourlyRate  Float
+  dailyRate   Float
+  weekendRate Float
+  
+  // Media
+  photos      SpacePhoto[]
+  
+  // Status
+  active      Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  owner       User     @relation("SpaceOwner", fields: [ownerId], references: [id])
+  bookings    Booking[]
+  reviews     Review[]
+
+  @@map("spaces")
+}
+
+model SpacePhoto {
+  id        String   @id @default(cuid())
+  spaceId   String
+  url       String
+  
+  createdAt DateTime @default(now())
+
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@map("space_photos")
+}
+
+model Booking {
+  id          String        @id @default(cuid())
+  spaceId     String
+  renterId    String
+  
+  // Timing
+  startTime   DateTime
+  endTime     DateTime
+  isHourly    Boolean       @default(false)
+  
+  // Pricing
+  basePrice   Float
+  cleaningFee Float
+  insurance   Float
+  totalPrice  Float
+  commission  Float
+  
+  // Status
+  status      BookingStatus @default(PENDING)
+  
+  // Access
+  accessCode  String?
+  
+  // Payment
+  paymentId   String?
+  
+  // Contract Logic
+  termsAcceptedAt DateTime?
+  termsAcceptedIp String?
+
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  space       Space         @relation(fields: [spaceId], references: [id])
+  renter      User          @relation("BookingRenter", fields: [renterId], references: [id])
+  transaction Transaction?
+  cleaningLog CleaningLog?
+  reviews     Review[]
+
+  @@map("bookings")
+}
+
+model Transaction {
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  
+  amount          Float
+  currency        String        @default("CZK")
+  
+  // Stripe
+  stripePaymentId String?
+  
+  // Status
+  paymentStatus   PaymentStatus @default(PENDING)
+  
+  // Payout
+  payoutCompleted Boolean       @default(false)
+  payoutDate      DateTime?
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+
+  @@map("transactions")
+}
+
+model CleaningLog {
+  id                String   @id @default(cuid())
+  bookingId         String   @unique
+  cleanerId         String?
+  
+  // Check-in
+  checkInTime       DateTime?
+  checkInPhoto      String?
+  
+  // Check-out
+  checkOutTime      DateTime?
+  checkOutPhoto     String?
+  
+  // Duration
+  duration          Int?     // in minutes
+  
+  // Notes
+  notes             String?
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  booking           Booking  @relation(fields: [bookingId], references: [id])
+  cleaner           User?    @relation(fields: [cleanerId], references: [id])
+
+  @@map("cleaning_logs")
+}
+
+model Review {
+  id          String   @id @default(cuid())
+  bookingId   String?
+  spaceId     String?
+  
+  authorId    String
+  subjectId   String?  // User being reviewed (for renter/cleaner reviews)
+  
+  rating      Int      // 1-5 stars
+  comment     String?
+  
+  // Type of review
+  type        String   // "renter_to_space", "owner_to_renter", "owner_to_cleaner", "renter_to_app"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  author      User     @relation("ReviewAuthor", fields: [authorId], references: [id])
+  subject     User?    @relation("ReviewSubject", fields: [subjectId], references: [id])
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+  space       Space?   @relation(fields: [spaceId], references: [id])
+
+  @@map("reviews")
+}
