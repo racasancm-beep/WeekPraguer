@@ -10,6 +10,7 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
     const minPrice = searchParams.minPrice as string | undefined;
     const maxPrice = searchParams.maxPrice as string | undefined;
     const capacity = searchParams.capacity as string | undefined;
+    const amenities = searchParams.amenities as string | undefined;
 
     const where: any = {};
 
@@ -25,6 +26,13 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
 
     if (capacity) {
         where.capacity = { gte: parseInt(capacity) };
+    }
+
+    if (amenities) {
+        const amenityList = amenities.split(",");
+        where.AND = amenityList.map((amenity) => ({
+            amenitiesList: { contains: amenity }
+        }));
     }
 
     return await prisma.space.findMany({

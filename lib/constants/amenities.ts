@@ -1,0 +1,22 @@
+export const AMENITIES_OPTIONS = [
+    "High-Speed Wi-Fi",
+    "Professional Meeting Rooms",
+    "Ergonomic Furniture",
+    "Natural Lighting",
+    "Air Conditioning",
+    "Kitchen Access",
+    "Free Coffee/Tea",
+    "Print/Scan Facilities",
+    "Quiet Zones",
+    "Breakout Areas",
+    "Whiteboards/Projectors",
+    "Secure Bike Storage",
+    "On-site Showers",
+    "24/7 Access",
+    "Advanced Security",
+    "On-site Parking",
+    "ADA Accessibility",
+    "Outdoor Terrace",
+    "Soundproofing",
+    "Reception Services"
+];

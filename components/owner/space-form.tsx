@@ -39,15 +39,8 @@ const formSchema = z.object({
     amenitiesList: z.array(z.string()).default([]),
 });
 
-const AMENITIES_OPTIONS = [
-    "High-Speed Wi-Fi", "Professional Meeting Rooms", "Ergonomic Furniture",
-    "Natural Lighting", "Air Conditioning", "Kitchen Access",
-    "Free Coffee/Tea", "Print/Scan Facilities", "Quiet Zones",
-    "Breakout Areas", "Whiteboards/Projectors", "Secure Bike Storage",
-    "On-site Showers", "24/7 Access", "Advanced Security",
-    "On-site Parking", "ADA Accessibility", "Outdoor Terrace",
-    "Soundproofing", "Reception Services"
-];
+import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
+import { useSession } from "next-auth/react";
 
 interface SpaceFormProps {
     initialData?: any;
@@ -316,39 +309,86 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">Photos</h3>
+                <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Photos</h3>
+                    <span className="text-xs text-muted-foreground">{photos.length} photos added</span>
+                </div>
                 <div className="flex gap-2">
                     <Input
                         placeholder="Enter image URL..."
                         value={photoUrl}
                         onChange={e => setPhotoUrl(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addPhoto())}
+                        className="flex-1"
                     />
-                    <Button type="button" onClick={addPhoto} variant="secondary">
-                        <Plus className="w-4 h-4" />
+                    <input
+                        type="file"
+                        id="photo-upload"
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            files.forEach(file => {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                    setPhotos(prev => [...prev, reader.result as string]);
+                                };
+                                reader.readAsDataURL(file);
+                            });
+                        }}
+                    />
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            if (photoUrl) {
+                                addPhoto();
+                            } else {
+                                document.getElementById('photo-upload')?.click();
+                            }
+                        }}
+                        variant="secondary"
+                        className="bg-violet-100 text-violet-700 hover:bg-violet-200 dark:bg-violet-900/40 dark:text-violet-300"
+                    >
+                        <Plus className="w-4 h-4 mr-1" />
+                        {photoUrl ? "Add" : "Browse"}
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mt-2">
-                    {photos.map((url, i) => (
-                        <div key={i} className="relative group border rounded-lg overflow-hidden h-32">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover" />
-                            <button
-                                type="button"
-                                onClick={() => removePhoto(i)}
-                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                                <X className="w-3 h-3" />
-                            </button>
+                {photos.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+                        {photos.map((url, i) => (
+                            <div key={i} className="relative group aspect-video border-2 border-violet-100 dark:border-violet-900/30 rounded-xl overflow-hidden shadow-sm">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={url} alt={`Preview ${i}`} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => removePhoto(i)}
+                                        className="bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transform hover:scale-110 transition-all shadow-lg"
+                                        title="Remove photo"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-full">
+                                    Photo {i + 1}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div
+                        onClick={() => document.getElementById('photo-upload')?.click()}
+                        className="text-center py-12 text-gray-400 border-2 border-dashed border-violet-100 dark:border-violet-900/30 rounded-xl bg-violet-50/30 dark:bg-violet-900/10 cursor-pointer hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors group"
+                    >
+                        <div className="flex flex-col items-center gap-2">
+                            <Plus className="w-8 h-8 text-violet-300 group-hover:text-violet-500 transition-colors" />
+                            <p className="text-sm">Click to upload or drag and drop photos</p>
+                            <p className="text-xs text-muted-foreground">Supported formats: JPG, PNG, GIF</p>
                         </div>
-                    ))}
-                    {photos.length === 0 && (
-                        <div className="col-span-2 text-center py-8 text-gray-400 border-2 border-dashed rounded-lg">
-                            No photos added yet
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             <div className="pt-4 border-t">

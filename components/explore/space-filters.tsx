@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 
+import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
+
 export function SpaceFilters() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -16,14 +18,16 @@ export function SpaceFilters() {
     const [city, setCity] = useState(searchParams.get("city") || "");
     const [priceRange, setPriceRange] = useState([0, 10000]);
     const [capacity, setCapacity] = useState(searchParams.get("capacity") || "");
-    const [hasWifi, setHasWifi] = useState(searchParams.get("hasWifi") === "true");
+    const [selectedAmenities, setSelectedAmenities] = useState<string[]>(
+        searchParams.get("amenities")?.split(",") || []
+    );
 
     const applyFilters = () => {
         const params = new URLSearchParams();
         if (city) params.set("city", city);
         if (priceRange[1] < 10000) params.set("maxPrice", priceRange[1].toString());
         if (capacity) params.set("capacity", capacity);
-        if (hasWifi) params.set("hasWifi", "true");
+        if (selectedAmenities.length > 0) params.set("amenities", selectedAmenities.join(","));
 
         router.push(`${pathname}?${params.toString()}`);
     };
@@ -32,7 +36,7 @@ export function SpaceFilters() {
         setCity("");
         setPriceRange([0, 10000]);
         setCapacity("");
-        setHasWifi(false);
+        setSelectedAmenities([]);
         router.push(pathname);
     };
 
@@ -70,13 +74,26 @@ export function SpaceFilters() {
                         />
                     </div>
 
-                    <div className="flex items-center space-x-2 pt-2">
-                        <Checkbox
-                            id="wifi-filter"
-                            checked={hasWifi}
-                            onCheckedChange={(c) => setHasWifi(c as boolean)}
-                        />
-                        <Label htmlFor="wifi-filter">Has Wi-Fi</Label>
+                    <div className="space-y-4 pt-4 border-t">
+                        <Label className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Amenities</Label>
+                        <div className="grid grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3">
+                            {AMENITIES_OPTIONS.map((amenity) => (
+                                <div key={amenity} className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id={`filter-${amenity}`}
+                                        checked={selectedAmenities.includes(amenity)}
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                setSelectedAmenities([...selectedAmenities, amenity]);
+                                            } else {
+                                                setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
+                                            }
+                                        }}
+                                    />
+                                    <Label htmlFor={`filter-${amenity}`} className="text-xs cursor-pointer line-clamp-1">{amenity}</Label>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="pt-4 flex flex-col gap-2">
