@@ -42,7 +42,7 @@ export default function OwnerDashboard() {
         <div className="p-8 space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold">Owner Dashboard</h1>
-                <Link href="/owner/spaces/new">
+                <Link href="/owner/dashboard/listings/create">
                     <Button>+ List New Space</Button>
                 </Link>
             </div>
