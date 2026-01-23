@@ -1,10 +1,6 @@
 
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-11-20.acacia',
-} as any);
-
 export const SUBSCRIPTION_PLANS = {
     FREE: {
         name: 'Free',
@@ -24,6 +20,10 @@ export const SUBSCRIPTION_PLANS = {
 };
 
 export async function createSubscriptionSession(userId: string, userEmail: string, tier: keyof typeof SUBSCRIPTION_PLANS) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2024-11-20.acacia',
+    } as any);
+
     const plan = SUBSCRIPTION_PLANS[tier];
     if (!plan.priceId) {
         throw new Error('This plan does not require a subscription payment');
@@ -52,6 +52,10 @@ export async function createSubscriptionSession(userId: string, userEmail: strin
 }
 
 export async function cancelSubscription(subscriptionId: string) {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+        apiVersion: '2024-11-20.acacia',
+    } as any);
+
     return await stripe.subscriptions.update(subscriptionId, {
         cancel_at_period_end: true,
     });
