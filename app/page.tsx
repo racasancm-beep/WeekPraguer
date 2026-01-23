@@ -132,6 +132,11 @@ export default function HomePage() {
                                     </div>
                                     <p className="text-gray-600 dark:text-gray-300">Get paid automatically Monday morning</p>
                                 </div>
+                                <div className="pt-4">
+                                    <Link href="/register?role=OWNER">
+                                        <Button className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700">List Your Space</Button>
+                                    </Link>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -167,6 +172,11 @@ export default function HomePage() {
                                     </div>
                                     <p className="text-gray-600 dark:text-gray-300">Receive access codes and enjoy your weekend</p>
                                 </div>
+                                <div className="pt-4">
+                                    <Link href="/register?role=RENTER">
+                                        <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">Rent Spaces</Button>
+                                    </Link>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -199,6 +209,11 @@ export default function HomePage() {
                                         3
                                     </div>
                                     <p className="text-gray-600 dark:text-gray-300">Track time automatically and get paid</p>
+                                </div>
+                                <div className="pt-4">
+                                    <Link href="/register?role=CLEANER">
+                                        <Button className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700">Cleaning</Button>
+                                    </Link>
                                 </div>
                             </CardContent>
                         </Card>
