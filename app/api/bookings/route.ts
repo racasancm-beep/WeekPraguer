@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
-import { checkAvailability } from "@/lib/booking/availability";
-import { addHours } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -14,89 +12,104 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get IP from headers (Next.js/Node specific)
     const forwardedFor = req.headers.get("x-forwarded-for");
     const ip = forwardedFor ? forwardedFor.split(',')[0] : "127.0.0.1";
 
     try {
-        const { spaceId, startTime } = await req.json();
+        const body = await req.json();
+        const { spaceId } = body;
 
-        const start = new Date(startTime);
-        const isFriday = start.getDay() === 5;
-
-        if (isFriday) {
-            start.setHours(18, 0, 0, 0);
-        } else {
-            start.setHours(9, 0, 0, 0);
+        let slots = body.slots;
+        if (!slots && body.startTime) {
+            // Backward compatibility for single date select
+            slots = [{
+                date: body.startTime,
+                isFullDay: body.isHourly === false,
+                startTime: "09:00",
+                endTime: "18:00"
+            }];
         }
 
-        const end = new Date(start);
-        if (isFriday) {
-            end.setHours(23, 59, 0, 0); // Friday night slot
-        } else {
-            end.setHours(18, 0, 0, 0);
+        if (!slots || slots.length === 0) {
+            return NextResponse.json({ error: "No slots provided" }, { status: 400 });
         }
 
-        // Use interactive transaction for Concurrency Control
+        const space = await prisma.space.findUnique({ where: { id: spaceId } });
+        if (!space) throw new Error("Space not found");
+
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Re-check availability INSIDE transaction
-            // Note: In strict SQL, we might need row locking (SELECT FOR UPDATE). 
-            // Prisma doesn't fully support explicit locking in high-level client yet without raw queries.
-            // But wrapping find + create in transaction is better than nothing.
+            const bookings = [];
 
-            const overlapping = await tx.booking.findFirst({
-                where: {
-                    spaceId,
-                    status: { not: "CANCELLED" },
-                    OR: [
-                        {
-                            startTime: { lt: end },
-                            endTime: { gt: start },
-                        },
-                    ],
+            for (const slot of slots) {
+                const sDate = new Date(slot.date);
+                const [sH, sM] = slot.startTime.split(":").map(Number);
+                const [eH, eM] = slot.endTime.split(":").map(Number);
+
+                const start = new Date(sDate);
+                start.setHours(sH, sM, 0, 0);
+
+                const end = new Date(sDate);
+                end.setHours(eH, eM, 0, 0);
+
+                // Validation: Friday 18:00+
+                if (start.getDay() === 5 && start.getHours() < 18) {
+                    throw new Error("Friday bookings are only available after 18:00");
                 }
-            });
 
-            if (overlapping) {
-                throw new Error("Space is already booked for this time.");
+                // Check Overlaps
+                const overlapping = await tx.booking.findFirst({
+                    where: {
+                        spaceId,
+                        status: { not: "CANCELLED" },
+                        OR: [
+                            { startTime: { lt: end }, endTime: { gt: start } }
+                        ]
+                    }
+                });
+
+                if (overlapping) {
+                    throw new Error(`Space is already booked on ${start.toLocaleDateString()} between ${slot.startTime}-${slot.endTime}`);
+                }
+
+                // Calculate Price
+                let basePrice = 0;
+                if (slot.isFullDay) {
+                    basePrice = space.dailyRate;
+                } else {
+                    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
+                    basePrice = hours * space.hourlyRate;
+                }
+
+                const cleaningFee = 500;
+                const insurance = basePrice * 0.5; // As per legal terms 50% insurance
+                const commission = (basePrice + cleaningFee) * 0.25; // 25% renter commission
+                const total = basePrice + cleaningFee + insurance + commission;
+
+                const booking = await tx.booking.create({
+                    data: {
+                        spaceId,
+                        renterId: session.user.id,
+                        startTime: start,
+                        endTime: end,
+                        isHourly: !slot.isFullDay,
+                        basePrice,
+                        cleaningFee,
+                        insurance,
+                        totalPrice: total,
+                        commission,
+                        status: "CONFIRMED",
+                        termsAcceptedAt: new Date(),
+                        termsAcceptedIp: ip,
+                    },
+                });
+
+                bookings.push(booking);
             }
 
-            // 2. Fetch space details
-            const space = await tx.space.findUnique({ where: { id: spaceId } });
-            if (!space) throw new Error("Space not found");
-
-            // 3. Create Booking
-            const booking = await tx.booking.create({
-                data: {
-                    spaceId,
-                    renterId: session.user.id,
-                    startTime: start,
-                    endTime: end,
-                    basePrice: space.dailyRate,
-                    cleaningFee: 500,
-                    insurance: 100,
-                    totalPrice: space.dailyRate + 500 + 100,
-                    commission: (space.dailyRate + 500 + 100) * 0.15,
-                    status: "CONFIRMED",
-                    termsAcceptedAt: new Date(),
-                    termsAcceptedIp: ip,
-                },
-            });
-
-            // 4. Cleaning Trigger (Operations Automation)
-            // REMOVED: Owners will now choose if they want a cleaner in their dashboard
-            /*
-            await tx.cleaningLog.create({
-                data: {
-                    bookingId: booking.id,
-                }
-            });
-            */
-
-            return booking;
+            return bookings;
         });
 
-        return NextResponse.json({ success: true, bookingId: result.id });
+        return NextResponse.json({ success: true, count: result.length });
     } catch (error: any) {
         console.error("Booking error:", error);
         return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
