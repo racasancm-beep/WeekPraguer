@@ -80,12 +80,12 @@ export default function RenterDashboard() {
                                         <p className="text-sm text-muted-foreground">Total Paid</p>
                                         <p>{booking.totalPrice} CZK</p>
                                     </div>
-                                    <div className="flex items-end justify-end">
+                                    <div className="flex items-end justify-end gap-2">
                                         {booking.status === "COMPLETED" && (
-                                            <Button variant="secondary" size="sm">Leave Review</Button>
+                                            <Button variant="secondary" size="sm" className="opacity-40 grayscale cursor-not-allowed" title="Coming Soon">Leave Review</Button>
                                         )}
                                         {booking.status === "CONFIRMED" && (
-                                            <Button variant="outline" size="sm">View Contract</Button>
+                                            <Button variant="outline" size="sm" className="opacity-40 grayscale cursor-not-allowed" title="Coming Soon">View Contract</Button>
                                         )}
                                     </div>
                                 </div>

@@ -55,20 +55,28 @@ export default function RenterLayout({
                 <nav className="space-y-1">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
+                        const isInactive = ["Profile", "Settings"].includes(item.name);
                         return (
                             <Link
                                 key={item.name}
-                                href={item.href}
-                                onClick={() => setIsMobileOpen(false)}
+                                href={isInactive ? "#" : item.href}
+                                onClick={(e) => {
+                                    if (isInactive) e.preventDefault();
+                                    else setIsMobileOpen(false);
+                                }}
                                 className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all ${isActive
                                     ? "bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400 shadow-sm"
-                                    : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
+                                    : isInactive
+                                        ? "text-gray-400 opacity-40 grayscale cursor-not-allowed"
+                                        : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
                                     }`}
+                                title={isInactive ? "Coming Soon" : ""}
                             >
                                 <item.icon
-                                    className={`mr-3 h-5 w-5 ${isActive ? "text-violet-600 dark:text-violet-400" : "text-gray-400"}`}
+                                    className={`mr-3 h-5 w-5 ${isActive ? "text-violet-600 dark:text-violet-400" : isInactive ? "text-gray-300" : "text-gray-400"}`}
                                 />
                                 {item.name}
+                                {isInactive && <span className="ml-auto text-[8px] uppercase tracking-tighter opacity-70">Soon</span>}
                             </Link>
                         );
                     })}

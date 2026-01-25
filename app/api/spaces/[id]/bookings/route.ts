@@ -14,8 +14,8 @@ export async function GET(
             where: {
                 spaceId: id,
                 status: "CONFIRMED",
-                startTime: {
-                    gte: new Date(),
+                endTime: {
+                    gte: new Date(new Date().setHours(0, 0, 0, 0)),
                 },
             },
             select: {

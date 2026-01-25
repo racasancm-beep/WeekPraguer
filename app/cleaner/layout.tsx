@@ -42,21 +42,29 @@ export default function CleanerLayout({
                 <nav className="space-y-1 px-3">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
+                        const isInactive = item.name === "Settings";
                         return (
                             <Link
                                 key={item.name}
-                                href={item.href}
-                                onClick={() => setIsMobileOpen(false)}
+                                href={isInactive ? "#" : item.href}
+                                onClick={(e) => {
+                                    if (isInactive) e.preventDefault();
+                                    else setIsMobileOpen(false);
+                                }}
                                 className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive
-                                        ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                                    ? "bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
+                                    : isInactive
+                                        ? "text-gray-400 opacity-40 grayscale cursor-not-allowed"
                                         : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
                                     }`}
+                                title={isInactive ? "Coming Soon" : ""}
                             >
                                 <item.icon
-                                    className={`mr-3 h-5 w-5 ${isActive ? "text-green-600 dark:text-green-400" : "text-gray-400 group-hover:text-gray-500"
+                                    className={`mr-3 h-5 w-5 ${isActive ? "text-green-600 dark:text-green-400" : isInactive ? "text-gray-300" : "text-gray-400 group-hover:text-gray-500"
                                         }`}
                                 />
                                 {item.name}
+                                {isInactive && <span className="ml-auto text-[8px] uppercase tracking-tighter">Soon</span>}
                             </Link>
                         );
                     })}

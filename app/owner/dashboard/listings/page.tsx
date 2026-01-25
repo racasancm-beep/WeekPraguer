@@ -102,7 +102,7 @@ export default async function MyListingsPage() {
                                         {space.dailyRate} CZK
                                         <span className="text-sm font-normal text-gray-500">/day</span>
                                     </span>
-                                    <Button variant="outline" size="sm">Manage</Button>
+                                    <Button variant="outline" size="sm" className="opacity-40 grayscale cursor-not-allowed" title="Coming Soon">Manage</Button>
                                 </div>
                             </div>
                         </div>

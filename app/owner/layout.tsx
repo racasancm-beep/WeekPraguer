@@ -58,17 +58,23 @@ export default function OwnerLayout({
                     <div className="flex-1 py-6 px-4 space-y-1">
                         {navigation.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                            const isInactive = ["Bookings", "Earnings", "Settings"].includes(item.name);
                             return (
                                 <Link
                                     key={item.name}
-                                    href={item.href}
+                                    href={isInactive ? "#" : item.href}
+                                    onClick={(e) => isInactive && e.preventDefault()}
                                     className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                                            ? "bg-primary/10 text-primary"
+                                        ? "bg-primary/10 text-primary"
+                                        : isInactive
+                                            ? "text-gray-400 opacity-40 grayscale cursor-not-allowed"
                                             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                                         }`}
+                                    title={isInactive ? "Coming Soon" : ""}
                                 >
-                                    <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-primary" : "text-gray-400"}`} />
+                                    <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-primary" : isInactive ? "text-gray-300" : "text-gray-400"}`} />
                                     {item.name}
+                                    {isInactive && <span className="ml-auto text-[8px] uppercase tracking-tighter opacity-70">Soon</span>}
                                 </Link>
                             );
                         })}
