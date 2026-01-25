@@ -208,9 +208,9 @@ export default function OwnerDashboard() {
                                             {b.cleaningLog ? (
                                                 <div className="flex items-center gap-3">
                                                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${b.cleaningLog.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                                                            b.cleaningLog.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-700' :
-                                                                b.cleaningLog.status === 'SELF_CLEANING' ? 'bg-emerald-100 text-emerald-700' :
-                                                                    b.cleaningLog.cleanerId ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                                        b.cleaningLog.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-700' :
+                                                            b.cleaningLog.status === 'SELF_CLEANING' ? 'bg-emerald-100 text-emerald-700' :
+                                                                b.cleaningLog.cleanerId ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                                                         }`}>
                                                         {b.cleaningLog.status === 'COMPLETED' ? "Cleaned" :
                                                             b.cleaningLog.status === 'ACCEPTED' ? "Accepted" :
@@ -251,14 +251,24 @@ export default function OwnerDashboard() {
                                                     )}
                                                 </div>
                                             ) : (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 text-[10px] font-bold border-violet-200 text-violet-600 hover:bg-violet-50 rounded-lg"
-                                                    onClick={() => toggleCleaning(b.id, true)}
-                                                >
-                                                    Hire Cleaner
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 text-[10px] font-bold border-violet-200 text-violet-600 hover:bg-violet-50 rounded-lg"
+                                                        onClick={() => handleHireCleanerClick(b.id)}
+                                                    >
+                                                        Hire Cleaner
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 text-[10px] font-bold border-emerald-200 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                                                        onClick={() => toggleCleaning(b.id, true, undefined, true)}
+                                                    >
+                                                        Self Cleaning
+                                                    </Button>
+                                                </div>
                                             )}
                                         </div>
                                     </div>
