@@ -69,15 +69,15 @@ export default function OwnerDashboard() {
         }
     };
 
-    const toggleCleaning = async (bookingId: string, wantsCleaning: boolean, cleanerId?: string) => {
+    const toggleCleaning = async (bookingId: string, wantsCleaning: boolean, cleanerId?: string, isSelfCleaning?: boolean) => {
         try {
             const res = await fetch("/api/owner/cleaning-request", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ bookingId, wantsCleaning, cleanerId }),
+                body: JSON.stringify({ bookingId, wantsCleaning, cleanerId, isSelfCleaning }),
             });
             if (res.ok) {
-                toast.success(cleanerId ? "Cleaner assigned successfully!" : "Cleaning request updated.");
+                toast.success(isSelfCleaning ? "Self cleaning activated!" : cleanerId ? "Cleaner assigned successfully!" : "Cleaning request updated.");
                 setIsModalOpen(false);
                 fetchData();
             } else {
@@ -207,20 +207,33 @@ export default function OwnerDashboard() {
 
                                             {b.cleaningLog ? (
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${b.cleaningLog.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-700' :
-                                                            b.cleaningLog.cleanerId ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${b.cleaningLog.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                                                            b.cleaningLog.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-700' :
+                                                                b.cleaningLog.status === 'SELF_CLEANING' ? 'bg-emerald-100 text-emerald-700' :
+                                                                    b.cleaningLog.cleanerId ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                                                         }`}>
-                                                        {b.cleaningLog.status === 'ACCEPTED' ? "Accepted" : b.cleaningLog.cleanerId ? "Assigned" : "Log Created"}
+                                                        {b.cleaningLog.status === 'COMPLETED' ? "Cleaned" :
+                                                            b.cleaningLog.status === 'ACCEPTED' ? "Accepted" :
+                                                                b.cleaningLog.status === 'SELF_CLEANING' ? "Self Cleaning" :
+                                                                    b.cleaningLog.cleanerId ? "Assigned" : "Log Created"}
                                                     </span>
-                                                    {b.cleaningLog.status !== 'ACCEPTED' && !b.cleaningLog.cleanerId && (
+                                                    {b.cleaningLog.status !== 'ACCEPTED' && b.cleaningLog.status !== 'SELF_CLEANING' && b.cleaningLog.status !== 'COMPLETED' && !b.cleaningLog.cleanerId && (
                                                         <div className="flex gap-2">
                                                             <Button
                                                                 size="sm"
                                                                 variant="default"
-                                                                className="h-7 text-[10px] bg-violet-600 hover:bg-violet-700"
+                                                                className="h-7 text-[10px] bg-violet-600 hover:bg-violet-700 font-bold"
                                                                 onClick={() => handleHireCleanerClick(b.id)}
                                                             >
-                                                                Select Cleaner
+                                                                Hire Cleaner
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-7 text-[10px] border-emerald-500 text-emerald-600 hover:bg-emerald-50 font-bold"
+                                                                onClick={() => toggleCleaning(b.id, true, undefined, true)}
+                                                            >
+                                                                Self Cleaning
                                                             </Button>
                                                             <button
                                                                 onClick={() => toggleCleaning(b.id, false)}
@@ -229,6 +242,12 @@ export default function OwnerDashboard() {
                                                                 Cancel
                                                             </button>
                                                         </div>
+                                                    )}
+                                                    {b.cleaningLog.status === 'SELF_CLEANING' && (
+                                                        <span className="text-[10px] text-emerald-600 font-bold flex items-center">
+                                                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                                                            Doing myself
+                                                        </span>
                                                     )}
                                                 </div>
                                             ) : (

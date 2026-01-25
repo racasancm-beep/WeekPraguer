@@ -63,9 +63,30 @@ export async function GET(req: Request) {
         where.capacity = { gte: parseInt(capacity) };
     }
 
+    // Only show clean spaces to users
+    where.isClean = true;
+
     try {
+        // Auto-complete self-cleaning jobs that are > 2 hours past booking end
+        const overdueLogs = await (prisma as any).cleaningLog.findMany({
+            where: {
+                status: "SELF_CLEANING",
+                booking: {
+                    endTime: { lte: new Date(Date.now() - 2 * 60 * 60 * 1000) }
+                }
+            } as any,
+            include: { booking: true }
+        }) as any[];
+
+        for (const log of overdueLogs) {
+            await (prisma as any).$transaction([
+                (prisma as any).cleaningLog.update({ where: { id: log.id }, data: { status: "COMPLETED" } }),
+                (prisma as any).space.update({ where: { id: log.booking.spaceId }, data: { isClean: true } })
+            ]);
+        }
+
         const spaces = await prisma.space.findMany({
-            where,
+            where: where as any,
             orderBy: { createdAt: "desc" },
             include: {
                 photos: true,

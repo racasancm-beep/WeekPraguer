@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Banknote, MapPin, Clock, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function CleanerMyJobs() {
     const [jobs, setJobs] = useState<any[]>([]);
@@ -26,6 +27,24 @@ export default function CleanerMyJobs() {
             console.error(e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleComplete = async (jobId: string) => {
+        try {
+            const res = await fetch("/api/cleaner/complete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jobId }),
+            });
+            if (res.ok) {
+                toast.success("Job completed! Space is now ready for the next guest.");
+                fetchJobs();
+            } else {
+                toast.error("Failed to complete job.");
+            }
+        } catch (e) {
+            toast.error("Network error.");
         }
     };
 
@@ -101,6 +120,7 @@ export default function CleanerMyJobs() {
                                     <div className="bg-gray-50 dark:bg-gray-800 p-6 flex items-center justify-center border-t md:border-t-0 md:border-l border-gray-100 dark:border-gray-700">
                                         {job.status === 'ACCEPTED' ? (
                                             <Button
+                                                onClick={() => handleComplete(job.id)}
                                                 className="w-full md:w-32 h-12 bg-green-600 hover:bg-green-700 shadow-lg shadow-green-200 dark:shadow-none text-white font-bold rounded-2xl transition-transform active:scale-95"
                                             >
                                                 Complete

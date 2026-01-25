@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -13,34 +11,41 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { bookingId, wantsCleaning, cleanerId } = await req.json();
+        const { bookingId, wantsCleaning, cleanerId, isSelfCleaning } = await req.json();
 
         // 1. Verify owner owns the space for this booking
-        const booking = await prisma.booking.findUnique({
-            where: { id: bookingId },
-            include: { space: true }
+        const booking = await prisma.space.findFirst({
+            where: { ownerId: session.user.id, bookings: { some: { id: bookingId } } },
+            include: { bookings: { where: { id: bookingId } } }
         });
 
-        if (!booking || booking.space.ownerId !== session.user.id) {
+        if (!booking) {
             return NextResponse.json({ error: "Booking not found or access denied" }, { status: 403 });
         }
 
         if (wantsCleaning) {
-            // Create or update cleaning log with optional cleaner assignment
-            await prisma.cleaningLog.upsert({
+            // Create or update cleaning log
+            await (prisma as any).cleaningLog.upsert({
                 where: { bookingId },
-                update: { cleanerId: cleanerId || null },
-                create: { bookingId, cleanerId: cleanerId || null }
+                update: {
+                    cleanerId: cleanerId || null,
+                    status: isSelfCleaning ? "SELF_CLEANING" : "PENDING"
+                },
+                create: {
+                    bookingId,
+                    cleanerId: cleanerId || null,
+                    status: isSelfCleaning ? "SELF_CLEANING" : "PENDING"
+                }
+            });
+
+            // Mark space as NOT clean
+            await (prisma as any).space.update({
+                where: { id: booking.id },
+                data: { isClean: false }
             });
         } else {
-            // Remove cleaning log if exists and NOT assigned yet
-            const log = await prisma.cleaningLog.findUnique({ where: { bookingId } });
-            if (log && log.cleanerId && !cleanerId) {
-                // If it was assigned and they want to remove it entirely
-                await prisma.cleaningLog.delete({ where: { bookingId } });
-            } else if (log) {
-                await prisma.cleaningLog.delete({ where: { bookingId } });
-            }
+            // Remove cleaning log if exists
+            await (prisma as any).cleaningLog.deleteMany({ where: { bookingId } });
         }
 
         return NextResponse.json({ success: true });

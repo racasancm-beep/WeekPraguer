@@ -22,7 +22,7 @@ export default async function MyListingsPage() {
         redirect("/login");
     }
 
-    const spaces = await getOwnerSpaces((session.user as any).id);
+    const spaces = await getOwnerSpaces((session.user as any).id) as any[];
 
     return (
         <div className="space-y-8">
@@ -71,8 +71,11 @@ export default async function MyListingsPage() {
                                         No Image
                                     </div>
                                 )}
-                                <div className="absolute top-2 right-2 bg-white/90 dark:bg-black/90 px-2 py-1 rounded text-xs font-medium">
-                                    {space.active ? "Active" : "Inactive"}
+                                <div className={`absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${space.isClean
+                                    ? "bg-green-100/90 text-green-700 dark:bg-green-900/90 dark:text-green-300"
+                                    : "bg-red-100/90 text-red-700 dark:bg-red-900/90 dark:text-red-300"
+                                    }`}>
+                                    {space.active ? (space.isClean ? "Active" : "Cleaning Needed") : "Inactive"}
                                 </div>
                             </div>
 

@@ -104,6 +104,7 @@ model Space {
   dailyRate     Float
   weekendRate   Float
   active        Boolean      @default(true)
+  isClean       Boolean      @default(true)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   bookings      Booking[]
@@ -191,6 +192,7 @@ enum CleaningStatus {
   PENDING
   ACCEPTED
   COMPLETED
+  SELF_CLEANING
 }
 
 model Review {
