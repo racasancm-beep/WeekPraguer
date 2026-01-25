@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { startOfMonth, subMonths, endOfMonth, format } from "date-fns";
-
-const prisma = new PrismaClient();
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -16,17 +14,17 @@ export async function GET() {
     try {
         const userId = session.user.id;
 
-        const spaces = await prisma.space.findMany({ where: { ownerId: userId }, select: { id: true } });
-        const spaceIds = spaces.map(s => s.id);
+        const spaces = await (prisma as any).space.findMany({ where: { ownerId: userId }, select: { id: true } });
+        const spaceIds = spaces.map((s: any) => s.id);
 
-        const bookings = await prisma.booking.findMany({
+        const bookings = await (prisma as any).booking.findMany({
             where: { spaceId: { in: spaceIds } },
             include: { space: true, renter: true, cleaningLog: true },
             orderBy: { createdAt: "desc" },
             take: 5
         });
 
-        const totalRevenueAgg = await prisma.booking.aggregate({
+        const totalRevenueAgg = await (prisma as any).booking.aggregate({
             where: { spaceId: { in: spaceIds }, status: { in: ["CONFIRMED", "COMPLETED"] } },
             _sum: { totalPrice: true },
             _count: true
@@ -35,16 +33,15 @@ export async function GET() {
         const revenue = totalRevenueAgg._sum.totalPrice || 0;
         const count = totalRevenueAgg._count;
 
-        // Chart Data: 3 months past, current month, 1 month future
+        // Chart Data: 5 months past + Current month (Total 6 columns)
         const chartData = [];
 
-        // Past 3 months + Current
-        for (let i = 3; i >= 0; i--) {
+        for (let i = 5; i >= 0; i--) {
             const date = subMonths(new Date(), i);
             const start = startOfMonth(date);
             const end = endOfMonth(date);
 
-            const monthAgg = await prisma.booking.aggregate({
+            const monthAgg = await (prisma as any).booking.aggregate({
                 where: {
                     spaceId: { in: spaceIds },
                     status: { in: ["CONFIRMED", "COMPLETED"] },
@@ -61,9 +58,11 @@ export async function GET() {
             });
         }
 
-        // Calculate average of previous 3 months for projection
-        const last3Months = chartData.slice(0, 3);
-        const avgRevenue = last3Months.reduce((sum, item) => sum + item.total, 0) / 3;
+        // Calculate average of previous 5 months for projection
+        const activeMonths = chartData.filter(d => d.total > 0);
+        const avgRevenue = activeMonths.length > 0
+            ? activeMonths.reduce((sum, item) => sum + item.total, 0) / activeMonths.length
+            : 0;
 
         // Add 1 Future Month as hollow projection
         const nextMonthDate = subMonths(new Date(), -1);

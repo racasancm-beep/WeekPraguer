@@ -138,7 +138,7 @@ export default function OwnerDashboard() {
                         <CardTitle className="text-xl font-bold">Revenue Overview</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2 pb-8">
-                        <ResponsiveContainer width="100%" height={350}>
+                        <ResponsiveContainer width="100%" height={300}>
                             <BarChart data={chartData}>
                                 <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
@@ -173,6 +173,18 @@ export default function OwnerDashboard() {
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
+
+                        <div className="mt-6 border-t pt-6 px-4">
+                            <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Monthly Breakdown</h4>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                {chartData.filter(d => d.isActual).map((d) => (
+                                    <div key={d.name} className="space-y-1">
+                                        <p className="text-sm font-medium text-gray-500">{d.name}</p>
+                                        <p className="text-lg font-bold">{d.total.toLocaleString()} <span className="text-[10px] text-gray-400">CZK</span></p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
 
