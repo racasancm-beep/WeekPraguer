@@ -81,11 +81,12 @@ export default function SpaceDetailsPage() {
                 const key = d.toDateString();
                 if (!next[key]) {
                     const isFriday = d.getDay() === 5;
+                    const isSunday = d.getDay() === 0;
                     next[key] = {
                         date: d,
                         isFullDay: !isFriday,
                         startTime: isFriday ? "18:00" : "09:00",
-                        endTime: isFriday ? "22:00" : "18:00"
+                        endTime: isFriday ? "22:00" : (isSunday ? "20:00" : "18:00")
                     };
                 }
             });
@@ -314,7 +315,9 @@ export default function SpaceDetailsPage() {
                                                         onChange={(e) => updateSlot(key, { startTime: e.target.value })}
                                                         className="w-full bg-transparent text-xs font-medium focus:ring-0 border-none p-0 cursor-pointer"
                                                     >
-                                                        {Array.from({ length: slot.date.getDay() === 5 ? 6 : 14 }).map((_, i) => {
+                                                        {Array.from({
+                                                            length: slot.date.getDay() === 5 ? 6 : (slot.date.getDay() === 0 ? 12 : 14)
+                                                        }).map((_, i) => {
                                                             const hour = slot.date.getDay() === 5 ? 18 + i : 8 + i;
                                                             const hStr = `${hour.toString().padStart(2, '0')}:00`;
                                                             return <option key={hStr} value={hStr}>{hStr}</option>
@@ -329,7 +332,9 @@ export default function SpaceDetailsPage() {
                                                         onChange={(e) => updateSlot(key, { endTime: e.target.value })}
                                                         className="w-full bg-transparent text-xs font-medium focus:ring-0 border-none p-0 cursor-pointer"
                                                     >
-                                                        {Array.from({ length: slot.date.getDay() === 5 ? 6 : 14 }).map((_, i) => {
+                                                        {Array.from({
+                                                            length: slot.date.getDay() === 5 ? 6 : (slot.date.getDay() === 0 ? 12 : 14)
+                                                        }).map((_, i) => {
                                                             const hour = slot.date.getDay() === 5 ? 19 + i : 9 + i;
                                                             const hStr = `${hour.toString().padStart(2, '0')}:00`;
                                                             return <option key={hStr} value={hStr}>{hStr}</option>

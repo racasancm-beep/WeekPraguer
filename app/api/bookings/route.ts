@@ -56,6 +56,11 @@ export async function POST(req: Request) {
                     throw new Error("Friday bookings are only available after 18:00");
                 }
 
+                // Validation: Sunday until 20:00
+                if (start.getDay() === 0 && (end.getHours() > 20 || (end.getHours() === 20 && end.getMinutes() > 0))) {
+                    throw new Error("Sunday bookings must end by 20:00");
+                }
+
                 // Check Overlaps
                 const overlapping = await tx.booking.findFirst({
                     where: {
