@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Search } from "lucide-react";
 
 export default function RenterDashboard() {
     const [bookings, setBookings] = useState<any[]>([]);
@@ -31,15 +32,21 @@ export default function RenterDashboard() {
     if (loading) return <div>Loading bookings...</div>;
 
     return (
-        <div className="p-8 max-w-5xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">My Trips</h1>
+        <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-4xl font-extrabold tracking-tight">My Trips</h1>
+                    <p className="text-muted-foreground mt-1 text-lg">Manage and view your upcoming weekend stays.</p>
+                </div>
                 <Link href="/explore">
-                    <Button>Find a Space</Button>
+                    <Button size="lg" className="bg-violet-600 hover:bg-violet-700 shadow-lg shadow-violet-200 dark:shadow-none rounded-2xl px-8">
+                        <Search className="w-4 h-4 mr-2" />
+                        Find a Space
+                    </Button>
                 </Link>
             </div>
 
-            <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-1">
                 {bookings.length === 0 ? (
                     <div className="text-center py-12 border rounded-lg bg-gray-50 dark:bg-gray-800">
                         <h3 className="text-xl font-medium mb-2">No bookings yet</h3>
