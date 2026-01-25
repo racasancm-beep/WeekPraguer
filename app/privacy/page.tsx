@@ -55,7 +55,7 @@ export default function PrivacyPolicyPage() {
 
                         <div className="mt-12 p-6 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30">
                             <p className="text-sm text-blue-700 dark:text-blue-300 font-medium">
-                                Questions about privacy? Contact us at privacy@weekpraguer.com
+                                Questions about privacy? Contact us at privacy@weekpragueR.com
                             </p>
                         </div>
                     </div>

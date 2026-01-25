@@ -48,7 +48,7 @@ export default function OwnerLayout({
                 <div className="flex flex-col h-full">
                     <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
                         <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                            Space Booker
+                            WeekPragueR
                         </span>
                         <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                             Owner

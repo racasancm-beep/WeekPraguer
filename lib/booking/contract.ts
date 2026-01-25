@@ -1,14 +1,14 @@
 export function generateContract(
-    renterName: string,
-    ownerName: string,
-    spaceName: string,
-    totalPrice: number,
-    startDate: string,
-    endDate: string
+  renterName: string,
+  ownerName: string,
+  spaceName: string,
+  totalPrice: number,
+  startDate: string,
+  endDate: string
 ) {
-    const date = new Date().toLocaleDateString();
+  const date = new Date().toLocaleDateString();
 
-    return `
+  return `
 RENTAL AGREEMENT
 
 Date: ${date}
@@ -35,6 +35,6 @@ Quiet hours are strictly enforced between 22:00 and 06:00.
 The Tenant is liable for any damages caused to the property during the rental period.
 
 6. ACCEPTANCE
-By checking the "I Agree" box on the Weekend Space Booker platform, the Tenant accepts these terms digitally.
+By checking the "I Agree" box on the WeekPragueR platform, the Tenant accepts these terms digitally.
   `;
 }

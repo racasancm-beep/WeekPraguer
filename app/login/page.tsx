@@ -56,7 +56,7 @@ export default function LoginPage() {
                     <Link href="/" className="flex items-center justify-center gap-2 mb-4">
                         <Calendar className="w-8 h-8 text-primary" />
                         <span className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                            Weekend Space Booker
+                            WeekPragueR
                         </span>
                     </Link>
                     <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>

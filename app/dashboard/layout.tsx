@@ -44,7 +44,7 @@ export default function RenterLayout({
         <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800">
             <div className="flex h-16 items-center px-6 border-b dark:border-gray-800">
                 <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                    WeekPraguer
+                    WeekPragueR
                 </span>
                 <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 uppercase tracking-tighter">
                     Renter
@@ -116,7 +116,7 @@ export default function RenterLayout({
 
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b dark:border-gray-800 px-4 h-16 flex items-center justify-between">
-                <span className="font-bold text-violet-600">WeekPraguer</span>
+                <span className="font-bold text-violet-600">WeekPragueR</span>
                 <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="rounded-full">

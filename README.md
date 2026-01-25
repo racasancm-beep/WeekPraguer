@@ -1,10 +1,10 @@
-# Weekend Space Booker
+# WeekPragueR
 
 A specialized marketplace platform connecting building owners with renters for weekend-only office space bookings in Prague, Czechia.
 
 ## 🎯 Overview
 
-Weekend Space Booker is designed for:
+WeekPragueR is designed for:
 - **Building Owners/Managers**: Monetize empty weekend office spaces
 - **Operators/Renters**: Find perfect spaces for therapy sessions, workshops, IT activities, and events
 - **Cleaning Companies**: Streamlined cleaning operations with automated scheduling
@@ -114,26 +114,23 @@ weekend-space-booker/
 - SEPA Direct Debit support
 - Multi-language support (Czech/English)
 
-## 💰 Pricing Model
+## 💰 Pricing & Revenue Model
 
-| Component | Rate | Applied To |
+WeekPragueR operates on a transparent **60/25/15** allocation model from the total booking amount:
+
+| Party | Share | Description |
 |-----------|------|------------|
-| Base Price | Variable | Set by owner |
-| Platform Commission | 14% | Renter (from base price) |
-| Cleaning Fee | 10% | Renter (added to total) |
-| Insurance | 50% | Renter (added to total) |
+| **Owner** | 60% | Direct earnings for the property owner |
+| **Admin** | 25% | Platform service and maintenance fee |
+| **Cleaner**| 15% | Guaranteed compensation for precision cleaning |
 
-**Example Booking:**
-- Base Price: 5,000 CZK
-- Cleaning Fee: 500 CZK (10%)
-- Insurance: 2,500 CZK (50%)
-- **Total Paid by Renter**: 8,000 CZK
+**Example Booking (Yoga Studio @ 500 CZK/hr):**
+- **2 Hour Booking**: 1,000 CZK (Total Paid by Renter)
+- **Owner Allocation**: 600 CZK
+- **Admin Allocation**: 250 CZK
+- **Cleaner Allocation**: 150 CZK
 
-**Owner Receives:**
-- Base Price: 5,000 CZK
-- Less Commission: -700 CZK (14%)
-- Plus Cleaning Revenue Share: +175 CZK (35% of cleaning fee)
-- **Total Payout**: 4,475 CZK
+*Note: No hidden cleaning fees or insurance premiums are added. The base rate covers the entire ecosystem.*
 
 ## 🔐 Security & Compliance
 
@@ -227,7 +224,7 @@ This is a proprietary platform. For inquiries about contributing or partnerships
 
 ## 📄 License
 
-Copyright © 2026 Weekend Space Booker. All rights reserved.
+Copyright © 2026 WeekPragueR. All rights reserved.
 
 ## 📞 Support
 

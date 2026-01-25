@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-    title: "Weekend Space Booker - Rent Office Spaces on Weekends",
+    title: "WeekPragueR - Rent Office Spaces on Weekends",
     description: "Connect building owners with renters for weekend-only office space bookings in Prague. Perfect for therapists, workshops, and events.",
     keywords: ["office rental", "weekend booking", "Prague", "coworking", "therapy rooms", "event space"],
 };

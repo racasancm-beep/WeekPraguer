@@ -35,7 +35,7 @@ export default function AdminLayout({
         <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800">
             <div className="flex h-16 items-center px-6 border-b dark:border-gray-800">
                 <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
-                    AdminPanel
+                    WeekPragueR Admin
                 </span>
             </div>
             <div className="flex-1 overflow-y-auto py-4">
@@ -101,7 +101,7 @@ export default function AdminLayout({
 
             {/* Mobile Sidebar */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b px-4 h-16 flex items-center justify-between">
-                <span className="font-bold text-purple-600">AdminPanel</span>
+                <span className="font-bold text-purple-600">WeekPragueR Admin</span>
                 <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon">

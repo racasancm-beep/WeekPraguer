@@ -14,7 +14,7 @@ export default function HomePage() {
                             <Calendar className="w-6 h-6 text-white" />
                         </div>
                         <span className="text-2xl font-black tracking-tighter text-gray-900 group-hover:text-violet-600 transition-colors">
-                            WeekPraguer
+                            WeekPragueR
                         </span>
                     </Link>
 
@@ -179,7 +179,7 @@ export default function HomePage() {
                 <section className="py-32 bg-[#FAFAFB]">
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="text-center mb-24 space-y-4">
-                            <h2 className="text-5xl font-black tracking-tighter text-gray-900">Why WeekPraguer?</h2>
+                            <h2 className="text-5xl font-black tracking-tighter text-gray-900">Why WeekPragueR?</h2>
                             <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-xs">Innovation for the local market</p>
                         </div>
 
@@ -209,7 +209,7 @@ export default function HomePage() {
                             <div className="w-10 h-10 bg-violet-600 rounded-2xl flex items-center justify-center">
                                 <Calendar className="w-6 h-6 text-white" />
                             </div>
-                            <span className="text-2xl font-black tracking-tighter">WeekPraguer</span>
+                            <span className="text-2xl font-black tracking-tighter">WeekPragueR</span>
                         </Link>
                         <p className="text-gray-400 font-medium leading-relaxed">
                             The definitive weekend office rental marketplace for Prague's modern professionals.
@@ -236,7 +236,7 @@ export default function HomePage() {
                     </div>
                 </div>
                 <div className="max-w-7xl mx-auto px-6 pt-20 mt-20 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">&copy; 2026 WeekPraguer. Precision in Every Booking.</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">&copy; 2026 WeekPragueR. Precision in Every Booking.</p>
                     <div className="flex gap-8 text-xs font-bold text-gray-500 uppercase tracking-widest">
                         <span>Built with ❤️ for Prague</span>
                     </div>
