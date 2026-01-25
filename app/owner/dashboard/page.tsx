@@ -26,7 +26,7 @@ interface Cleaner {
 }
 
 export default function OwnerDashboard() {
-    const [stats, setStats] = useState({ revenue: 0, bookings: 0 });
+    const [stats, setStats] = useState({ revenue: 0, revenueThisMonth: 0, growth: "0.0", bookings: 0 });
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
     const [chartData, setChartData] = useState<StatItem[]>([]);
     const [cleaners, setCleaners] = useState<Cleaner[]>([]);
@@ -46,7 +46,12 @@ export default function OwnerDashboard() {
             const res = await fetch("/api/owner/dashboard-stats");
             if (res.ok) {
                 const data = await res.json();
-                setStats({ revenue: data.revenue || 0, bookings: data.count || 0 });
+                setStats({
+                    revenue: data.revenue || 0,
+                    revenueThisMonth: data.revenueThisMonth || 0,
+                    growth: data.growth || "0.0",
+                    bookings: data.count || 0
+                });
                 setRecentBookings(data.bookings || []);
                 setChartData(data.chartData || []);
             }
@@ -116,7 +121,9 @@ export default function OwnerDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black">{stats.revenue.toLocaleString()}</div>
-                        <p className="text-xs text-green-600 font-semibold mt-1">+20.1% from last month</p>
+                        <p className={`text-xs font-semibold mt-1 ${parseFloat(stats.growth) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                            {parseFloat(stats.growth) >= 0 ? "+" : ""}{stats.growth}% from last month
+                        </p>
                     </CardContent>
                 </Card>
                 <Card className="border-none shadow-xl">
