@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AMENITIES } from "@/lib/constants";
 import { useSession } from "next-auth/react";
-import { Clock, Calendar as CalendarIcon, Trash2 } from "lucide-react";
+import { Clock, Calendar as CalendarIcon, Trash2, Sparkles } from "lucide-react";
 
 interface SpaceDetailed {
     id: string;
@@ -70,33 +70,50 @@ export default function SpaceDetailsPage() {
 
     const handleDateSelect = (dates: Date[] | undefined) => {
         const newDates = dates || [];
-        setSelectedDates(newDates);
+        setSelectedDates([...newDates]); // Ensure new array reference for re-render
 
         // Update slots
-        const newSlots = { ...slots };
+        setSlots(prev => {
+            const next = { ...prev };
 
-        // Add new slots
-        newDates.forEach(d => {
-            const key = d.toDateString();
-            if (!newSlots[key]) {
-                const isFriday = d.getDay() === 5;
-                newSlots[key] = {
-                    date: d,
-                    isFullDay: !isFriday,
-                    startTime: isFriday ? "18:00" : "09:00",
-                    endTime: isFriday ? "22:00" : "18:00"
-                };
-            }
+            // Add new slots
+            newDates.forEach(d => {
+                const key = d.toDateString();
+                if (!next[key]) {
+                    const isFriday = d.getDay() === 5;
+                    next[key] = {
+                        date: d,
+                        isFullDay: !isFriday,
+                        startTime: isFriday ? "18:00" : "09:00",
+                        endTime: isFriday ? "22:00" : "18:00"
+                    };
+                }
+            });
+
+            // Remove unselected slots
+            Object.keys(next).forEach(key => {
+                if (!newDates.find(d => d.toDateString() === key)) {
+                    delete next[key];
+                }
+            });
+
+            return next;
         });
+    };
 
-        // Remove old slots
-        Object.keys(newSlots).forEach(key => {
-            if (!newDates.find(d => d.toDateString() === key)) {
-                delete newSlots[key];
-            }
-        });
+    const selectWholeWeekend = () => {
+        // Find upcoming Friday, Saturday, Sunday
+        const today = new Date();
+        const nextFri = new Date();
+        nextFri.setDate(today.getDate() + ((5 + 7 - today.getDay()) % 7));
 
-        setSlots(newSlots);
+        const nextSat = new Date(nextFri);
+        nextSat.setDate(nextFri.getDate() + 1);
+
+        const nextSun = new Date(nextFri);
+        nextSun.setDate(nextFri.getDate() + 2);
+
+        handleDateSelect([nextFri, nextSat, nextSun]);
     };
 
     const updateSlot = (key: string, updates: Partial<BookingSlot>) => {
@@ -252,9 +269,20 @@ export default function SpaceDetailsPage() {
                                 className="scale-95"
                             />
                         </div>
-                        <p className="text-[10px] text-center text-violet-600 font-medium">
-                            * Fri (after 18:00), Sat, & Sun only.
-                        </p>
+                        <div className="flex flex-col gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-[10px] h-7 border-dashed border-violet-300 text-violet-600 hover:bg-violet-50"
+                                onClick={selectWholeWeekend}
+                            >
+                                <CalendarIcon className="w-3 h-3 mr-1" />
+                                Select Entire Next Weekend
+                            </Button>
+                            <p className="text-[10px] text-center text-violet-600 font-medium">
+                                * Fri (after 18:00), Sat, & Sun only.
+                            </p>
+                        </div>
                     </div>
 
                     {/* Selected Slots Configuration */}
