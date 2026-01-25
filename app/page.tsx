@@ -273,7 +273,7 @@ export default function HomePage() {
             <section className="py-24 bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 text-white">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                        Ready to Get Started?
+                        Join WeekPraguer Today
                     </h2>
                     <p className="text-xl mb-8 text-violet-100">
                         Join the growing community of weekend space sharers in Prague
