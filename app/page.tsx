@@ -297,30 +297,14 @@ export default function HomePage() {
             {/* Footer */}
             <footer className="bg-gray-900 text-gray-300 py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid md:grid-cols-4 gap-8">
+                    <div className="grid md:grid-cols-2 gap-8 text-center md:text-left">
                         <div>
                             <h3 className="font-bold text-white mb-4">Weekend Space Booker</h3>
                             <p className="text-sm">
                                 The premier weekend office rental marketplace in Prague.
                             </p>
                         </div>
-                        <div>
-                            <h4 className="font-semibold text-white mb-4">For Owners</h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><Link href="/list-space" className="hover:text-white">List Your Space</Link></li>
-                                <li><Link href="/owner-guide" className="hover:text-white">Owner Guide</Link></li>
-                                <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-semibold text-white mb-4">For Renters</h4>
-                            <ul className="space-y-2 text-sm">
-                                <li><Link href="/explore" className="hover:text-white">Find Spaces</Link></li>
-                                <li><Link href="/how-it-works" className="hover:text-white">How It Works</Link></li>
-                                <li><Link href="/use-cases" className="hover:text-white">Use Cases</Link></li>
-                            </ul>
-                        </div>
-                        <div>
+                        <div className="md:text-right">
                             <h4 className="font-semibold text-white mb-4">Legal</h4>
                             <ul className="space-y-2 text-sm">
                                 <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
