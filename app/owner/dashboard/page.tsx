@@ -26,7 +26,13 @@ interface Cleaner {
 }
 
 export default function OwnerDashboard() {
-    const [stats, setStats] = useState({ revenue: 0, revenueThisMonth: 0, growth: "0.0", bookings: 0 });
+    const [stats, setStats] = useState({
+        revenue: 0,
+        revenueThisMonth: 0,
+        growth: "0.0",
+        bookings: 0,
+        newBookingsTrend: 0
+    });
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
     const [chartData, setChartData] = useState<StatItem[]>([]);
     const [cleaners, setCleaners] = useState<Cleaner[]>([]);
@@ -50,7 +56,8 @@ export default function OwnerDashboard() {
                     revenue: data.revenue || 0,
                     revenueThisMonth: data.revenueThisMonth || 0,
                     growth: data.growth || "0.0",
-                    bookings: data.count || 0
+                    bookings: data.count || 0,
+                    newBookingsTrend: data.newBookingsTrend || 0
                 });
                 setRecentBookings(data.bookings || []);
                 setChartData(data.chartData || []);
@@ -133,7 +140,9 @@ export default function OwnerDashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-black">{stats.bookings}</div>
-                        <p className="text-xs text-violet-600 font-semibold mt-1">+2 since last week</p>
+                        <p className="text-xs text-violet-600 font-semibold mt-1">
+                            +{stats.newBookingsTrend} since last week
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -183,11 +192,14 @@ export default function OwnerDashboard() {
 
                         <div className="mt-6 border-t pt-6 px-4">
                             <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Monthly Breakdown</h4>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {chartData.filter(d => d.isActual).map((d) => (
-                                    <div key={d.name} className="space-y-1">
-                                        <p className="text-sm font-medium text-gray-500">{d.name}</p>
-                                        <p className="text-lg font-bold">{d.total.toLocaleString()} <span className="text-[10px] text-gray-400">CZK</span></p>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                {chartData.map((d) => (
+                                    <div key={d.name} className="space-y-1 p-2 rounded-xl bg-gray-50/50 dark:bg-gray-800/30">
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-xs font-medium text-gray-500">{d.name}</p>
+                                            {d.isProjection && <span className="text-[8px] bg-violet-100 text-violet-600 px-1 rounded-sm">Est.</span>}
+                                        </div>
+                                        <p className="text-base font-bold">{d.total.toLocaleString()} <span className="text-[10px] text-gray-400">CZK</span></p>
                                     </div>
                                 ))}
                             </div>

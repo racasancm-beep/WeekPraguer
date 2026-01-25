@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { startOfMonth, subMonths, endOfMonth, format } from "date-fns";
+import { startOfMonth, subMonths, endOfMonth, format, addMonths, subDays } from "date-fns";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -20,8 +20,7 @@ export async function GET() {
         const bookings = await (prisma as any).booking.findMany({
             where: { spaceId: { in: spaceIds } },
             include: { space: true, renter: true, cleaningLog: true },
-            orderBy: { createdAt: "desc" },
-            take: 5
+            orderBy: { startTime: "asc" }
         });
 
         const totalRevenueAgg = await (prisma as any).booking.aggregate({
@@ -33,12 +32,21 @@ export async function GET() {
         const totalRevenue = totalRevenueAgg._sum.totalPrice || 0;
         const totalCount = totalRevenueAgg._count;
 
-        // Chart Data: 5 months past + Current month (Total 6 columns)
-        // Revenue is allocated to the month of the BOOKING (startTime), not payment/creation date.
-        const chartData = [];
+        // Dynamic Booking Trend (+X since last week)
+        const lastWeekDate = subDays(new Date(), 7);
+        const newBookingsLastWeek = await (prisma as any).booking.count({
+            where: {
+                spaceId: { in: spaceIds },
+                createdAt: { gte: lastWeekDate }
+            }
+        });
 
-        for (let i = 5; i >= 0; i--) {
-            const date = subMonths(new Date(), i);
+        // Chart Data: 3 months back + current month + 3 months forward (Total 7 months)
+        const chartData = [];
+        const today = new Date();
+
+        for (let i = -3; i <= 3; i++) {
+            const date = addMonths(today, i);
             const start = startOfMonth(date);
             const end = endOfMonth(date);
 
@@ -51,16 +59,19 @@ export async function GET() {
                 _sum: { totalPrice: true }
             });
 
+            const amount = monthAgg._sum.totalPrice || 0;
+
             chartData.push({
                 name: format(date, "MMM"),
-                total: monthAgg._sum.totalPrice || 0,
-                isActual: true,
-                isProjection: false
+                total: amount,
+                isActual: i <= 0 || amount > 0,
+                isProjection: i > 0 && amount === 0
             });
         }
 
-        const revenueThisMonth = chartData[chartData.length - 1].total;
-        const revenueLastMonth = chartData[chartData.length - 2].total;
+        const currentMonthIdx = 3;
+        const revenueThisMonth = chartData[currentMonthIdx].total;
+        const revenueLastMonth = chartData[currentMonthIdx - 1].total;
 
         // Growth calculation
         let growth = 0;
@@ -70,19 +81,13 @@ export async function GET() {
             growth = 100;
         }
 
-        // Calculate average of previous 5 months for future projection
-        const activeMonths = chartData.filter(d => d.total > 0);
+        const activeMonths = chartData.filter(d => d.total > 0 && d.isActual);
         const avgRevenue = activeMonths.length > 0
             ? activeMonths.reduce((sum, item) => sum + item.total, 0) / activeMonths.length
             : 0;
 
-        // Add 1 Future Month as hollow projection
-        const nextMonthDate = subMonths(new Date(), -1);
-        chartData.push({
-            name: format(nextMonthDate, "MMM"),
-            total: avgRevenue,
-            isActual: false,
-            isProjection: true
+        chartData.forEach(d => {
+            if (d.isProjection) d.total = avgRevenue;
         });
 
         return NextResponse.json({
@@ -91,7 +96,8 @@ export async function GET() {
             revenueLastMonth,
             growth: growth.toFixed(1),
             count: totalCount,
-            bookings,
+            newBookingsTrend: newBookingsLastWeek,
+            bookings: bookings.reverse().slice(0, 5), // Most recent by date
             chartData
         });
     } catch (error) {
