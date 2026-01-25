@@ -1,185 +1,268 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Home, CalendarCheck, DollarSign, Activity } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Users, Home, CalendarCheck, DollarSign, Activity, TrendingUp, ShieldCheck, Sparkles, UserCircle } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend, LineChart, Line, CartesianGrid } from "recharts";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-interface AdminStats {
-    totalUsers: number;
-    usersByRole: { role: string; _count: number }[];
+interface UserItem {
+    id: string;
+    name: string;
+    email: string;
+}
+
+interface AdminData {
+    users: {
+        renters: UserItem[];
+        owners: UserItem[];
+        cleaners: UserItem[];
+    };
     totalSpaces: number;
+    activeSpacesCount: number;
     totalBookings: number;
     totalRevenue: number;
-    recentActivity: {
-        type: string;
-        title: string;
-        detail: string;
-        value: string;
-        time: string;
-    }[];
+    activityTrend: { month: string; booked: number; available: number }[];
+    userAnalytics: {
+        renter: { totalCount: number; monthlyActivity: { month: string; value: number }[] };
+        owner: { totalCount: number; monthlyActivity: { month: string; value: number }[] };
+        cleaner: { totalCount: number; monthlyActivity: { month: string; value: number }[] };
+    };
 }
 
 export default function AdminDashboard() {
-    const [stats, setStats] = useState<AdminStats | null>(null);
+    const [data, setData] = useState<AdminData | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await fetch("/api/admin/stats");
-                if (res.ok) {
-                    const data = await res.json();
-                    setStats(data);
-                }
-            } catch (error) {
-                console.error("Failed to fetch admin stats:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchStats();
     }, []);
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-[400px]">
-                <Activity className="h-8 w-8 animate-spin text-primary" />
-                <span className="ml-2">Loading statistics...</span>
-            </div>
-        );
-    }
+    const fetchStats = async () => {
+        try {
+            const res = await fetch("/api/admin/stats");
+            if (res.ok) {
+                const d = await res.json();
+                setData(d);
+            }
+        } catch (error) {
+            console.error("Failed to fetch admin stats:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    if (!stats) {
-        return <div className="text-center p-8 text-red-500">Error loading data. Please try again.</div>;
-    }
+    if (loading) return <div className="p-8 flex items-center justify-center min-h-screen"><Activity className="animate-spin mr-2" /> Loading Admin Panel...</div>;
+    if (!data) return <div className="p-8 text-center">Failed to load system state.</div>;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Admin Overview</h1>
-                <p className="text-muted-foreground">Platform-wide statistics and management.</p>
-            </div>
+        <div className="p-8 space-y-10 animate-in fade-in duration-700 max-w-[1600px] mx-auto">
+            <header className="flex justify-between items-end">
+                <div>
+                    <h1 className="text-5xl font-black tracking-tighter">System Intelligence</h1>
+                    <p className="text-xl text-muted-foreground mt-2">Platform monitoring & user distribution</p>
+                </div>
+                <div className="flex gap-4">
+                    <Card className="bg-emerald-50 border-emerald-100 p-4">
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase">System Status</p>
+                        <p className="text-xl font-bold text-emerald-900">Operational</p>
+                    </Card>
+                </div>
+            </header>
 
-            <div className="grid gap-4 md:grid-cols-4">
-                <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                        <Users className="h-4 w-4 text-violet-600" />
+            {/* 3 Columns: User Distribution */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Renters */}
+                <Card className="border-none shadow-xl border-t-4 border-t-blue-500 overflow-hidden">
+                    <CardHeader className="bg-blue-50/50">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-2xl font-black text-blue-900">Renters</CardTitle>
+                                <CardDescription className="font-bold text-blue-600">{data.users.renters.length} Accounts</CardDescription>
+                            </div>
+                            <UserCircle className="w-8 h-8 text-blue-500" />
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalUsers.toLocaleString()}</div>
-                        <div className="flex gap-2 mt-1">
-                            {stats.usersByRole.map(r => (
-                                <span key={r.role} className="text-[10px] bg-secondary px-1.5 py-0.5 rounded text-muted-foreground">
-                                    {r.role}: {r._count}
-                                </span>
+                    <CardContent className="p-0">
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {data.users.renters.map(u => (
+                                <div key={u.id} className="p-4 border-b last:border-0 hover:bg-gray-50 flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarFallback className="bg-blue-100 text-blue-600 text-[10px] font-bold">{u.name?.[0] || 'R'}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold truncate">{u.name || 'Anonymous'}</p>
+                                        <p className="text-[10px] text-gray-400 truncate font-mono uppercase">{u.id}</p>
+                                    </div>
+                                </div>
                             ))}
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Spaces</CardTitle>
-                        <Home className="h-4 w-4 text-emerald-600" />
+                {/* Owners */}
+                <Card className="border-none shadow-xl border-t-4 border-t-violet-500 overflow-hidden">
+                    <CardHeader className="bg-violet-50/50">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-2xl font-black text-violet-900">Owners</CardTitle>
+                                <CardDescription className="font-bold text-violet-600">{data.users.owners.length} Accounts</CardDescription>
+                            </div>
+                            <Home className="w-8 h-8 text-violet-500" />
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalSpaces}</div>
-                        <p className="text-xs text-muted-foreground">Currently published</p>
+                    <CardContent className="p-0">
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {data.users.owners.map(u => (
+                                <div key={u.id} className="p-4 border-b last:border-0 hover:bg-gray-50 flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarFallback className="bg-violet-100 text-violet-600 text-[10px] font-bold">{u.name?.[0] || 'O'}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold truncate">{u.name || 'Anonymous'}</p>
+                                        <p className="text-[10px] text-gray-400 truncate font-mono uppercase">{u.id}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
 
-                <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-                        <CalendarCheck className="h-4 w-4 text-blue-600" />
+                {/* Cleaners */}
+                <Card className="border-none shadow-xl border-t-4 border-t-emerald-500 overflow-hidden">
+                    <CardHeader className="bg-emerald-50/50">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <CardTitle className="text-2xl font-black text-emerald-900">Cleaners</CardTitle>
+                                <CardDescription className="font-bold text-emerald-600">{data.users.cleaners.length} Accounts</CardDescription>
+                            </div>
+                            <Sparkles className="w-8 h-8 text-emerald-500" />
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalBookings}</div>
-                        <p className="text-xs text-muted-foreground">Total reservations</p>
-                    </CardContent>
-                </Card>
-
-                <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                        <DollarSign className="h-4 w-4 text-amber-600" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString()} CZK</div>
-                        <p className="text-xs text-muted-foreground">Confirmed & Completed</p>
+                    <CardContent className="p-0">
+                        <div className="max-h-[300px] overflow-y-auto">
+                            {data.users.cleaners.map(u => (
+                                <div key={u.id} className="p-4 border-b last:border-0 hover:bg-gray-50 flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarFallback className="bg-emerald-100 text-emerald-600 text-[10px] font-bold">{u.name?.[0] || 'C'}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="min-w-0">
+                                        <p className="text-xs font-bold truncate">{u.name || 'Anonymous'}</p>
+                                        <p className="text-[10px] text-gray-400 truncate font-mono uppercase">{u.id}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4 shadow-sm">
-                    <CardHeader>
-                        <CardTitle>Recent Activity</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-8">
-                            {stats.recentActivity.length > 0 ? (
-                                stats.recentActivity.map((activity, i) => (
-                                    <div key={i} className="flex items-center">
-                                        <div className={`w-2 h-2 rounded-full mr-4 ${activity.type === 'booking' ? 'bg-blue-500' :
-                                                activity.type === 'space' ? 'bg-emerald-500' : 'bg-violet-500'
-                                            }`} />
-                                        <div className="space-y-1 flex-1">
-                                            <p className="text-sm font-medium leading-none">{activity.title}</p>
-                                            <p className="text-sm text-muted-foreground">{activity.detail}</p>
-                                        </div>
-                                        <div className="ml-auto text-right">
-                                            <div className="text-sm font-medium">{activity.value}</div>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                {formatDistanceToNow(new Date(activity.time), { addSuffix: true })}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                <p className="text-center text-muted-foreground py-8">No recent activity.</p>
-                            )}
+            {/* Booked vs Available Chart */}
+            <Card className="border-none shadow-2xl p-6 bg-white dark:bg-gray-950">
+                <div className="mb-6 flex justify-between items-center">
+                    <div>
+                        <CardTitle className="text-3xl font-black">Platform Utilization</CardTitle>
+                        <CardDescription>Booked Spaces vs Total Portfolio Capacity</CardDescription>
+                    </div>
+                    <div className="flex gap-8">
+                        <div className="text-right">
+                            <p className="text-[10px] uppercase font-bold text-gray-400">Total Spaces</p>
+                            <p className="text-2xl font-black">{data.totalSpaces}</p>
                         </div>
-                    </CardContent>
-                </Card>
+                        <div className="text-right">
+                            <p className="text-[10px] uppercase font-bold text-blue-500">Total Bookings</p>
+                            <p className="text-2xl font-black text-blue-600">{data.totalBookings}</p>
+                        </div>
+                    </div>
+                </div>
+                <div className="h-[400px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.activityTrend}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600 }} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                            <Tooltip
+                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                cursor={{ fill: '#f8fafc' }}
+                            />
+                            <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
+                            <Bar dataKey="available" name="Total Available" fill="#e2e8f0" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="booked" name="Booked Success" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            </Card>
 
-                <Card className="col-span-3 shadow-sm bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
-                    <CardHeader>
-                        <CardTitle>Platform Health</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
+            {/* Detailed User Type Section: Activity & Earnings */}
+            <div className="space-y-6">
+                <h2 className="text-3xl font-black italic border-l-8 border-violet-600 pl-4 uppercase tracking-tighter">Role Analytics</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Renter Insights */}
+                    <Card className="p-6 border-none shadow-lg">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-blue-100 rounded-2xl"><DollarSign className="w-6 h-6 text-blue-600" /></div>
                             <div>
-                                <div className="flex items-center justify-between text-sm mb-1">
-                                    <span>Server Status</span>
-                                    <span className="font-bold text-green-600">Optimal</span>
-                                </div>
-                                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                    <div className="h-full bg-green-500 w-[15%]"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <div className="flex items-center justify-between text-sm mb-1">
-                                    <span>Database Health</span>
-                                    <span className="font-bold text-blue-600">Stable</span>
-                                </div>
-                                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 w-[8%]"></div>
-                                </div>
-                            </div>
-                            <div className="pt-4 mt-4 border-t border-gray-100 dark:border-gray-800">
-                                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <button className="text-[10px] p-2 bg-white dark:bg-gray-800 border rounded hover:bg-gray-50 transition-colors">Clear Cache</button>
-                                    <button className="text-[10px] p-2 bg-white dark:bg-gray-800 border rounded hover:bg-gray-50 transition-colors">Backup DB</button>
-                                </div>
+                                <h3 className="font-bold">Renter Flow</h3>
+                                <p className="text-[10px] text-gray-500">Monthly Spending Activity</p>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                        <div className="h-[150px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.userAnalytics.renter.monthlyActivity}>
+                                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="mt-4 pt-4 border-t flex justify-between">
+                            <span className="text-sm font-bold text-gray-500">Total Spend</span>
+                            <span className="text-lg font-black">{data.userAnalytics.renter.monthlyActivity.reduce((a, b) => a + b.value, 0).toLocaleString()} CZK</span>
+                        </div>
+                    </Card>
+
+                    {/* Owner Insights */}
+                    <Card className="p-6 border-none shadow-lg">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-violet-100 rounded-2xl"><TrendingUp className="w-6 h-6 text-violet-600" /></div>
+                            <div>
+                                <h3 className="font-bold">Owner Yield</h3>
+                                <p className="text-[10px] text-gray-500">Revenue Generation Tracking</p>
+                            </div>
+                        </div>
+                        <div className="h-[150px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.userAnalytics.owner.monthlyActivity}>
+                                    <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="mt-4 pt-4 border-t flex justify-between">
+                            <span className="text-sm font-bold text-gray-500">Total Yield</span>
+                            <span className="text-lg font-black">{data.userAnalytics.owner.monthlyActivity.reduce((a, b) => a + b.value, 0).toLocaleString()} CZK</span>
+                        </div>
+                    </Card>
+
+                    {/* Cleaner Insights */}
+                    <Card className="p-6 border-none shadow-lg">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-emerald-100 rounded-2xl"><ShieldCheck className="w-6 h-6 text-emerald-600" /></div>
+                            <div>
+                                <h3 className="font-bold">Cleaner Ops</h3>
+                                <p className="text-[10px] text-gray-500">Completed Service Earnings</p>
+                            </div>
+                        </div>
+                        <div className="h-[150px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={data.userAnalytics.cleaner.monthlyActivity}>
+                                    <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="mt-4 pt-4 border-t flex justify-between">
+                            <span className="text-sm font-bold text-gray-500">Service Payout</span>
+                            <span className="text-lg font-black">{data.userAnalytics.cleaner.monthlyActivity.reduce((a, b) => a + b.value, 0).toLocaleString()} CZK</span>
+                        </div>
+                    </Card>
+                </div>
             </div>
         </div>
     );
