@@ -41,37 +41,33 @@ export async function POST(req: Request) {
             const bookings = [];
 
             for (const slot of slots) {
-                const sDate = new Date(slot.date);
+                // Parse "YYYY-MM-DD" safely
+                const [y, m, d] = slot.date.split("-").map(Number);
                 const [sH, sM] = slot.startTime.split(":").map(Number);
                 const [eH, eM] = slot.endTime.split(":").map(Number);
 
-                const start = new Date(sDate);
-                start.setHours(sH, sM, 0, 0);
+                // Create date objects for validation and storage (using UTC as the platform's baseline)
+                const start = new Date(Date.UTC(y, m - 1, d, sH, sM));
+                const end = new Date(Date.UTC(y, m - 1, d, eH, eM));
 
-                // For Friday "Full Day", we forcefully set the range to 18-22
-                if (start.getDay() === 5 && slot.isFullDay) {
-                    start.setHours(18, 0, 0, 0);
-                }
-
-                const end = new Date(sDate);
-                if (start.getDay() === 5 && slot.isFullDay) {
-                    end.setHours(22, 0, 0, 0);
-                } else {
-                    end.setHours(eH, eM, 0, 0);
+                // Force Friday Full Day to 18-22
+                if (start.getUTCDay() === 5 && slot.isFullDay) {
+                    start.setUTCHours(18, 0, 0, 0);
+                    end.setUTCHours(22, 0, 0, 0);
                 }
 
                 // Validation: Friday 18:00 - 22:00
-                if (start.getDay() === 5) {
-                    if (start.getHours() < 18) {
+                if (start.getUTCDay() === 5) {
+                    if (start.getUTCHours() < 18) {
                         throw new Error("Friday bookings are only available after 18:00");
                     }
-                    if (end.getHours() > 22 || (end.getHours() === 22 && end.getMinutes() > 0)) {
+                    if (end.getUTCHours() > 22 || (end.getUTCHours() === 22 && end.getUTCMinutes() > 0)) {
                         throw new Error("Friday bookings must end by 22:00");
                     }
                 }
 
                 // Validation: Sunday until 20:00
-                if (start.getDay() === 0 && (end.getHours() > 20 || (end.getHours() === 20 && end.getMinutes() > 0))) {
+                if (start.getUTCDay() === 0 && (end.getUTCHours() > 20 || (end.getUTCHours() === 20 && end.getUTCMinutes() > 0))) {
                     throw new Error("Sunday bookings must end by 20:00");
                 }
 

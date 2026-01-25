@@ -163,7 +163,7 @@ export default function SpaceDetailsPage() {
                 body: JSON.stringify({
                     spaceId: id,
                     slots: Object.values(slots).map(s => ({
-                        date: s.date.toISOString(),
+                        date: format(s.date, "yyyy-MM-dd"),
                         isFullDay: s.isFullDay,
                         startTime: s.startTime,
                         endTime: s.endTime
