@@ -124,28 +124,20 @@ export default function SpaceDetailsPage() {
         }));
     };
 
-    const calculatePriceBreakdown = () => {
-        if (!space) return { base: 0, cleaning: 0, insurance: 0, commission: 0, total: 0 };
-        let base = 0;
+    const calculateTotalPrice = () => {
+        if (!space) return 0;
+        let total = 0;
         Object.values(slots).forEach(slot => {
             if (slot.isFullDay) {
-                base += space.dailyRate;
+                total += space.dailyRate;
             } else {
                 const startHour = parseInt(slot.startTime.split(":")[0]);
                 const endHour = parseInt(slot.endTime.split(":")[0]);
                 const hours = endHour - startHour;
-                base += hours * space.hourlyRate;
+                total += hours * space.hourlyRate;
             }
         });
-
-        if (base === 0) return { base: 0, cleaning: 0, insurance: 0, commission: 0, total: 0 };
-
-        const cleaning = 500;
-        const insurance = base * 0.5;
-        const commission = (base + cleaning) * 0.25;
-        const total = base + cleaning + insurance + commission;
-
-        return { base, cleaning, insurance, commission, total };
+        return total;
     };
 
     const handleBook = async () => {
@@ -195,8 +187,7 @@ export default function SpaceDetailsPage() {
     if (!space) return <div className="min-h-screen flex items-center justify-center">Space not found</div>;
 
     const amenities = JSON.parse(space.amenitiesList || "[]");
-    const priceBreakdown = calculatePriceBreakdown();
-    const totalPrice = priceBreakdown.total;
+    const totalPrice = calculateTotalPrice();
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-12 gap-12">
@@ -360,25 +351,9 @@ export default function SpaceDetailsPage() {
 
                     {Object.keys(slots).length > 0 && (
                         <div className="pt-4 space-y-3 border-t border-gray-100 dark:border-gray-800">
-                            <div className="flex justify-between text-sm text-gray-500">
-                                <span>Base Amount</span>
-                                <span>{priceBreakdown.base.toLocaleString()} CZK</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-gray-500">
-                                <span className="flex items-center gap-1">Cleaning Fee <Sparkles className="w-3 h-3" /></span>
-                                <span>{priceBreakdown.cleaning.toLocaleString()} CZK</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-gray-500">
-                                <span>Insurance (50%)</span>
-                                <span>{priceBreakdown.insurance.toLocaleString()} CZK</span>
-                            </div>
-                            <div className="flex justify-between text-sm text-gray-500">
-                                <span>Service Fee</span>
-                                <span>{priceBreakdown.commission.toLocaleString()} CZK</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xl font-black pt-2 border-t border-gray-100 dark:border-gray-800">
+                            <div className="flex justify-between items-center text-xl font-black pt-2">
                                 <span>Total Price</span>
-                                <span className="text-violet-600">{priceBreakdown.total.toLocaleString()} CZK</span>
+                                <span className="text-violet-600">{totalPrice.toLocaleString()} CZK</span>
                             </div>
                         </div>
                     )}
@@ -394,7 +369,7 @@ export default function SpaceDetailsPage() {
                             />
                             <label htmlFor="contract" className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
                                 I agree to the <a
-                                    href={`/api/bookings/contract-preview?spaceName=${encodeURIComponent(space.name)}&price=${priceBreakdown.total}`}
+                                    href={`/api/bookings/contract-preview?spaceName=${encodeURIComponent(space.name)}&price=${totalPrice}`}
                                     target="_blank"
                                     className="font-bold text-violet-600 underline"
                                 >

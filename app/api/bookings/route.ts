@@ -85,20 +85,15 @@ export async function POST(req: Request) {
                 }
 
                 // Calculate Price
-                let basePrice = 0;
+                let total = 0;
                 if (slot.isFullDay) {
-                    basePrice = space.dailyRate;
+                    total = space.dailyRate;
                 } else {
                     const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-                    basePrice = hours * space.hourlyRate;
+                    total = hours * space.hourlyRate;
                 }
 
-                const cleaningFee = 500;
-                const insurance = basePrice * 0.5; // As per legal terms 50% insurance
-                const commission = (basePrice + cleaningFee) * 0.25; // 25% renter commission
-                const total = basePrice + cleaningFee + insurance + commission;
-
-                // User Rule: 60% Owner, 25% Admin, 15% Cleaner
+                // User Rule: 60% Owner, 25% Admin, 15% Cleaner of the total paid by renter
                 const ownerEarnings = total * 0.60;
                 const adminEarnings = total * 0.25;
                 const cleanerEarnings = total * 0.15;
@@ -110,11 +105,11 @@ export async function POST(req: Request) {
                         startTime: start,
                         endTime: end,
                         isHourly: !slot.isFullDay,
-                        basePrice,
-                        cleaningFee,
-                        insurance,
+                        basePrice: total,
+                        cleaningFee: 0,
+                        insurance: 0,
                         totalPrice: total,
-                        commission,
+                        commission: 0,
                         ownerEarnings,
                         adminEarnings,
                         cleanerEarnings,
