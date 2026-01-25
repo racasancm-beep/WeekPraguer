@@ -41,7 +41,7 @@ export async function GET() {
         };
 
         // GLOBAL TOTALS (Matches the Owner Dashboard "Total Revenue" logic)
-        const globalFinancials = allBookings.reduce((acc, b) => {
+        const globalFinancials = allBookings.reduce((acc: any, b: any) => {
             const split = getSplit(b);
             acc.totalRenterSpend += split.renter;
             acc.totalOwnerYield += split.owner;
@@ -77,7 +77,7 @@ export async function GET() {
                 return sum + (new Date(b.endTime).getTime() - new Date(b.startTime).getTime()) / (1000 * 60 * 60);
             }, 0);
 
-            const financials = monthBookings.reduce((acc, b) => {
+            const financials = monthBookings.reduce((acc: any, b: any) => {
                 const split = getSplit(b);
                 acc.renter += split.renter;
                 acc.owner += split.owner;
