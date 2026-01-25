@@ -137,21 +137,30 @@ export default function SpaceDetailsPage() {
                                 mode="single"
                                 selected={date}
                                 onSelect={setDate}
-                                disabled={(d) =>
-                                    !isWeekend(d) ||
-                                    d < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                                    bookedDates.some(booked =>
-                                        booked.getDate() === d.getDate() &&
-                                        booked.getMonth() === d.getMonth() &&
-                                        booked.getFullYear() === d.getFullYear()
-                                    )
-                                }
+                                disabled={(d) => {
+                                    const day = d.getDay();
+                                    const isEnabledDay = day === 0 || day === 5 || day === 6; // Sun, Fri, Sat
+                                    return (
+                                        !isEnabledDay ||
+                                        d < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                                        bookedDates.some(booked =>
+                                            booked.getDate() === d.getDate() &&
+                                            booked.getMonth() === d.getMonth() &&
+                                            booked.getFullYear() === d.getFullYear()
+                                        )
+                                    );
+                                }}
                                 className="rounded-md border"
                             />
                         </div>
-                        <p className="text-sm text-muted-foreground mt-2 text-center">
-                            Only weekends are available.
-                        </p>
+                        <div className="mt-2 space-y-1 text-center">
+                            <p className="text-sm text-muted-foreground">
+                                Only Fridays, Saturdays, and Sundays available.
+                            </p>
+                            <p className="text-xs font-semibold text-violet-600">
+                                * Friday bookings start from 18:00 (6 PM)
+                            </p>
+                        </div>
                     </div>
 
                     <div className="flex items-center space-x-2 mb-4">

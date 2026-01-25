@@ -22,9 +22,20 @@ export async function POST(req: Request) {
         const { spaceId, startTime } = await req.json();
 
         const start = new Date(startTime);
-        start.setHours(9, 0, 0, 0);
+        const isFriday = start.getDay() === 5;
+
+        if (isFriday) {
+            start.setHours(18, 0, 0, 0);
+        } else {
+            start.setHours(9, 0, 0, 0);
+        }
+
         const end = new Date(start);
-        end.setHours(18, 0, 0, 0);
+        if (isFriday) {
+            end.setHours(23, 59, 0, 0); // Friday night slot
+        } else {
+            end.setHours(18, 0, 0, 0);
+        }
 
         // Use interactive transaction for Concurrency Control
         const result = await prisma.$transaction(async (tx) => {
