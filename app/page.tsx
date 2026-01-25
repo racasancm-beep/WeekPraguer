@@ -37,12 +37,21 @@ export default function HomePage() {
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
                     <div className="text-center space-y-8">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium animate-fade-in">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 text-sm font-medium animate-fade-in text-center mx-auto">
                             <Sparkles className="w-4 h-4" />
                             <span>Unlock Your Space's Weekend Potential</span>
                         </div>
 
-                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight">
+                        <div className="flex justify-center -mb-4">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src="/hero-image.jpg"
+                                alt="Prague Workspace"
+                                className="w-full max-w-lg rounded-2xl shadow-2xl border-4 border-white dark:border-gray-800 transform -rotate-1 hover:rotate-0 transition-transform duration-500"
+                            />
+                        </div>
+
+                        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight pt-4">
                             <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                                 Rent Office Spaces
                             </span>
