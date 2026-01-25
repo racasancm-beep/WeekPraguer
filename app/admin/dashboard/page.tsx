@@ -22,12 +22,20 @@ interface AdminData {
     activeSpacesCount: number;
     totalBookings: number;
     totalRevenue: number;
-    activityTrend: { month: string; booked: number; available: number }[];
-    userAnalytics: {
-        renter: { totalCount: number; monthlyActivity: { month: string; value: number }[] };
-        owner: { totalCount: number; monthlyActivity: { month: string; value: number }[] };
-        cleaner: { totalCount: number; monthlyActivity: { month: string; value: number }[] };
+    globalFinancials: {
+        totalRenterSpend: number;
+        totalOwnerYield: number;
+        totalAdminShare: number;
+        totalCleanerPayout: number;
     };
+    activityTrend: {
+        month: string;
+        booked: number;
+        available: number;
+        renterRevenue: number;
+        ownerRevenue: number;
+        cleanerRevenue: number;
+    }[];
 }
 
 export default function AdminDashboard() {
@@ -65,7 +73,7 @@ export default function AdminDashboard() {
                 <div className="flex gap-4">
                     <Card className="bg-amber-50 border-amber-100 p-4 min-w-[180px]">
                         <p className="text-[10px] font-bold text-amber-600 uppercase">Admin Share (25%)</p>
-                        <p className="text-xl font-black text-amber-900">{data.totalRevenue.toLocaleString()} CZK</p>
+                        <p className="text-xl font-black text-amber-900">{data.globalFinancials.totalAdminShare.toLocaleString()} CZK</p>
                     </Card>
                     <Card className="bg-emerald-50 border-emerald-100 p-4 min-w-[140px]">
                         <p className="text-[10px] font-bold text-emerald-600 uppercase">System Status</p>
@@ -161,7 +169,7 @@ export default function AdminDashboard() {
                 </Card>
             </div>
 
-            {/* Booked vs Available Chart */}
+            {/* Platform Utilization (Hours Based) */}
             <Card className="border-none shadow-2xl p-6 bg-white dark:bg-gray-950">
                 <div className="mb-6 flex justify-between items-center">
                     <div>
@@ -174,8 +182,8 @@ export default function AdminDashboard() {
                             <p className="text-2xl font-black">{data.activityTrend[0]?.available?.toLocaleString()} <span className="text-xs text-gray-400">Hours/mo</span></p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-blue-500">Total Booked Life-to-date</p>
-                            <p className="text-2xl font-black text-blue-600">{data.totalBookings} <span className="text-xs text-blue-400">Sessions</span></p>
+                            <p className="text-[10px] uppercase font-bold text-blue-500">Total Booked Sessions</p>
+                            <p className="text-2xl font-black text-blue-600">{data.totalBookings} <span className="text-xs text-blue-400">Bookings</span></p>
                         </div>
                     </div>
                 </div>
@@ -194,7 +202,6 @@ export default function AdminDashboard() {
                                 <Tooltip
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
                                     cursor={{ fill: '#f8fafc' }}
-                                    formatter={(value: any, name: string) => [value, name]}
                                 />
                                 <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
                                 <Bar dataKey="available" name="Available Portfolio (Hours)" fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={24} />
@@ -205,7 +212,7 @@ export default function AdminDashboard() {
                 </div>
             </Card>
 
-            {/* Detailed User Type Section: Activity & Earnings */}
+            {/* Role Analytics (60/25/15 Rule) - Synchronized with all platform activity */}
             <div className="space-y-6">
                 <h2 className="text-3xl font-black italic border-l-8 border-violet-600 pl-4 uppercase tracking-tighter">Role Analytics</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -215,19 +222,19 @@ export default function AdminDashboard() {
                             <div className="p-3 bg-blue-100 rounded-2xl"><DollarSign className="w-6 h-6 text-blue-600" /></div>
                             <div>
                                 <h3 className="font-bold">Renter Flow</h3>
-                                <p className="text-[10px] text-gray-500">Monthly Spending Activity</p>
+                                <p className="text-[10px] text-gray-500">Monthly Spending Activity (Past + Future)</p>
                             </div>
                         </div>
                         <div className="h-[150px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data.userAnalytics.renter.monthlyActivity}>
-                                    <Line type="monotone" dataKey="value" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} />
+                                <LineChart data={data.activityTrend}>
+                                    <Line type="monotone" dataKey="renterRevenue" stroke="#3b82f6" strokeWidth={3} dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="mt-4 pt-4 border-t flex justify-between">
-                            <span className="text-sm font-bold text-gray-500">Total Spend</span>
-                            <span className="text-lg font-black">{data.userAnalytics.renter.monthlyActivity.reduce((a, b) => a + b.value, 0).toLocaleString()} CZK</span>
+                        <div className="mt-4 pt-4 border-t flex justify-between items-end">
+                            <span className="text-xs font-bold text-gray-400 uppercase">Total Spend</span>
+                            <span className="text-2xl font-black">{data.globalFinancials.totalRenterSpend.toLocaleString()} <span className="text-xs text-gray-400">CZK</span></span>
                         </div>
                     </Card>
 
@@ -237,19 +244,19 @@ export default function AdminDashboard() {
                             <div className="p-3 bg-violet-100 rounded-2xl"><TrendingUp className="w-6 h-6 text-violet-600" /></div>
                             <div>
                                 <h3 className="font-bold">Owner Yield</h3>
-                                <p className="text-[10px] text-gray-500">Revenue Generation Tracking</p>
+                                <p className="text-[10px] text-gray-500">60% Revenue Share Generation</p>
                             </div>
                         </div>
                         <div className="h-[150px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data.userAnalytics.owner.monthlyActivity}>
-                                    <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, fill: '#8b5cf6' }} />
+                                <LineChart data={data.activityTrend}>
+                                    <Line type="monotone" dataKey="ownerRevenue" stroke="#8b5cf6" strokeWidth={3} dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="mt-4 pt-4 border-t flex justify-between">
-                            <span className="text-sm font-bold text-gray-500">Total Yield</span>
-                            <span className="text-lg font-black">{data.userAnalytics.owner.monthlyActivity.reduce((a, b) => a + b.value, 0).toLocaleString()} CZK</span>
+                        <div className="mt-4 pt-4 border-t flex justify-between items-end">
+                            <span className="text-xs font-bold text-gray-400 uppercase">Total Yield</span>
+                            <span className="text-2xl font-black text-violet-600">{data.globalFinancials.totalOwnerYield.toLocaleString()} <span className="text-xs text-gray-400">CZK</span></span>
                         </div>
                     </Card>
 
@@ -259,19 +266,19 @@ export default function AdminDashboard() {
                             <div className="p-3 bg-emerald-100 rounded-2xl"><ShieldCheck className="w-6 h-6 text-emerald-600" /></div>
                             <div>
                                 <h3 className="font-bold">Cleaner Ops</h3>
-                                <p className="text-[10px] text-gray-500">Completed Service Earnings</p>
+                                <p className="text-[10px] text-gray-500">15% Service Allocation</p>
                             </div>
                         </div>
                         <div className="h-[150px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data.userAnalytics.cleaner.monthlyActivity}>
-                                    <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} />
+                                <LineChart data={data.activityTrend}>
+                                    <Line type="monotone" dataKey="cleanerRevenue" stroke="#10b981" strokeWidth={3} dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
-                        <div className="mt-4 pt-4 border-t flex justify-between">
-                            <span className="text-sm font-bold text-gray-500">Service Payout</span>
-                            <span className="text-lg font-black">{data.userAnalytics.cleaner.monthlyActivity.reduce((a, b) => a + b.value, 0).toLocaleString()} CZK</span>
+                        <div className="mt-4 pt-4 border-t flex justify-between items-end">
+                            <span className="text-xs font-bold text-gray-400 uppercase">Service Payout</span>
+                            <span className="text-2xl font-black text-emerald-600">{data.globalFinancials.totalCleanerPayout.toLocaleString()} <span className="text-xs text-gray-400">CZK</span></span>
                         </div>
                     </Card>
                 </div>
