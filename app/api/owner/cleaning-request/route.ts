@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     try {
-        const { bookingId, wantsCleaning } = await req.json();
+        const { bookingId, wantsCleaning, cleanerId } = await req.json();
 
         // 1. Verify owner owns the space for this booking
         const booking = await prisma.booking.findUnique({
@@ -26,19 +26,19 @@ export async function POST(req: Request) {
         }
 
         if (wantsCleaning) {
-            // Create cleaning log if it doesn't exist
+            // Create or update cleaning log with optional cleaner assignment
             await prisma.cleaningLog.upsert({
                 where: { bookingId },
-                update: {}, // Do nothing if exists
-                create: { bookingId }
+                update: { cleanerId: cleanerId || null },
+                create: { bookingId, cleanerId: cleanerId || null }
             });
         } else {
             // Remove cleaning log if exists and NOT assigned yet
             const log = await prisma.cleaningLog.findUnique({ where: { bookingId } });
-            if (log && log.cleanerId) {
-                return NextResponse.json({ error: "Cannot remove cleaning once a cleaner is assigned" }, { status: 400 });
-            }
-            if (log) {
+            if (log && log.cleanerId && !cleanerId) {
+                // If it was assigned and they want to remove it entirely
+                await prisma.cleaningLog.delete({ where: { bookingId } });
+            } else if (log) {
                 await prisma.cleaningLog.delete({ where: { bookingId } });
             }
         }
