@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -83,7 +81,7 @@ export async function POST(req: Request) {
                 });
 
                 if (overlapping) {
-                    throw new Error(`Space is already booked on ${start.toLocaleDateString()} between ${slot.startTime}-${slot.endTime}`);
+                    throw new Error(`Space is already booked on ${start.toLocaleDateString()} between ${slot.startTime} -${slot.endTime} `);
                 }
 
                 // Calculate Price
@@ -100,7 +98,12 @@ export async function POST(req: Request) {
                 const commission = (basePrice + cleaningFee) * 0.25; // 25% renter commission
                 const total = basePrice + cleaningFee + insurance + commission;
 
-                const booking = await tx.booking.create({
+                // User Rule: 60% Owner, 25% Admin, 15% Cleaner
+                const ownerEarnings = total * 0.60;
+                const adminEarnings = total * 0.25;
+                const cleanerEarnings = total * 0.15;
+
+                const booking = await (tx.booking as any).create({
                     data: {
                         spaceId,
                         renterId: session.user.id,
@@ -112,6 +115,9 @@ export async function POST(req: Request) {
                         insurance,
                         totalPrice: total,
                         commission,
+                        ownerEarnings,
+                        adminEarnings,
+                        cleanerEarnings,
                         status: "CONFIRMED",
                         termsAcceptedAt: new Date(),
                         termsAcceptedIp: ip,

@@ -63,7 +63,11 @@ export default function AdminDashboard() {
                     <p className="text-xl text-muted-foreground mt-2">Platform monitoring & user distribution</p>
                 </div>
                 <div className="flex gap-4">
-                    <Card className="bg-emerald-50 border-emerald-100 p-4">
+                    <Card className="bg-amber-50 border-amber-100 p-4 min-w-[180px]">
+                        <p className="text-[10px] font-bold text-amber-600 uppercase">Admin Share (25%)</p>
+                        <p className="text-xl font-black text-amber-900">{data.totalRevenue.toLocaleString()} CZK</p>
+                    </Card>
+                    <Card className="bg-emerald-50 border-emerald-100 p-4 min-w-[140px]">
                         <p className="text-[10px] font-bold text-emerald-600 uppercase">System Status</p>
                         <p className="text-xl font-bold text-emerald-900">Operational</p>
                     </Card>

@@ -17,20 +17,17 @@ export async function GET() {
         const spaces = await (prisma as any).space.findMany({ where: { ownerId: userId }, select: { id: true } });
         const spaceIds = spaces.map((s: any) => s.id);
 
-        const bookings = await (prisma as any).booking.findMany({
-            where: { spaceId: { in: spaceIds } },
+        const rawBookings = await (prisma as any).booking.findMany({
+            where: { spaceId: { in: spaceIds }, status: { in: ["CONFIRMED", "COMPLETED"] } },
             include: { space: true, renter: true, cleaningLog: true },
             orderBy: { startTime: "asc" }
         });
 
-        const totalRevenueAgg = await (prisma as any).booking.aggregate({
-            where: { spaceId: { in: spaceIds }, status: { in: ["CONFIRMED", "COMPLETED"] } },
-            _sum: { totalPrice: true },
-            _count: true
-        });
+        // Use ownerEarnings if available, otherwise fallback to 60% of totalPrice
+        const calculateOwnerEarnings = (b: any) => b.ownerEarnings > 0 ? b.ownerEarnings : b.totalPrice * 0.60;
 
-        const totalRevenue = totalRevenueAgg._sum.totalPrice || 0;
-        const totalCount = totalRevenueAgg._count;
+        const totalRevenue = rawBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
+        const totalCount = rawBookings.length;
 
         // Dynamic Booking Trend (+X since last week)
         const lastWeekDate = subDays(new Date(), 7);
@@ -50,16 +47,12 @@ export async function GET() {
             const start = startOfMonth(date);
             const end = endOfMonth(date);
 
-            const monthAgg = await (prisma as any).booking.aggregate({
-                where: {
-                    spaceId: { in: spaceIds },
-                    status: { in: ["CONFIRMED", "COMPLETED"] },
-                    startTime: { gte: start, lte: end }
-                },
-                _sum: { totalPrice: true }
+            const monthBookings = rawBookings.filter((b: any) => {
+                const d = new Date(b.startTime);
+                return d >= start && d <= end;
             });
 
-            const amount = monthAgg._sum.totalPrice || 0;
+            const amount = monthBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
 
             chartData.push({
                 name: format(date, "MMM"),
@@ -97,7 +90,7 @@ export async function GET() {
             growth: growth.toFixed(1),
             count: totalCount,
             newBookingsTrend: newBookingsLastWeek,
-            bookings: bookings.reverse().slice(0, 5), // Most recent by date
+            bookings: rawBookings.reverse().slice(0, 5), // Most recent by date
             chartData
         });
     } catch (error) {

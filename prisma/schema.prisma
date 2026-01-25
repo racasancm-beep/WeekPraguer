@@ -137,6 +137,9 @@ model Booking {
   insurance       Float
   totalPrice      Float
   commission      Float
+  ownerEarnings   Float         @default(0)
+  adminEarnings   Float         @default(0)
+  cleanerEarnings Float         @default(0)
   status          BookingStatus @default(PENDING)
   accessCode      String?
   paymentId       String?

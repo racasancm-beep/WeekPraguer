@@ -98,7 +98,7 @@ export default function CleanerDashboard() {
                                             <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-100 dark:border-green-800/50">
                                                 <p className="text-[10px] uppercase font-bold text-green-600 mb-1">Potential Earnings</p>
                                                 <p className="text-lg font-black text-green-700 dark:text-green-400">
-                                                    {job.booking.cleaningFee.toLocaleString()} CZK
+                                                    {(job.booking.cleanerEarnings > 0 ? job.booking.cleanerEarnings : job.booking.totalPrice * 0.15).toLocaleString()} CZK
                                                 </p>
                                             </div>
                                         </div>

@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     try {
-        // 1. User Stats (Categories with IDs)
+        // 1. User Stats
         const users = await (prisma as any).user.findMany({
             select: { id: true, name: true, email: true, role: true, createdAt: true }
         });
@@ -25,8 +25,7 @@ export async function GET() {
         const totalSpaces = await (prisma as any).space.count();
         const activeSpacesCount = await (prisma as any).space.count({ where: { active: true } });
 
-        // 3. Activity Trend: Booked vs Available per month (Last 6 months + Next 12 months)
-        // Total range: -5 to +12 (18 months)
+        // 3. Activity Trend
         const activityTrend = [];
         const today = new Date();
 
@@ -43,18 +42,32 @@ export async function GET() {
             });
 
             activityTrend.push({
-                month: format(date, "MMM yy"), // Using yy for clarity with a long range
+                month: format(date, "MMM yy"),
                 booked: bookedCount,
                 available: totalSpaces,
                 isFuture: i > 0
             });
         }
 
-        // 4. Detailed User Analytics (Activity & Earnings per month - Last 3 months)
+        // 4. Detailed User Analytics (60/25/15 Rule)
         const userAnalytics = {
             renter: { totalCount: renters.length, monthlyActivity: [] as any[] },
             owner: { totalCount: owners.length, monthlyActivity: [] as any[] },
             cleaner: { totalCount: cleaners.length, monthlyActivity: [] as any[] }
+        };
+
+        const allBookings = await (prisma as any).booking.findMany({
+            where: { status: { in: ["CONFIRMED", "COMPLETED"] } }
+        });
+
+        const getSplit = (b: any) => {
+            const total = b.totalPrice || 0;
+            return {
+                renter: total,
+                owner: b.ownerEarnings > 0 ? b.ownerEarnings : total * 0.60,
+                admin: b.adminEarnings > 0 ? b.adminEarnings : total * 0.25,
+                cleaner: b.cleanerEarnings > 0 ? b.cleanerEarnings : total * 0.15
+            };
         };
 
         for (let i = 2; i >= 0; i--) {
@@ -63,30 +76,26 @@ export async function GET() {
             const end = endOfMonth(date);
             const label = format(date, "MMM");
 
-            const renterSpend = await (prisma as any).booking.aggregate({
-                where: { status: { in: ["CONFIRMED", "COMPLETED"] }, startTime: { gte: start, lte: end } },
-                _sum: { totalPrice: true }
+            const monthBookings = allBookings.filter((b: any) => {
+                const d = new Date(b.startTime);
+                return d >= start && d <= end;
             });
 
-            const ownerEarn = await (prisma as any).booking.aggregate({
-                where: { status: { in: ["CONFIRMED", "COMPLETED"] }, startTime: { gte: start, lte: end } },
-                _sum: { totalPrice: true }
-            });
+            const stats = monthBookings.reduce((acc: any, b: any) => {
+                const split = getSplit(b);
+                acc.renter += split.renter;
+                acc.owner += split.owner;
+                acc.cleaner += split.cleaner;
+                return acc;
+            }, { renter: 0, owner: 0, cleaner: 0 });
 
-            const cleanerJobs = await (prisma as any).cleaningLog.count({
-                where: { status: "COMPLETED", checkOutTime: { gte: start, lte: end } }
-            });
-
-            userAnalytics.renter.monthlyActivity.push({ month: label, value: renterSpend._sum.totalPrice || 0 });
-            userAnalytics.owner.monthlyActivity.push({ month: label, value: ownerEarn._sum.totalPrice || 0 });
-            userAnalytics.cleaner.monthlyActivity.push({ month: label, value: cleanerJobs * 500 });
+            userAnalytics.renter.monthlyActivity.push({ month: label, value: stats.renter });
+            userAnalytics.owner.monthlyActivity.push({ month: label, value: stats.owner });
+            userAnalytics.cleaner.monthlyActivity.push({ month: label, value: stats.cleaner });
         }
 
-        // 5. Total counts and revenue
-        const totalRevenueAgg = await (prisma as any).booking.aggregate({
-            where: { status: { in: ["CONFIRMED", "COMPLETED"] } },
-            _sum: { totalPrice: true }
-        });
+        // 5. Total Platform Revenue (Admin's 25% Share)
+        const totalAdminRevenue = allBookings.reduce((sum: number, b: any) => sum + getSplit(b).admin, 0);
 
         return NextResponse.json({
             users: {
@@ -96,8 +105,8 @@ export async function GET() {
             },
             totalSpaces,
             activeSpacesCount,
-            totalBookings: await (prisma as any).booking.count(),
-            totalRevenue: totalRevenueAgg._sum.totalPrice || 0,
+            totalBookings: allBookings.length,
+            totalRevenue: totalAdminRevenue,
             activityTrend,
             userAnalytics
         });
