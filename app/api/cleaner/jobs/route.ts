@@ -17,17 +17,22 @@ export async function GET() {
     }
 
     try {
-        // Fetch all logs that are either unassigned OR assigned to this cleaner
+        const userId = session.user.id;
+
         const jobs = await prisma.cleaningLog.findMany({
             where: {
                 OR: [
                     { cleanerId: null },
-                    { cleanerId: session.user.id }
+                    { cleanerId: userId }
                 ]
             },
             include: {
                 booking: {
-                    include: { space: true }
+                    include: {
+                        space: {
+                            include: { owner: { select: { name: true, email: true } } }
+                        }
+                    }
                 }
             },
             orderBy: { createdAt: "desc" }

@@ -177,13 +177,20 @@ model CleaningLog {
   checkOutTime  DateTime?
   checkOutPhoto String?
   duration      Int?
+  status        CleaningStatus @default(PENDING)
   notes         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  booking       Booking   @relation(fields: [bookingId], references: [id])
-  cleaner       User?     @relation(fields: [cleanerId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  booking       Booking        @relation(fields: [bookingId], references: [id])
+  cleaner       User?          @relation(fields: [cleanerId], references: [id])
 
   @@map("cleaning_logs")
+}
+
+enum CleaningStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
 }
 
 model Review {

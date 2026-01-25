@@ -207,11 +207,12 @@ export default function OwnerDashboard() {
 
                                             {b.cleaningLog ? (
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${b.cleaningLog.cleanerId ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${b.cleaningLog.status === 'ACCEPTED' ? 'bg-blue-100 text-blue-700' :
+                                                            b.cleaningLog.cleanerId ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
                                                         }`}>
-                                                        {b.cleaningLog.cleanerId ? "Assigned" : "Log Created"}
+                                                        {b.cleaningLog.status === 'ACCEPTED' ? "Accepted" : b.cleaningLog.cleanerId ? "Assigned" : "Log Created"}
                                                     </span>
-                                                    {!b.cleaningLog.cleanerId && (
+                                                    {b.cleaningLog.status !== 'ACCEPTED' && !b.cleaningLog.cleanerId && (
                                                         <div className="flex gap-2">
                                                             <Button
                                                                 size="sm"
