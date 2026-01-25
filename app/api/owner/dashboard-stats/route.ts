@@ -22,7 +22,7 @@ export async function GET() {
         // Get bookings
         const bookings = await prisma.booking.findMany({
             where: { spaceId: { in: spaceIds } },
-            include: { space: true, renter: true },
+            include: { space: true, renter: true, cleaningLog: true },
             orderBy: { createdAt: "desc" },
             take: 5
         });

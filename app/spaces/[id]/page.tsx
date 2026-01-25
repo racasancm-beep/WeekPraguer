@@ -27,7 +27,8 @@ export default function SpaceDetailsPage() {
     const router = useRouter();
     const { data: session } = useSession();
     const [space, setSpace] = useState<SpaceDetailed | null>(null);
-    const [date, setDate] = useState<Date | undefined>(new Date());
+    const [bookedDates, setBookedDates] = useState<Date[]>([]);
+    const [date, setDate] = useState<Date | undefined>(undefined);
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [agreed, setAgreed] = useState(false);
@@ -42,6 +43,14 @@ export default function SpaceDetailsPage() {
             if (!res.ok) throw new Error("Space not found");
             const data = await res.json();
             setSpace(data);
+
+            // Fetch existing bookings for this space
+            const bookingsRes = await fetch(`/api/spaces/${id}/bookings`);
+            if (bookingsRes.ok) {
+                const bData = await bookingsRes.json();
+                const dates = bData.map((b: any) => new Date(b.startTime));
+                setBookedDates(dates);
+            }
         } catch (error) {
             toast.error("Failed to load space");
         } finally {
@@ -128,7 +137,15 @@ export default function SpaceDetailsPage() {
                                 mode="single"
                                 selected={date}
                                 onSelect={setDate}
-                                disabled={(date) => !isWeekend(date) || date < new Date()}
+                                disabled={(d) =>
+                                    !isWeekend(d) ||
+                                    d < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                                    bookedDates.some(booked =>
+                                        booked.getDate() === d.getDate() &&
+                                        booked.getMonth() === d.getMonth() &&
+                                        booked.getFullYear() === d.getFullYear()
+                                    )
+                                }
                                 className="rounded-md border"
                             />
                         </div>

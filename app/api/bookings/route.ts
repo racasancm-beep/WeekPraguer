@@ -73,13 +73,14 @@ export async function POST(req: Request) {
             });
 
             // 4. Cleaning Trigger (Operations Automation)
-            // Automatically create a pending cleaning log
+            // REMOVED: Owners will now choose if they want a cleaner in their dashboard
+            /*
             await tx.cleaningLog.create({
                 data: {
                     bookingId: booking.id,
-                    // cleanerId is optional now, will be assigned later
                 }
             });
+            */
 
             return booking;
         });

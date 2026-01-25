@@ -22,8 +22,23 @@ export default function OwnerDashboard() {
             const res = await fetch("/api/owner/dashboard-stats");
             if (res.ok) {
                 const data = await res.json();
-                setStats({ revenue: data.revenue || 12500, bookings: data.count || 5 }); // Fallback mock
+                setStats({ revenue: data.revenue || 0, bookings: data.count || 0 });
                 setRecentBookings(data.bookings || []);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const toggleCleaning = async (bookingId: string, wantsCleaning: boolean) => {
+        try {
+            const res = await fetch("/api/owner/cleaning-request", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ bookingId, wantsCleaning }),
+            });
+            if (res.ok) {
+                fetchData();
             }
         } catch (e) {
             console.error(e);
@@ -97,12 +112,43 @@ export default function OwnerDashboard() {
                                 <p>No new bookings.</p>
                             ) : (
                                 recentBookings.map((b) => (
-                                    <div key={b.id} className="flex items-center">
-                                        <div className="ml-4 space-y-1">
-                                            <p className="text-sm font-medium leading-none">{b.space.name}</p>
-                                            <p className="text-sm text-muted-foreground">{new Date(b.startTime).toLocaleDateString()}</p>
+                                    <div key={b.id} className="border-b pb-4 last:border-0 last:pb-0">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-medium leading-none">{b.space.name}</p>
+                                                <p className="text-sm text-muted-foreground">{new Date(b.startTime).toLocaleDateString()}</p>
+                                            </div>
+                                            <div className="font-medium">+{b.totalPrice} CZK</div>
                                         </div>
-                                        <div className="ml-auto font-medium">+{b.totalPrice} CZK</div>
+                                        <div className="flex items-center justify-between mt-2 px-2 py-1 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                            <span className="text-xs font-medium">Cleaning Service</span>
+                                            {b.cleaningLog ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-green-600 font-semibold">
+                                                        {b.cleaningLog.cleanerId ? "Cleaner Assigned" : "Log Created"}
+                                                    </span>
+                                                    {!b.cleaningLog.cleanerId && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            className="h-6 text-[10px] text-red-500 hover:text-red-700"
+                                                            onClick={() => toggleCleaning(b.id, false)}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="h-6 text-[10px]"
+                                                    onClick={() => toggleCleaning(b.id, true)}
+                                                >
+                                                    Hire Cleaner
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                 ))
                             )}
