@@ -165,17 +165,17 @@ export default function AdminDashboard() {
             <Card className="border-none shadow-2xl p-6 bg-white dark:bg-gray-950">
                 <div className="mb-6 flex justify-between items-center">
                     <div>
-                        <CardTitle className="text-3xl font-black">Platform Utilization</CardTitle>
-                        <CardDescription>Booked Spaces vs Total Portfolio Capacity</CardDescription>
+                        <CardTitle className="text-3xl font-black">Platform Hours Utilization</CardTitle>
+                        <CardDescription>Total Available Hours vs Booked Hours across all spaces</CardDescription>
                     </div>
                     <div className="flex gap-8">
                         <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-gray-400">Total Spaces</p>
-                            <p className="text-2xl font-black">{data.totalSpaces}</p>
+                            <p className="text-[10px] uppercase font-bold text-gray-400">Total Portfolio Capacity</p>
+                            <p className="text-2xl font-black">{data.activityTrend[0]?.available?.toLocaleString()} <span className="text-xs text-gray-400">Hours/mo</span></p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-blue-500">Total Bookings</p>
-                            <p className="text-2xl font-black text-blue-600">{data.totalBookings}</p>
+                            <p className="text-[10px] uppercase font-bold text-blue-500">Total Booked Life-to-date</p>
+                            <p className="text-2xl font-black text-blue-600">{data.totalBookings} <span className="text-xs text-blue-400">Sessions</span></p>
                         </div>
                     </div>
                 </div>
@@ -197,8 +197,8 @@ export default function AdminDashboard() {
                                     formatter={(value: any, name: string) => [value, name]}
                                 />
                                 <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
-                                <Bar dataKey="available" name="Total Portfolio" fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={24} />
-                                <Bar dataKey="booked" name="Confirmed Bookings" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={24} />
+                                <Bar dataKey="available" name="Available Portfolio (Hours)" fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={24} />
+                                <Bar dataKey="booked" name="Booked Action (Hours)" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={24} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
