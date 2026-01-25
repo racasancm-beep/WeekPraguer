@@ -281,7 +281,7 @@ export default function SpaceDetailsPage() {
                                 Select Entire Next Weekend
                             </Button>
                             <p className="text-[10px] text-center text-violet-600 font-medium">
-                                * Fri (after 18:00), Sat, & Sun only.
+                                * Fri (18:00 - 22:00), Sat (9:00 - 18:00) & Sun (9:00 - 20:00).
                             </p>
                         </div>
                     </div>
@@ -316,7 +316,7 @@ export default function SpaceDetailsPage() {
                                                         className="w-full bg-transparent text-xs font-medium focus:ring-0 border-none p-0 cursor-pointer"
                                                     >
                                                         {Array.from({
-                                                            length: slot.date.getDay() === 5 ? 6 : (slot.date.getDay() === 0 ? 12 : 14)
+                                                            length: slot.date.getDay() === 5 ? 4 : (slot.date.getDay() === 0 ? 12 : 14)
                                                         }).map((_, i) => {
                                                             const hour = slot.date.getDay() === 5 ? 18 + i : 8 + i;
                                                             const hStr = `${hour.toString().padStart(2, '0')}:00`;
@@ -333,7 +333,7 @@ export default function SpaceDetailsPage() {
                                                         className="w-full bg-transparent text-xs font-medium focus:ring-0 border-none p-0 cursor-pointer"
                                                     >
                                                         {Array.from({
-                                                            length: slot.date.getDay() === 5 ? 6 : (slot.date.getDay() === 0 ? 12 : 14)
+                                                            length: slot.date.getDay() === 5 ? 4 : (slot.date.getDay() === 0 ? 12 : 14)
                                                         }).map((_, i) => {
                                                             const hour = slot.date.getDay() === 5 ? 19 + i : 9 + i;
                                                             const hStr = `${hour.toString().padStart(2, '0')}:00`;
