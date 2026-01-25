@@ -175,21 +175,29 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </div>
-                <div className="h-[400px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.activityTrend}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600 }} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
-                            <Tooltip
-                                contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
-                                cursor={{ fill: '#f8fafc' }}
-                            />
-                            <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ paddingBottom: '20px' }} />
-                            <Bar dataKey="available" name="Total Available" fill="#e2e8f0" radius={[4, 4, 0, 0]} />
-                            <Bar dataKey="booked" name="Booked Success" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div className="h-[450px] w-full overflow-x-auto pb-4 custom-scrollbar">
+                    <div className="min-w-[1200px] h-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={data.activityTrend} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                                <XAxis
+                                    dataKey="month"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 11, fontWeight: 600 }}
+                                />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                                    cursor={{ fill: '#f8fafc' }}
+                                    formatter={(value: any, name: string) => [value, name]}
+                                />
+                                <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: '30px' }} />
+                                <Bar dataKey="available" name="Total Portfolio" fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={24} />
+                                <Bar dataKey="booked" name="Confirmed Bookings" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={24} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </Card>
 
