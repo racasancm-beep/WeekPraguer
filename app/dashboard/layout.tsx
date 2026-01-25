@@ -34,7 +34,7 @@ export default function RenterLayout({
     }
 
     const navigation = [
-        { name: "My Trips", href: "/dashboard", icon: Calendar },
+        { name: "My Bookings", href: "/dashboard", icon: Calendar },
         { name: "Explore", href: "/explore", icon: Search },
         { name: "Profile", href: "/dashboard/profile", icon: User },
         { name: "Settings", href: "/dashboard/settings", icon: Settings },

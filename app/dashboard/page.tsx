@@ -35,7 +35,7 @@ export default function RenterDashboard() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-4xl font-extrabold tracking-tight">My Trips</h1>
+                    <h1 className="text-4xl font-extrabold tracking-tight">My Bookings</h1>
                     <p className="text-muted-foreground mt-1 text-lg">Manage and view your upcoming weekend stays.</p>
                 </div>
                 <Link href="/explore">
