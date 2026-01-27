@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { startOfMonth, subMonths, endOfMonth, format, addMonths } from "date-fns";
+import { calculateCleaningFee } from "@/lib/pricing";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -34,11 +35,21 @@ export async function GET() {
         const getSplit = (b: any) => {
             const total = b.totalPrice || 0;
             const isSelfClean = b.space?.selfCleaning || false;
+            const size = b.space?.size || 50;
+
+            // Priority:
+            // 1. Explicitly stored cleanerEarnings
+            // 2. Explicitly stored cleaningFee
+            // 3. Calculated cleaning fee based on space size
+            const cleanerEarnings = b.cleanerEarnings > 0 ? b.cleanerEarnings :
+                (b.cleaningFee > 0 ? b.cleaningFee :
+                    (isSelfClean ? 0 : calculateCleaningFee(size)));
+
             return {
                 renter: total,
                 owner: b.ownerEarnings > 0 ? b.ownerEarnings : (isSelfClean ? total * 0.70 : total * 0.60),
                 admin: b.adminEarnings > 0 ? b.adminEarnings : (isSelfClean ? total * 0.30 : total * 0.25),
-                cleaner: b.cleanerEarnings > 0 ? b.cleanerEarnings : (isSelfClean ? 0 : total * 0.15)
+                cleaner: cleanerEarnings
             };
         };
 

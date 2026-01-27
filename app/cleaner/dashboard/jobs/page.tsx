@@ -50,8 +50,10 @@ export default function CleanerMyJobs() {
 
     if (loading) return <div className="p-8">Loading your jobs...</div>;
 
-    const totalEarned = jobs.reduce((sum, job) => sum + (job.status === "COMPLETED" ? job.booking.cleaningFee : 0), 0);
-    const potentialEarnings = jobs.reduce((sum, job) => sum + (job.status === "ACCEPTED" ? job.booking.cleaningFee : 0), 0);
+    const getEarnings = (job: any) => job.booking.cleanerEarnings > 0 ? job.booking.cleanerEarnings : (job.booking.cleaningFee > 0 ? job.booking.cleaningFee : job.booking.totalPrice * 0.15);
+
+    const totalEarned = jobs.reduce((sum, job) => sum + (job.status === "COMPLETED" ? getEarnings(job) : 0), 0);
+    const potentialEarnings = jobs.reduce((sum, job) => sum + (job.status === "ACCEPTED" ? getEarnings(job) : 0), 0);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -111,7 +113,7 @@ export default function CleanerMyJobs() {
                                             <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl border border-green-100 dark:border-green-800/50">
                                                 <p className="text-[10px] uppercase font-bold text-green-600 mb-1">Earnings</p>
                                                 <p className="text-lg font-black text-green-700 dark:text-green-400">
-                                                    {job.booking.cleaningFee.toLocaleString()} CZK
+                                                    {(job.booking.cleanerEarnings > 0 ? job.booking.cleanerEarnings : (job.booking.cleaningFee > 0 ? job.booking.cleaningFee : job.booking.totalPrice * 0.15)).toLocaleString()} CZK
                                                 </p>
                                             </div>
                                         </div>

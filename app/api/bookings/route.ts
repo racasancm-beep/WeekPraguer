@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { calculatePricing } from "@/lib/pricing";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -84,29 +85,11 @@ export async function POST(req: Request) {
                     throw new Error(`Space is already booked on ${start.toLocaleDateString()} between ${slot.startTime} -${slot.endTime} `);
                 }
 
-                // Calculate Price
-                let total = 0;
-                if (slot.isFullDay) {
-                    total = space.dailyRate;
-                } else {
-                    const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-                    total = hours * space.hourlyRate;
-                }
-
-                // User Rule: 
-                // Default: 60% Owner, 25% Admin, 15% Cleaner
-                // Self-Cleaning: 70% Owner, 30% Admin
-                let ownerEarnings, adminEarnings, cleanerEarnings;
-
-                if ((space as any).selfCleaning) {
-                    ownerEarnings = total * 0.70;
-                    adminEarnings = total * 0.30;
-                    cleanerEarnings = 0;
-                } else {
-                    ownerEarnings = total * 0.60;
-                    adminEarnings = total * 0.25;
-                    cleanerEarnings = total * 0.15;
-                }
+                // Calculate Price using lib/pricing
+                const pricing = calculatePricing(
+                    slot.isFullDay ? space.dailyRate : ((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * space.hourlyRate,
+                    space.size
+                );
 
                 const booking = await (tx.booking as any).create({
                     data: {
@@ -115,14 +98,14 @@ export async function POST(req: Request) {
                         startTime: start,
                         endTime: end,
                         isHourly: !slot.isFullDay,
-                        basePrice: total,
-                        cleaningFee: 0,
-                        insurance: 0,
-                        totalPrice: total,
-                        commission: 0,
-                        ownerEarnings,
-                        adminEarnings,
-                        cleanerEarnings,
+                        basePrice: pricing.basePrice,
+                        cleaningFee: pricing.cleaningFee,
+                        insurance: pricing.insurance,
+                        totalPrice: pricing.totalPrice,
+                        commission: pricing.commission,
+                        ownerEarnings: pricing.ownerPayout,
+                        adminEarnings: pricing.commission, // Admin takes commission 
+                        cleanerEarnings: pricing.cleanerPayout,
                         status: "CONFIRMED",
                         termsAcceptedAt: new Date(),
                         termsAcceptedIp: ip,

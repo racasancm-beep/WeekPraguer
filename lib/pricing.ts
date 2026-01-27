@@ -5,7 +5,7 @@ export const CLEANING_FEE_RATE = parseFloat(
     process.env.CLEANING_FEE_RATE || "0.10"
 );
 export const INSURANCE_RATE = parseFloat(
-    process.env.INSURANCE_RATE || "0.50"
+    process.env.INSURANCE_RATE || "0.05" // Reduced from 0.50 to a more realistic 0.05
 );
 
 export interface PricingBreakdown {
@@ -15,19 +15,31 @@ export interface PricingBreakdown {
     totalPrice: number;
     commission: number;
     ownerPayout: number;
+    cleanerPayout: number;
 }
 
-export function calculatePricing(basePrice: number): PricingBreakdown {
-    const cleaningFee = basePrice * CLEANING_FEE_RATE;
+/**
+ * Calculates a dynamic cleaning fee based on space size
+ */
+export function calculateCleaningFee(sizeM2: number): number {
+    const base = 250;
+    const perMeter = 5;
+    return base + (sizeM2 * perMeter);
+}
+
+export function calculatePricing(basePrice: number, sizeM2: number = 50): PricingBreakdown {
+    const cleaningFee = calculateCleaningFee(sizeM2);
     const insurance = basePrice * INSURANCE_RATE;
     const totalPrice = basePrice + cleaningFee + insurance;
 
-    // Commission is 14% from renter's perspective (applied to base price)
+    // Commission is 14% of the base price
     const commission = basePrice * PLATFORM_COMMISSION_RATE;
 
-    // Owner receives base price minus commission, plus 60-70% of cleaning fee
-    const cleaningRevenue = cleaningFee * 0.35; // Platform takes 30-40% margin
-    const ownerPayout = basePrice - commission + cleaningRevenue;
+    // Owner receives base price minus commission
+    const ownerPayout = basePrice - commission;
+
+    // Cleaner receives the full cleaning fee
+    const cleanerPayout = cleaningFee;
 
     return {
         basePrice,
@@ -36,25 +48,29 @@ export function calculatePricing(basePrice: number): PricingBreakdown {
         totalPrice,
         commission,
         ownerPayout,
+        cleanerPayout,
     };
 }
 
 export function calculateHourlyPrice(
     hourlyRate: number,
-    hours: number
+    hours: number,
+    sizeM2: number
 ): PricingBreakdown {
-    return calculatePricing(hourlyRate * hours);
+    return calculatePricing(hourlyRate * hours, sizeM2);
 }
 
 export function calculateDailyPrice(
     dailyRate: number,
-    days: number
+    days: number,
+    sizeM2: number
 ): PricingBreakdown {
-    return calculatePricing(dailyRate * days);
+    return calculatePricing(dailyRate * days, sizeM2);
 }
 
 export function calculateWeekendPrice(
-    weekendRate: number
+    weekendRate: number,
+    sizeM2: number
 ): PricingBreakdown {
-    return calculatePricing(weekendRate);
+    return calculatePricing(weekendRate, sizeM2);
 }
