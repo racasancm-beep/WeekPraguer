@@ -85,10 +85,10 @@ export async function POST(req: Request) {
                     throw new Error(`Space is already booked on ${start.toLocaleDateString()} between ${slot.startTime} -${slot.endTime} `);
                 }
 
-                // Calculate Price using lib/pricing
+                // Calculate Price using lib/pricing (15% cleaner rule)
                 const pricing = calculatePricing(
                     slot.isFullDay ? space.dailyRate : ((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * space.hourlyRate,
-                    space.size
+                    (space as any).selfCleaning
                 );
 
                 const booking = await (tx.booking as any).create({

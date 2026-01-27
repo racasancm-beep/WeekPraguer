@@ -2,10 +2,10 @@ export const PLATFORM_COMMISSION_RATE = parseFloat(
     process.env.PLATFORM_COMMISSION_RATE || "0.14"
 );
 export const CLEANING_FEE_RATE = parseFloat(
-    process.env.CLEANING_FEE_RATE || "0.10"
+    process.env.CLEANING_FEE_RATE || "0.15" // 15% as per user rule
 );
 export const INSURANCE_RATE = parseFloat(
-    process.env.INSURANCE_RATE || "0.05" // Reduced from 0.50 to a more realistic 0.05
+    process.env.INSURANCE_RATE || "0.05"
 );
 
 export interface PricingBreakdown {
@@ -19,58 +19,49 @@ export interface PricingBreakdown {
 }
 
 /**
- * Calculates a dynamic cleaning fee based on space size
+ * Platform Revenue Split Rule:
+ * If Cleaning Service used: 60% Owner, 25% Admin, 15% Cleaner
+ * If Self-Cleaning: 70% Owner, 30% Admin, 0% Cleaner
  */
-export function calculateCleaningFee(sizeM2: number): number {
-    const base = 250;
-    const perMeter = 5;
-    return base + (sizeM2 * perMeter);
-}
-
-export function calculatePricing(basePrice: number, sizeM2: number = 50): PricingBreakdown {
-    const cleaningFee = calculateCleaningFee(sizeM2);
+export function calculatePricing(basePrice: number, isSelfCleaning: boolean = false): PricingBreakdown {
     const insurance = basePrice * INSURANCE_RATE;
-    const totalPrice = basePrice + cleaningFee + insurance;
+    const totalPrice = basePrice + insurance;
 
-    // Commission is 14% of the base price
-    const commission = basePrice * PLATFORM_COMMISSION_RATE;
-
-    // Owner receives base price minus commission
-    const ownerPayout = basePrice - commission;
-
-    // Cleaner receives the full cleaning fee
-    const cleanerPayout = cleaningFee;
+    // Commission is the administrative cut
+    const commissionRate = isSelfCleaning ? 0.30 : 0.25;
+    const ownerRate = isSelfCleaning ? 0.70 : 0.60;
+    const cleanerRate = isSelfCleaning ? 0 : 0.15;
 
     return {
         basePrice,
-        cleaningFee,
+        cleaningFee: totalPrice * cleanerRate, // This is the 15% rule
         insurance,
         totalPrice,
-        commission,
-        ownerPayout,
-        cleanerPayout,
+        commission: totalPrice * commissionRate,
+        ownerPayout: totalPrice * ownerRate,
+        cleanerPayout: totalPrice * cleanerRate,
     };
 }
 
 export function calculateHourlyPrice(
     hourlyRate: number,
     hours: number,
-    sizeM2: number
+    isSelfCleaning: boolean = false
 ): PricingBreakdown {
-    return calculatePricing(hourlyRate * hours, sizeM2);
+    return calculatePricing(hourlyRate * hours, isSelfCleaning);
 }
 
 export function calculateDailyPrice(
     dailyRate: number,
     days: number,
-    sizeM2: number
+    isSelfCleaning: boolean = false
 ): PricingBreakdown {
-    return calculatePricing(dailyRate * days, sizeM2);
+    return calculatePricing(dailyRate * days, isSelfCleaning);
 }
 
 export function calculateWeekendPrice(
     weekendRate: number,
-    sizeM2: number
+    isSelfCleaning: boolean = false
 ): PricingBreakdown {
-    return calculatePricing(weekendRate, sizeM2);
+    return calculatePricing(weekendRate, isSelfCleaning);
 }
