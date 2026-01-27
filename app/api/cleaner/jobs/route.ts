@@ -24,7 +24,12 @@ export async function GET() {
                 OR: [
                     { cleanerId: null },
                     { cleanerId: userId }
-                ]
+                ],
+                booking: {
+                    space: {
+                        selfCleaning: false
+                    }
+                }
             },
             include: {
                 booking: {

@@ -27,16 +27,18 @@ export async function GET() {
 
         // 3. Activity Overview & Global Financials
         const allBookings = await (prisma as any).booking.findMany({
-            where: { status: { in: ["CONFIRMED", "COMPLETED"] } }
+            where: { status: { in: ["CONFIRMED", "COMPLETED"] } },
+            include: { space: true }
         });
 
         const getSplit = (b: any) => {
             const total = b.totalPrice || 0;
+            const isSelfClean = b.space?.selfCleaning || false;
             return {
                 renter: total,
-                owner: b.ownerEarnings > 0 ? b.ownerEarnings : total * 0.60,
-                admin: b.adminEarnings > 0 ? b.adminEarnings : total * 0.25,
-                cleaner: b.cleanerEarnings > 0 ? b.cleanerEarnings : total * 0.15
+                owner: b.ownerEarnings > 0 ? b.ownerEarnings : (isSelfClean ? total * 0.70 : total * 0.60),
+                admin: b.adminEarnings > 0 ? b.adminEarnings : (isSelfClean ? total * 0.30 : total * 0.25),
+                cleaner: b.cleanerEarnings > 0 ? b.cleanerEarnings : (isSelfClean ? 0 : total * 0.15)
             };
         };
 

@@ -36,6 +36,7 @@ const formSchema = z.object({
     hasKitchen: z.boolean().default(false),
     hasParking: z.boolean().default(false),
     hasAC: z.boolean().default(false),
+    selfCleaning: z.boolean().default(false),
     amenitiesList: z.array(z.string()).default([]),
 });
 
@@ -80,6 +81,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             hasKitchen: false,
             hasParking: false,
             hasAC: false,
+            selfCleaning: false,
             amenitiesList: [],
         },
     });
@@ -304,6 +306,30 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                         <label className="text-sm font-medium mb-1 block">Full Weekend</label>
                         <Input type="number" {...form.register("weekendRate")} placeholder="e.g. 7500" />
                         {form.formState.errors.weekendRate && <p className="text-red-500 text-xs mt-1">{form.formState.errors.weekendRate.message}</p>}
+                    </div>
+                </div>
+
+                <div className="pt-6 mt-4 border-t-2 border-dashed border-violet-100 dark:border-violet-900/30">
+                    <div className="flex items-start space-x-3 p-4 bg-violet-50 dark:bg-violet-900/10 rounded-2xl border border-violet-100 dark:border-violet-800">
+                        <Checkbox
+                            id="selfCleaning"
+                            checked={form.watch("selfCleaning")}
+                            onCheckedChange={c => form.setValue("selfCleaning", c as boolean)}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <label
+                                htmlFor="selfCleaning"
+                                className="text-sm font-black leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-violet-900 dark:text-violet-200"
+                            >
+                                I will provide cleaning services personally
+                            </label>
+                            <p className="text-[11px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider">
+                                Financial Law Change: 70% Owner / 30% Admin
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                By checking this, you take full responsibility for cleaning the space after every weekend booking. Your revenue share increases from 60% to 70%.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

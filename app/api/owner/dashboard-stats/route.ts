@@ -23,8 +23,11 @@ export async function GET() {
             orderBy: { startTime: "asc" }
         });
 
-        // Use ownerEarnings if available, otherwise fallback to 60% of totalPrice
-        const calculateOwnerEarnings = (b: any) => b.ownerEarnings > 0 ? b.ownerEarnings : b.totalPrice * 0.60;
+        // Use ownerEarnings if available, otherwise fallback to split rule based on self-cleaning preference
+        const calculateOwnerEarnings = (b: any) => {
+            if (b.ownerEarnings > 0) return b.ownerEarnings;
+            return b.space?.selfCleaning ? b.totalPrice * 0.70 : b.totalPrice * 0.60;
+        };
 
         const totalRevenue = rawBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
         const totalCount = rawBookings.length;

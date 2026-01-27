@@ -93,10 +93,20 @@ export async function POST(req: Request) {
                     total = hours * space.hourlyRate;
                 }
 
-                // User Rule: 60% Owner, 25% Admin, 15% Cleaner of the total paid by renter
-                const ownerEarnings = total * 0.60;
-                const adminEarnings = total * 0.25;
-                const cleanerEarnings = total * 0.15;
+                // User Rule: 
+                // Default: 60% Owner, 25% Admin, 15% Cleaner
+                // Self-Cleaning: 70% Owner, 30% Admin
+                let ownerEarnings, adminEarnings, cleanerEarnings;
+
+                if ((space as any).selfCleaning) {
+                    ownerEarnings = total * 0.70;
+                    adminEarnings = total * 0.30;
+                    cleanerEarnings = 0;
+                } else {
+                    ownerEarnings = total * 0.60;
+                    adminEarnings = total * 0.25;
+                    cleanerEarnings = total * 0.15;
+                }
 
                 const booking = await (tx.booking as any).create({
                     data: {

@@ -105,6 +105,7 @@ model Space {
   weekendRate   Float
   active        Boolean      @default(true)
   isClean       Boolean      @default(true)
+  selfCleaning  Boolean      @default(false)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
   bookings      Booking[]

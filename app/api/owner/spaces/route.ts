@@ -26,6 +26,7 @@ const spaceSchema = z.object({
     hasKitchen: z.boolean(),
     hasParking: z.boolean(),
     hasAC: z.boolean(),
+    selfCleaning: z.boolean().optional().default(false),
     amenitiesList: z.array(z.string()).optional(),
     // Photos (just URLs for now)
     photos: z.array(z.string()).min(1),
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
                 hasKitchen: data.hasKitchen,
                 hasParking: data.hasParking,
                 hasAC: data.hasAC,
+                selfCleaning: data.selfCleaning,
                 amenitiesList: data.amenitiesList ? JSON.stringify(data.amenitiesList) : null,
                 // Create related photos
                 photos: {
