@@ -93,7 +93,9 @@ export async function GET() {
             growth: growth.toFixed(1),
             count: totalCount,
             newBookingsTrend: newBookingsLastWeek,
-            bookings: rawBookings.reverse().slice(0, 5), // Most recent by date
+            bookings: [...rawBookings].sort((a: any, b: any) =>
+                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            ).slice(0, 10), // Most recently created first
             chartData
         });
     } catch (error) {
