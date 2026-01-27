@@ -116,13 +116,17 @@ weekend-space-booker/
 
 ## 💰 Pricing & Revenue Model
 
-WeekPragueR operates on a transparent **60/25/15** allocation model from the total booking amount:
+WeekPragueR operates on a flexible allocation model from the total booking amount:
 
-| Party | Share | Description |
-|-----------|------|------------|
-| **Owner** | 60% | Direct earnings for the property owner |
-| **Admin** | 25% | Platform service and maintenance fee |
-| **Cleaner**| 15% | Guaranteed compensation for precision cleaning |
+| Party | Share (Standard) | Share (Self-Cleaning) | Description |
+|-----------|------|------------|------------|
+| **Owner** | 60% | **70%** | Direct earnings for the property owner |
+| **Admin** | 25% | **30%** | Platform service and maintenance fee |
+| **Cleaner**| 15% | **0%** | Compensation for precision cleaning (or $0 if Owner cleans) |
+
+**Notes on the "Financial Law":**
+- **Self-Cleaning Option**: Owners can opt to provide cleaning services personally. In this case, the cleaner's 15% is split: **+10% to the Owner** and **+5% to the Admin**.
+- **Standard Option**: Default for owners who prefer a hands-off experience with verified cleaning partners.
 
 **Example Booking (Yoga Studio @ 500 CZK/hr):**
 - **2 Hour Booking**: 1,000 CZK (Total Paid by Renter)

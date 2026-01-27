@@ -43,6 +43,32 @@ export async function POST(req: Request) {
                 where: { id: booking.id },
                 data: { isClean: false }
             });
+
+            // Update Booking revenue split if self-cleaning is selected
+            if (isSelfCleaning) {
+                const b = booking.bookings[0];
+                const total = b.totalPrice;
+                await (prisma as any).booking.update({
+                    where: { id: bookingId },
+                    data: {
+                        ownerEarnings: total * 0.70,
+                        adminEarnings: total * 0.30,
+                        cleanerEarnings: 0
+                    }
+                });
+            } else if (cleanerId) {
+                // Revert to 60/25/15 if a cleaner is assigned
+                const b = booking.bookings[0];
+                const total = b.totalPrice;
+                await (prisma as any).booking.update({
+                    where: { id: bookingId },
+                    data: {
+                        ownerEarnings: total * 0.60,
+                        adminEarnings: total * 0.25,
+                        cleanerEarnings: total * 0.15
+                    }
+                });
+            }
         } else {
             // Remove cleaning log if exists
             await (prisma as any).cleaningLog.deleteMany({ where: { bookingId } });

@@ -96,6 +96,7 @@ export default function HomePage() {
                                     <span className="text-xs font-black uppercase tracking-widest text-gray-400">Safe Pay</span>
                                 </div>
                                 <p className="text-2xl font-black tracking-tight text-gray-900">60/25/15</p>
+                                <p className="text-[10px] text-violet-600 font-bold uppercase mt-1 mb-2">Or 70/30 for Self-Cleaners</p>
                                 <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-tighter leading-tight">Automated Revenue Split Guarantee</p>
                             </div>
                         </div>
@@ -116,7 +117,7 @@ export default function HomePage() {
                                     Turn your empty weekend offices into a revenue stream. We handle the bookings, insurance, and professional cleaning.
                                 </p>
                                 <ul className="space-y-3">
-                                    {["60% Direct Revenue Share", "Automated SES Integration", "Professional Cleaning Teams"].map(item => (
+                                    {["Up to 70% Revenue Share", "Automated SES Integration", "Flexible Cleaning Options"].map(item => (
                                         <li key={item} className="flex items-center gap-3 text-sm font-bold text-gray-600">
                                             <CheckCircle2 className="w-5 h-5 text-green-500" />
                                             {item}
