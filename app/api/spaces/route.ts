@@ -6,8 +6,9 @@ import { spaceSchema } from "@/lib/schemas/space";
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
+    const role = (session?.user as any)?.role;
 
-    if (!session || session.user.role !== "OWNER") {
+    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -27,9 +28,9 @@ export async function POST(req: Request) {
                 hourlyRate: body.hourlyRate,
                 dailyRate: body.dailyRate,
                 weekendRate: body.weekendRate,
-                amenitiesList: JSON.stringify(body.amenities), // Store as JSON string
-                latitude: 50.0755, // Mock coords for Prague center
-                longitude: 14.4378,
+                amenitiesList: JSON.stringify(body.amenities || body.amenitiesList || []),
+                latitude: typeof (json as any).latitude === "number" ? (json as any).latitude : 44.4268,
+                longitude: typeof (json as any).longitude === "number" ? (json as any).longitude : 26.1025,
             },
         });
 
@@ -68,28 +69,7 @@ export async function GET(req: Request) {
         where.capacity = { gte: parseInt(capacity) };
     }
 
-    // Only show clean spaces to users
-    where.isClean = true;
-
     try {
-        // Auto-complete self-cleaning jobs that are > 2 hours past booking end
-        const overdueLogs = await (prisma as any).cleaningLog.findMany({
-            where: {
-                status: "SELF_CLEANING",
-                booking: {
-                    endTime: { lte: new Date(Date.now() - 2 * 60 * 60 * 1000) }
-                }
-            } as any,
-            include: { booking: true }
-        }) as any[];
-
-        for (const log of overdueLogs) {
-            await (prisma as any).$transaction([
-                (prisma as any).cleaningLog.update({ where: { id: log.id }, data: { status: "COMPLETED" } }),
-                (prisma as any).space.update({ where: { id: log.booking.spaceId }, data: { isClean: true } })
-            ]);
-        }
-
         const spaces = await prisma.space.findMany({
             where: where as any,
             orderBy: { createdAt: "desc" },

@@ -19,7 +19,7 @@ interface MultipleMarkersMapProps {
 }
 
 export default function MultipleMarkersMap({ locations, centerLat, centerLng, zoom = 12 }: MultipleMarkersMapProps) {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyBgYxlln25mL1D5b5IxDn95lVIvs2MPcqM";
     
     const { isLoaded, loadError } = useLoadScript({
         googleMapsApiKey: apiKey || "", 

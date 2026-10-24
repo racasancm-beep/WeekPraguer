@@ -4,12 +4,14 @@
     "installCommand": "npm install",
     "env": {
         "NEXTAUTH_URL": "https://www.mygenieurope.com",
-        "NEXT_PUBLIC_APP_URL": "https://www.mygenieurope.com"
+        "NEXT_PUBLIC_APP_URL": "https://www.mygenieurope.com",
+        "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBgYxlln25mL1D5b5IxDn95lVIvs2MPcqM"
     },
     "build": {
         "env": {
             "NEXTAUTH_URL": "https://www.mygenieurope.com",
-            "NEXT_PUBLIC_APP_URL": "https://www.mygenieurope.com"
+            "NEXT_PUBLIC_APP_URL": "https://www.mygenieurope.com",
+            "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyBgYxlln25mL1D5b5IxDn95lVIvs2MPcqM"
         }
     }
 }
