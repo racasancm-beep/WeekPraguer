@@ -2,28 +2,51 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { startOfMonth, subMonths, endOfMonth, format, addMonths, subDays } from "date-fns";
+import { startOfMonth, endOfMonth, format, addMonths, subDays } from "date-fns";
 
-export async function GET() {
+export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
+    const role = (session?.user as any)?.role;
 
-    if (!session || session.user.role !== "OWNER") {
+    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
-        const userId = session.user.id;
+        const { searchParams } = new URL(req.url);
+        const targetUserId = searchParams.get("userId");
 
-        const spaces = await (prisma as any).space.findMany({ where: { ownerId: userId }, select: { id: true } });
+        // If ADMIN is viewing without a specific userId, show aggregated stats across ALL owners/spaces
+        const spaceFilter =
+            role === "ADMIN"
+                ? targetUserId
+                    ? { ownerId: targetUserId }
+                    : {}
+                : { ownerId: (session.user as any).id };
+
+        const spaces = await (prisma as any).space.findMany({ where: spaceFilter, select: { id: true } });
         const spaceIds = spaces.map((s: any) => s.id);
+
+        let inspectedUser = null;
+        if (role === "ADMIN" && targetUserId) {
+            inspectedUser = await (prisma as any).user.findUnique({
+                where: { id: targetUserId },
+                select: { id: true, name: true, email: true, role: true }
+            });
+        }
+
+        const pendingBookings = await (prisma as any).booking.findMany({
+            where: { spaceId: { in: spaceIds }, status: { in: ["PENDING", "OWNER_PROPOSED"] } },
+            include: { space: true, renter: true },
+            orderBy: { createdAt: "desc" }
+        });
 
         const rawBookings = await (prisma as any).booking.findMany({
             where: { spaceId: { in: spaceIds }, status: { in: ["CONFIRMED", "COMPLETED"] } },
-            include: { space: true, renter: true, cleaningLog: true },
+            include: { space: true, renter: true },
             orderBy: { startTime: "asc" }
         });
 
-        // Use ownerEarnings if available, otherwise fallback to split rule based on self-cleaning preference
         const calculateOwnerEarnings = (b: any) => {
             if (b.ownerEarnings > 0) return b.ownerEarnings;
             return b.space?.selfCleaning ? b.totalPrice * 0.70 : b.totalPrice * 0.60;
@@ -32,7 +55,6 @@ export async function GET() {
         const totalRevenue = rawBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
         const totalCount = rawBookings.length;
 
-        // Dynamic Booking Trend (+X since last week)
         const lastWeekDate = subDays(new Date(), 7);
         const newBookingsLastWeek = await (prisma as any).booking.count({
             where: {
@@ -41,7 +63,6 @@ export async function GET() {
             }
         });
 
-        // Chart Data: 3 months back + current month + 3 months forward (Total 7 months)
         const chartData = [];
         const today = new Date();
 
@@ -69,7 +90,6 @@ export async function GET() {
         const revenueThisMonth = chartData[currentMonthIdx].total;
         const revenueLastMonth = chartData[currentMonthIdx - 1].total;
 
-        // Growth calculation
         let growth = 0;
         if (revenueLastMonth > 0) {
             growth = ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100;
@@ -93,9 +113,11 @@ export async function GET() {
             growth: growth.toFixed(1),
             count: totalCount,
             newBookingsTrend: newBookingsLastWeek,
+            pendingBookings,
+            inspectedUser,
             bookings: [...rawBookings].sort((a: any, b: any) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            ).slice(0, 10), // Most recently created first
+            ).slice(0, 10),
             chartData
         });
     } catch (error) {

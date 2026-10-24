@@ -1,60 +1,44 @@
 "use client";
 
-import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
+import dynamic from 'next/dynamic';
 import { useMemo } from 'react';
 
-const containerStyle = {
-    width: '100%',
-    height: '100%',
-    borderRadius: '0.75rem',
-};
+// Dynamically import the interactive map to avoid SSR issues with Leaflet
+const InteractiveMap = dynamic(
+    () => import('./interactive-map'),
+    { ssr: false, loading: () => <div className="w-full h-full bg-gray-100 dark:bg-gray-800 animate-pulse rounded-2xl flex items-center justify-center"><span className="text-gray-400 font-medium">Loading Map...</span></div> }
+);
 
 const defaultCenter = {
-    lat: 50.0755,
-    lng: 14.4378
+    lat: 44.4268, // Bucharest, Romania
+    lng: 26.1025
 };
 
 interface MapComponentProps {
     lat?: number;
     lng?: number;
     zoom?: number;
+    address?: string;
+    showDirectionsLink?: boolean;
+    spaces?: any[];
 }
 
-const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
-
-export default function MapComponent({ lat, lng, zoom = 14 }: MapComponentProps) {
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries
-    });
-
+export default function MapComponent({
+    lat,
+    lng,
+    zoom = 13,
+    address,
+    showDirectionsLink = true,
+    spaces = []
+}: MapComponentProps) {
     const center = useMemo(() => ({
-        lat: lat || defaultCenter.lat,
-        lng: lng || defaultCenter.lng
+        lat: lat ?? defaultCenter.lat,
+        lng: lng ?? defaultCenter.lng
     }), [lat, lng]);
 
-    if (!isLoaded) {
-        return (
-            <div className="w-full h-full bg-gray-100 rounded-xl animate-pulse flex items-center justify-center text-gray-400 text-sm">
-                Loading Map...
-            </div>
-        );
-    }
-
     return (
-        <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={center}
-            zoom={zoom}
-            options={{
-                disableDefaultUI: true,
-                zoomControl: true,
-                streetViewControl: false,
-                mapTypeControl: false,
-            }}
-        >
-            {lat && lng && <Marker position={center} />}
-        </GoogleMap>
+        <div className="relative w-full h-full min-h-[220px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 shadow-sm">
+            <InteractiveMap lat={center.lat} lng={center.lng} zoom={zoom} spaces={spaces} />
+        </div>
     );
 }

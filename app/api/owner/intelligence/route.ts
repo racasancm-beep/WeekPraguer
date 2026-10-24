@@ -2,64 +2,66 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { PrismaClient } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
-import { startOfMonth, endOfMonth, subMonths, eachWeekendOfInterval, isSameDay } from "date-fns";
+import { startOfMonth, endOfMonth, subMonths, eachWeekendOfInterval } from "date-fns";
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
+    const role = (session?.user as any)?.role;
 
-    if (!session || session.user.role !== "OWNER") {
+    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     try {
-        const userId = session.user.id;
-        const spaces = await prisma.space.findMany({ where: { ownerId: userId } });
+        const { searchParams } = new URL(req.url);
+        const targetUserId = searchParams.get("userId");
+
+        const spaceFilter =
+            role === "ADMIN"
+                ? targetUserId
+                    ? { ownerId: targetUserId }
+                    : {}
+                : { ownerId: (session.user as any).id };
+
+        const spaces = await prisma.space.findMany({ where: spaceFilter });
         const spaceIds = spaces.map(s => s.id);
 
-        // 1. Utilization Rate (Current Month)
         const now = new Date();
         const start = startOfMonth(now);
         const end = endOfMonth(now);
 
-        // Calculate total available weekend days for all spaces
         const weekends = eachWeekendOfInterval({ start, end });
         const totalSlots = weekends.length * spaceIds.length;
 
-        // Count booked days (simplification: 1 booking = 1 day for now, or check overlap)
-        // Ideally we check actual booked dates.
         const bookings = await prisma.booking.findMany({
             where: {
                 spaceId: { in: spaceIds },
-                status: "CONFIRMED",
+                status: { in: ["CONFIRMED", "COMPLETED"] },
                 startTime: { gte: start, lte: end }
             }
         });
 
         const utilizationRate = totalSlots > 0 ? (bookings.length / totalSlots) * 100 : 0;
 
-        // 2. Revenue Forecasting (Simple Moving Average of last 3 months)
         const threeMonthsAgo = subMonths(now, 3);
         const pastBookings = await prisma.booking.findMany({
             where: {
                 spaceId: { in: spaceIds },
-                status: "CONFIRMED",
+                status: { in: ["CONFIRMED", "COMPLETED"] },
                 startTime: { gte: threeMonthsAgo }
             }
         });
 
         const totalRevenue = pastBookings.reduce((acc, b) => acc + b.totalPrice, 0);
         const avgMonthlyRevenue = totalRevenue / 3;
-        const nextMonthForecast = avgMonthlyRevenue * 1.1; // Optimistic 10% growth
+        const nextMonthForecast = avgMonthlyRevenue * 1.1;
 
-        // 3. Historical Data for Chart
-        // Group by month - Simplified mock data structure logic for the API response
-        // In real app, we would aggregate nicely.
         const revenueHistory = [
-            { month: "Oct", revenue: totalRevenue * 0.3 },
-            { month: "Nov", revenue: totalRevenue * 0.3 },
-            { month: "Dec", revenue: totalRevenue * 0.4 },
+            { month: "Oct", revenue: Math.round(totalRevenue * 0.3) },
+            { month: "Nov", revenue: Math.round(totalRevenue * 0.3) },
+            { month: "Dec", revenue: Math.round(totalRevenue * 0.4) },
         ];
 
         return NextResponse.json({

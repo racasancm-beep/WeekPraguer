@@ -21,10 +21,10 @@ const formSchema = z.object({
     name: z.string().min(3, "Name is too short"),
     description: z.string().min(10, "Description is too short"),
     address: z.string().min(5, "Address is required"),
-    city: z.string().default("Prague"),
+    city: z.string().default("București"),
     district: z.string().optional(),
-    latitude: z.coerce.number(),
-    longitude: z.coerce.number(),
+    latitude: z.coerce.number().optional(),
+    longitude: z.coerce.number().optional(),
     size: z.coerce.number().positive("Size must be positive"),
     capacity: z.coerce.number().int().positive("Capacity must be positive"),
     officeCount: z.coerce.number().int().optional(),
@@ -66,10 +66,10 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             name: "",
             description: "",
             address: "",
-            city: "Prague",
+            city: "București",
             district: "",
-            latitude: 50.0755,
-            longitude: 14.4378,
+            latitude: 44.4268,
+            longitude: 26.1025,
             size: undefined,
             capacity: undefined,
             officeCount: 0,
@@ -112,7 +112,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 }
 
                 // Extract City and District from address_components
-                let city = "Prague";
+                let city = "București";
                 let district = "";
 
                 place.address_components?.forEach(component => {
@@ -290,7 +290,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">Pricing (CZK)</h3>
+                <h3 className="text-lg font-medium">Tarifas y Precios (RON RON)</h3>
                 <div className="grid grid-cols-3 gap-4">
                     <div>
                         <label className="text-sm font-medium mb-1 block">Hourly Rate</label>

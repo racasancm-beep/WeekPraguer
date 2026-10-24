@@ -30,9 +30,7 @@ export default function PortalPage() {
             case "RENTER":
                 router.push("/dashboard"); // Renter dashboard (default public dashboard or specific renter one)
                 break;
-            case "CLEANER":
-                router.push("/cleaner/dashboard");
-                break;
+            
             case "ADMIN":
                 router.push("/admin/dashboard");
                 break;

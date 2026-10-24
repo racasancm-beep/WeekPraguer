@@ -11,7 +11,7 @@ interface PriceDisplayProps {
 
 export function PriceDisplay({
     amount,
-    currency = "CZK",
+    currency = "RON",
     period,
     size = "md",
     className,

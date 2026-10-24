@@ -9,14 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
-type UserRole = "OWNER" | "RENTER" | "CLEANER";
+type UserRole = "OWNER" | "RENTER";
 
 function RegisterForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialRole = searchParams.get("role")?.toUpperCase() as UserRole;
     const [role, setRole] = useState<UserRole>(
-        ["OWNER", "RENTER", "CLEANER"].includes(initialRole) ? initialRole : "RENTER"
+        ["OWNER", "RENTER"].includes(initialRole) ? initialRole : "RENTER"
     );
     const [formData, setFormData] = useState({
         name: "",
@@ -83,17 +83,7 @@ function RegisterForm() {
                         <div className="text-sm font-medium">List Space</div>
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={() => setRole("CLEANER")}
-                        className={`p-4 rounded-lg border-2 transition-all ${role === "CLEANER"
-                            ? "border-primary bg-primary/10"
-                            : "border-gray-200 hover:border-gray-300"
-                            }`}
-                    >
-                        <Calendar className="w-6 h-6 mx-auto mb-2" />
-                        <div className="text-sm font-medium">Cleaning</div>
-                    </button>
+                    
                 </div>
             </div>
 
@@ -159,15 +149,14 @@ function RegisterForm() {
 
                 <div>
                     <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                        Phone Number
+                        Phone Number <span className="text-gray-400 font-normal">(optional)</span>
                     </label>
                     <Input
                         id="phone"
                         type="tel"
-                        placeholder="+420 123 456 789"
+                        placeholder="+34 600 000 000"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                        required
                     />
                 </div>
             </div>
@@ -255,12 +244,12 @@ export default function RegisterPage() {
                     <Link href="/" className="flex items-center justify-center gap-2 mb-4">
                         <Calendar className="w-8 h-8 text-primary" />
                         <span className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                            WeekPragueR
+                            MyGenie
                         </span>
                     </Link>
                     <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
                     <CardDescription className="text-base">
-                        Join our community of space sharers in Prague
+                        Join the community of unique hourly spaces
                     </CardDescription>
                 </CardHeader>
 

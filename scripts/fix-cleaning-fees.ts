@@ -24,8 +24,7 @@ async function main() {
         await prisma.booking.update({
             where: { id: b.id },
             data: {
-                cleaningFee: newCleaningFee,
-                cleanerEarnings: newCleaningFee
+                cleaningFee: newCleaningFee
             }
         });
         console.log(`Updated booking ${b.id}: CleaningFee set to ${newCleaningFee}`);

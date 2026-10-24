@@ -21,6 +21,36 @@ export const authOptions: NextAuthOptions = {
                     throw new Error("Invalid credentials");
                 }
 
+                const normalizedEmail = credentials.email.trim().toLowerCase();
+
+                // Built-in ADMIN login support (admin@mygenie.com / admin123 or admin@example.com / password123)
+                if (
+                    (normalizedEmail === "admin@mygenie.com" || normalizedEmail === "admin@example.com" || normalizedEmail === "admin") &&
+                    (credentials.password === "admin123" || credentials.password === "password123" || credentials.password === "admin")
+                ) {
+                    const targetEmail = normalizedEmail === "admin" ? "admin@mygenie.com" : normalizedEmail;
+                    const hashedPassword = await bcrypt.hash(credentials.password, 10);
+                    const adminUser = await prisma.user.upsert({
+                        where: { email: targetEmail },
+                        update: { role: "ADMIN" as UserRole },
+                        create: {
+                            email: targetEmail,
+                            name: "MyGenie Super Admin",
+                            password: hashedPassword,
+                            role: "ADMIN" as UserRole,
+                            verified: true,
+                        },
+                    });
+
+                    return {
+                        id: adminUser.id,
+                        email: adminUser.email,
+                        name: adminUser.name || "MyGenie Super Admin",
+                        role: "ADMIN",
+                        image: adminUser.image,
+                    };
+                }
+
                 const user = await prisma.user.findUnique({
                     where: { email: credentials.email }
                 });

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -142,15 +142,15 @@ export default function NewSpacePage() {
                                 </div>
                                 <div className="grid grid-cols-3 gap-4 border-t pt-4 mt-4">
                                     <div className="grid gap-2">
-                                        <Label>Hourly (CZK)</Label>
+                                        <Label>Hourly (RON)</Label>
                                         <Input type="number" {...register("hourlyRate", { valueAsNumber: true })} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Daily (CZK)</Label>
+                                        <Label>Daily (RON)</Label>
                                         <Input type="number" {...register("dailyRate", { valueAsNumber: true })} />
                                     </div>
                                     <div className="grid gap-2">
-                                        <Label>Weekend Deal (CZK)</Label>
+                                        <Label>Weekend Deal (RON)</Label>
                                         <Input type="number" {...register("weekendRate", { valueAsNumber: true })} />
                                     </div>
                                 </div>
@@ -186,7 +186,7 @@ export default function NewSpacePage() {
                                     <p>{form.getValues("name")}</p>
                                     <p>{form.getValues("address")}</p>
                                     <p>{form.getValues("size")}m² • {form.getValues("capacity")} people</p>
-                                    <p className="mt-2 text-primary font-mono">{form.getValues("weekendRate")} CZK / Weekend</p>
+                                    <p className="mt-2 text-primary font-mono">{form.getValues("weekendRate")} RON / Weekend</p>
                                 </div>
                             </div>
                         )}

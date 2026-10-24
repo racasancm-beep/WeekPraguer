@@ -4,7 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Search, Calendar, Settings, LogOut, Menu, User } from "lucide-react";
+import { Search, Calendar, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -18,6 +18,7 @@ export default function RenterLayout({
     const router = useRouter();
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const isAdmin = (session?.user as any)?.role === "ADMIN";
 
     useEffect(() => {
         if (status === "unauthenticated") {
@@ -35,48 +36,48 @@ export default function RenterLayout({
 
     const navigation = [
         { name: "My Bookings", href: "/dashboard", icon: Calendar },
-        { name: "Explore", href: "/explore", icon: Search },
-        { name: "Profile", href: "/dashboard/profile", icon: User },
-        { name: "Settings", href: "/dashboard/settings", icon: Settings },
+        { name: "Explore Spaces", href: "/explore", icon: Search },
     ];
 
     const Sidebar = () => (
         <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800">
             <div className="flex h-16 items-center px-6 border-b dark:border-gray-800">
                 <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                    WeekPragueR
+                    MyGenie
                 </span>
                 <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 uppercase tracking-tighter">
-                    Renter
+                    {isAdmin ? "Admin → Renter" : "Renter"}
                 </span>
             </div>
+
+            {isAdmin && (
+                <div className="p-3 bg-amber-50 border-b border-amber-200">
+                    <Link href="/admin/dashboard">
+                        <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs">
+                            <ShieldCheck className="w-4 h-4 mr-1.5" />
+                            Back to ADMIN Hub
+                        </Button>
+                    </Link>
+                </div>
+            )}
 
             <div className="flex-1 overflow-y-auto py-6 px-4">
                 <nav className="space-y-1">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
-                        const isInactive = ["Profile", "Settings"].includes(item.name);
                         return (
                             <Link
                                 key={item.name}
-                                href={isInactive ? "#" : item.href}
-                                onClick={(e) => {
-                                    if (isInactive) e.preventDefault();
-                                    else setIsMobileOpen(false);
-                                }}
-                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all ${isActive
-                                    ? "bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400 shadow-sm"
-                                    : isInactive
-                                        ? "text-gray-400 opacity-40 grayscale cursor-not-allowed"
+                                href={item.href}
+                                onClick={() => setIsMobileOpen(false)}
+                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                                    isActive
+                                        ? "bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400 shadow-sm font-bold"
                                         : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
-                                    }`}
-                                title={isInactive ? "Coming Soon" : ""}
+                                }`}
                             >
-                                <item.icon
-                                    className={`mr-3 h-5 w-5 ${isActive ? "text-violet-600 dark:text-violet-400" : isInactive ? "text-gray-300" : "text-gray-400"}`}
-                                />
+                                <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-violet-600 dark:text-violet-400" : "text-gray-400"}`} />
                                 {item.name}
-                                {isInactive && <span className="ml-auto text-[8px] uppercase tracking-tighter opacity-70">Soon</span>}
                             </Link>
                         );
                     })}
@@ -116,7 +117,7 @@ export default function RenterLayout({
 
             {/* Mobile Header */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b dark:border-gray-800 px-4 h-16 flex items-center justify-between">
-                <span className="font-bold text-violet-600">WeekPragueR</span>
+                <span className="font-bold text-violet-600">MyGenie</span>
                 <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon" className="rounded-full">

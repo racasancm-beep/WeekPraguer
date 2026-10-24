@@ -8,28 +8,42 @@ import { redirect } from "next/navigation";
 
 const prisma = new PrismaClient();
 
-async function getOwnerSpaces(ownerId: string) {
+async function getOwnerSpaces(ownerId?: string) {
     return await prisma.space.findMany({
-        where: { ownerId },
-        include: { photos: true },
+        where: ownerId ? { ownerId } : {},
+        include: { photos: true, owner: { select: { name: true, email: true } } },
         orderBy: { createdAt: "desc" },
     });
 }
 
-export default async function MyListingsPage() {
+export default async function MyListingsPage({
+    searchParams,
+}: {
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "OWNER") {
+    const role = (session?.user as any)?.role;
+    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
         redirect("/login");
     }
 
-    const spaces = await getOwnerSpaces((session.user as any).id) as any[];
+    const params = searchParams ? await searchParams : {};
+    const targetUserId = typeof params.userId === "string" ? params.userId : undefined;
+
+    const spaces = (await getOwnerSpaces(
+        role === "ADMIN" ? targetUserId : (session.user as any).id
+    )) as any[];
 
     return (
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">My Listings</h1>
-                    <p className="text-gray-500 mt-2">Manage your office spaces and availability.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        {role === "ADMIN" && !targetUserId ? "All Platform Listings (Admin View)" : "My Listings"}
+                    </h1>
+                    <p className="text-gray-500 mt-2">
+                        Manage office spaces and availability ({spaces.length} spaces).
+                    </p>
                 </div>
                 <Link href="/owner/dashboard/listings/create">
                     <Button>
@@ -46,7 +60,7 @@ export default async function MyListingsPage() {
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">No spaces listed yet</h3>
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                        Get started by adding your first office space for weekend rentals.
+                        Get started by adding your first office space for rentals.
                     </p>
                     <div className="mt-6">
                         <Link href="/owner/dashboard/listings/create">
@@ -60,7 +74,6 @@ export default async function MyListingsPage() {
                         <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
                             <div className="aspect-video w-full bg-gray-200 relative">
                                 {space.photos[0] ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                         src={space.photos[0].url}
                                         alt={space.name}
@@ -81,9 +94,16 @@ export default async function MyListingsPage() {
 
                             <div className="p-4">
                                 <h3 className="font-semibold text-lg truncate mb-1">{space.name}</h3>
-                                <div className="flex items-center text-sm text-gray-500 mb-4">
-                                    <MapPin className="w-4 h-4 mr-1" />
-                                    {space.city}
+                                <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
+                                    <span className="flex items-center">
+                                        <MapPin className="w-4 h-4 mr-1" />
+                                        {space.city}
+                                    </span>
+                                    {space.owner?.email && (
+                                        <span className="text-[11px] font-mono text-violet-600 truncate max-w-[140px]">
+                                            {space.owner.email}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4 text-sm mb-4">
@@ -99,10 +119,12 @@ export default async function MyListingsPage() {
 
                                 <div className="flex items-center justify-between pt-4 border-t">
                                     <span className="font-bold text-lg">
-                                        {space.dailyRate} CZK
-                                        <span className="text-sm font-normal text-gray-500">/day</span>
+                                        {space.hourlyRate} RON
+                                        <span className="text-sm font-normal text-gray-500">/hr</span>
                                     </span>
-                                    <Button variant="outline" size="sm" className="opacity-40 grayscale cursor-not-allowed" title="Coming Soon">Manage</Button>
+                                    <Link href={`/spaces/${space.id}`}>
+                                        <Button variant="outline" size="sm">View Space</Button>
+                                    </Link>
                                 </div>
                             </div>
                         </div>

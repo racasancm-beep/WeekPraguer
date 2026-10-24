@@ -14,7 +14,7 @@ interface ReviewModalProps {
     subjectId: string;
     bookingId?: string;
     spaceId?: string;
-    type: "renter_to_space" | "owner_to_renter" | "owner_to_cleaner" | "cleaner_to_renter";
+    type: "renter_to_space" | "owner_to_renter";
     subjectName: string;
 }
 

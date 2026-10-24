@@ -22,11 +22,6 @@ const ownerSchema = baseSchema.extend({
     billingAddress: z.string().min(5, "Address is required"),
 });
 
-const cleanerSchema = baseSchema.extend({
-    serviceRadius: z.number().min(1, "Radius must be at least 1km"),
-    // availabilitySlots handled separately for now
-});
-
 export default function OnboardingPage() {
     const { data: session } = useSession();
     const router = useRouter();
@@ -41,7 +36,7 @@ export default function OnboardingPage() {
         formState: { errors },
     } = useForm({
         resolver: zodResolver(
-            role === "OWNER" ? ownerSchema : role === "CLEANER" ? cleanerSchema : baseSchema
+            role === "OWNER" ? ownerSchema : baseSchema
         ),
     });
 
@@ -77,7 +72,7 @@ export default function OnboardingPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div>
                     <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" {...register("phone")} placeholder="+420 123 456 789" />
+                    <Input id="phone" {...register("phone")} placeholder="+34 600 000 000" />
                     {errors.phone && <p className="text-red-500 text-sm">{(errors.phone as any).message}</p>}
                 </div>
 
@@ -96,22 +91,6 @@ export default function OnboardingPage() {
                             <Input id="billingAddress" {...register("billingAddress")} />
                             {errors.billingAddress && (
                                 <p className="text-red-500 text-sm">{(errors.billingAddress as any).message}</p>
-                            )}
-                        </div>
-                    </>
-                )}
-
-                {role === "CLEANER" && (
-                    <>
-                        <div>
-                            <Label htmlFor="serviceRadius">Service Radius (km)</Label>
-                            <Input
-                                id="serviceRadius"
-                                type="number"
-                                {...register("serviceRadius", { valueAsNumber: true })}
-                            />
-                            {errors.serviceRadius && (
-                                <p className="text-red-500 text-sm">{(errors.serviceRadius as any).message}</p>
                             )}
                         </div>
                     </>

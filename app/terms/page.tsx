@@ -2,11 +2,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const LEGAL_TEXT = `WeekPragueR: Legal Documents
+const LEGAL_TEXT = `MyGenie: Legal Documents
 
 Terms of Service
 
-These Terms of Service ("Terms") form a binding legal agreement between you and [Your Company Name] ("Company," "we," "us," or "our"), a company organized under the laws of the Czech Republic with its principal place of business at [Company Address]. The Terms govern your access to and use of the WeekPragueR platform (the "Platform" or "App"), including our websites, mobile apps, and other offerings (collectively, the "Platform"). 
+These Terms of Service ("Terms") form a binding legal agreement between you and [Your Company Name] ("Company," "we," "us," or "our"), a company organized under the laws of the Czech Republic with its principal place of business at [Company Address]. The Terms govern your access to and use of the MyGenie platform (the "Platform" or "App"), including our websites, mobile apps, and other offerings (collectively, the "Platform"). 
 The Platform connects Owners/ property managers (suppliers) (who list spaces) with Renters (who book spaces) for weekend-only rentals of empty office spaces in Prague, Czechia (Friday 18:00 to Sunday 20:00), along with related services such as Cleaning and administration.
 By accessing or using the Platform, you confirm that you have read, understood, and agree to be bound by these Terms, as well as our Privacy Policy, Payments Terms of Service, Cancellation Policy, Service Fees Policy, Taxes Policy, Reviews Policy, Content Policy, Non-discrimination Policy, and any other policies or standards posted on the Platform or incorporated by reference (collectively, the "Additional Policies"). If you do not agree, you may not access or use the Platform.
 If you are using the Platform on behalf of a business or entity, you represent that you have authority to bind that entity to these Terms, and "you" will refer to that entity. The Platform is not intended for users under 18 years old. If you are under 18, you may not use the Platform.
@@ -45,14 +45,14 @@ Search results may appear different on our mobile application than they appear o
 4.4 Your Responsibilities. You are responsible and liable for your own acts and omissions and are also responsible for the acts and omissions of anyone you allow to participate in providing your Services. For example, this means:
  (i) you are responsible for ensuring a Renter meets any age or other requirements you have, and
  (ii) you are responsible for identifying and obtaining any required licenses, permits, or registrations prior to providing your Services (including Services and Experiences). If you choose to host as a team, company, or other organization, the entity and each individual who participates in providing Services is responsible and liable as an Owner under these Terms. If you provide Services with a co-Owner, or accept bookings for Listings owned or managed by others, each such person or entity will be jointly and severally responsible and liable as an Owner under these Terms.
-4.5 Owning with a Team or Organization. If you work with a co-Owner or own as part of a team, business, or other organization, the entity and each individual who participates in providing Services, is responsible and liable as an Owner under these Terms. If you accept terms or enter into contracts, you represent and warrant that you are authorized to enter into contracts for and bind your team, business or other organization, and that each entity you use is in good standing under the laws of the place where it is established. If you perform other functions, you represent and warrant that you are authorized to perform those functions. If you instruct us to transfer a portion of your payout to a co-Owner or other Owners, or to send payments to someone else, you must be authorized to do so, and are responsible and liable for the payment amounts and accuracy of any payout information you provide. For Cleaners, this includes authorization to receive payments for mandatory cleaning add-ons.
+4.5 Owning with a Team or Organization. If you work with a co-Owner or own as part of a team, business, or other organization, the entity and each individual who participates in providing Services, is responsible and liable as an Owner under these Terms. If you accept terms or enter into contracts, you represent and warrant that you are authorized to enter into contracts for and bind your team, business or other organization, and that each entity you use is in good standing under the laws of the place where it is established. If you perform other functions, you represent and warrant that you are authorized to perform those functions. If you instruct us to transfer a portion of your payout to a co-Owner or other Owners, or to send payments to someone else, you must be authorized to do so, and are responsible and liable for the payment amounts and accuracy of any payout information you provide. For partners, this includes authorization to receive payments for mandatory cleaning add-ons.
 4.6 Your Assumption of Risk. You acknowledge that owning carries inherent risks and agree that you assume the entire risk from activities you decide to conduct. You are responsible, at your sole cost and expense, for meeting any and all safety requirements, for obtaining any required licenses, permits, or approvals prior to Renters participating in your Service, and for providing legally required or otherwise appropriate notices to Renters. Except as permitted by law, you agree to release us, our affiliates, and their respective officers, directors, employees, agents, and contractors (collectively, the "Company Parties") from all liability related to or arising out of any of the foregoing.
 
 Cleaner Terms
  5. Cleaning on the Platform
-5.1 Cleaner. As a Cleaner, the Platform offers you the opportunity to provide mandatory cleaning services for booked spaces and earn money by connecting with Owners and Renters. Cleaners are selected by Owners or Platform based on ratings, availability, and other criteria displayed on the Platform.
+5.1 Cleaner. As a Cleaner, the Platform offers you the opportunity to provide mandatory cleaning services for booked spaces and earn money by connecting with Owners and Renters. partners are selected by Owners or Platform based on ratings, availability, and other criteria displayed on the Platform.
 5.2 Contracting with Owners. When you accept a cleaning job notification or are assigned a job through the Platform, you are entering into a contract directly with the Owner (and indirectly benefiting the Renter), and are responsible for delivering the cleaning service under the terms specified in the job details, including space details, duration, activity type, and any Owner-specific requirements. You are also agreeing to pay applicable fees like our service fee (and applicable taxes) for each job. The cleaning add-on is up to 15% of the rental price. Links to the terms that apply to your relationship with us are provided throughout these Terms.
-5.3 Independence of Cleaners. Your relationship with us is that of an independent individual or entity and not an employee, agent, joint ventures, or partner of ours, except that our Payments acts as a payment collection agent as described in the Payments Terms of Service. You act exclusively on your own behalf and for your own benefit and not on behalf of or for the benefit of us. We do not, and shall not be deemed to, direct or control you generally or in your performance under these Terms specifically, including in connection with your provision of cleaning services. To promote the Platform and to increase exposure to potential jobs, your profile, ratings, and other Content may be displayed on the Platform or in advertisements in accordance with the Privacy Policy.
+5.3 Independence of partners. Your relationship with us is that of an independent individual or entity and not an employee, agent, joint ventures, or partner of ours, except that our Payments acts as a payment collection agent as described in the Payments Terms of Service. You act exclusively on your own behalf and for your own benefit and not on behalf of or for the benefit of us. We do not, and shall not be deemed to, direct or control you generally or in your performance under these Terms specifically, including in connection with your provision of cleaning services. To promote the Platform and to increase exposure to potential jobs, your profile, ratings, and other Content may be displayed on the Platform or in advertisements in accordance with the Privacy Policy.
 6. Managing Your Cleaning Services
 6.1 Creating and Managing Your Profile. The Platform provides tools to set up and manage your Cleaner profile. Your profile must include complete and accurate information about your services, price offers (e.g., per m²), availability, and any rules or requirements. You are responsible for keeping your profile information up-to-date and accurate at all times. We recommend obtaining appropriate insurance for your services and reviewing policy terms.
 6.2 Know Your Legal Obligations. You are responsible for understanding and complying with any laws, rules, regulations, and contracts with third parties that apply to your cleaning services. For example, you may need licenses for professional cleaning or compliance with health/safety standards in Czechia. Information we provide is for informational purposes only; confirm your obligations independently. Handle personal data in compliance with GDPR and these Terms.
@@ -74,12 +74,12 @@ Admin Terms
 
 8. Managing Your Admin Activities
 8.1 Creating and Managing Admin Access. Admins must use secure credentials and 2FA. You are responsible for all actions taken under your Admin account.
-8.2 Know Your Legal Obligations. Comply with GDPR, Czech laws, and platform policies when handling user data, disputes, or operations. Access data only as necessary for oversight.
+8.2 Know Your Legal Obligations. Comply with GDPR, EU laws, and platform policies when handling user data, disputes, or operations. Access data only as necessary for oversight.
 8.3 Oversight Responsibilities. Admins may monitor listings, bookings, payments, ratings, and user compliance; resolve disputes; approve/reject content; and perform maintenance.
 8.4 Confidentiality and Data Handling. Treat all accessed data confidentially. Do not disclose or misuse user information. Comply with Privacy Policy.
 8.5 Your Responsibilities. You are responsible and liable for misuse of Admin privileges. Report issues immediately. If managing as a team, all are jointly liable.
 8.6 Your Assumption of Risk. Admin activities may involve sensitive data; you assume risks and release Company Parties from liability for authorized use.
-8.7 Admin Dispute Resolution. As an Admin, you may be involved in resolving disputes between users (e.g., Owners, Renters, Cleaners) through the Platform's Resolution Centre. You agree to handle disputes fairly, in accordance with the Resolving Complaints and Damage Reports section (Section 15), Additional Policies, and applicable laws. This includes reviewing evidence, facilitating communication, and making determinations on refunds, penalties, or account actions. You must act impartially, document decisions, and cooperate with legal requests. If a dispute involves your actions as Admin, it will be escalated to senior Company personnel or external resolution as per Governing Law and Jurisdiction (Section 22). You release Company Parties from liability for good-faith dispute resolutions.
+8.7 Admin Dispute Resolution. As an Admin, you may be involved in resolving disputes between users (e.g., Owners, Renters, partners) through the Platform's Resolution Centre. You agree to handle disputes fairly, in accordance with the Resolving Complaints and Damage Reports section (Section 15), Additional Policies, and applicable laws. This includes reviewing evidence, facilitating communication, and making determinations on refunds, penalties, or account actions. You must act impartially, document decisions, and cooperate with legal requests. If a dispute involves your actions as Admin, it will be escalated to senior Company personnel or external resolution as per Governing Law and Jurisdiction (Section 22). You release Company Parties from liability for good-faith dispute resolutions.
 
 
 
@@ -87,7 +87,7 @@ Admin Terms
  General Terms
 
 9. Reviews
-After each Service, Renters and Owners will have an opportunity to review each other. Your Review must be accurate and may not contain any discriminatory, offensive, defamatory, or other language that violates our Content Policy or Reviews Policy. Reviews are not verified by us for accuracy and may be incorrect or misleading. Owners may also review Cleaners, and Renters may review the Platform.
+After each Service, Renters and Owners will have an opportunity to review each other. Your Review must be accurate and may not contain any discriminatory, offensive, defamatory, or other language that violates our Content Policy or Reviews Policy. Reviews are not verified by us for accuracy and may be incorrect or misleading. Owners may also review partners, and Renters may review the Platform.
 
 10. Content
 Parts of the Platform enable you to provide feedback, text, photos, audio, video, information, and other content (collectively, "Content"). By providing Content, in whatever form and through whatever means, you grant us a non-exclusive, worldwide, royalty-free, irrevocable, perpetual, sub-licensable and transferable license to copy, modify, prepare derivative works of, distribute, publicly perform, and publicly display your Content through all media for any purpose, including to provide and promote the Platform or your Services. We may access, preserve, and disclose your Content and related information if required to do so by law or if in good faith we believe that such access, preservation or disclosure is reasonably necessary to: 
@@ -191,20 +191,20 @@ To the maximum extent permitted by applicable law, you agree to release, defend 
 21.11 Contact Us. If you have any questions about these Terms please email us.
 
 22. Governing Law and Jurisdiction
-These Terms are governed by the laws of the Czech Republic without regard to its conflict of laws principles. If the laws of your country of residence or establishment mandate that contracts with consumers be governed by local law, then these Terms are governed by the laws of your country of residence or establishment. Any dispute arising from or in connection with these Terms, including any question regarding their existence, validity or termination, will be referred to and finally resolved by the competent courts of Prague, Czech Republic. However, if you are a consumer and resident of any European Union country, you will benefit from any mandatory provisions of, and legal rights available to you under, the laws of that country. Nothing in these Terms affects your rights as a consumer to rely on any such local law mandatory provisions and legal rights. You may also bring any dispute which may arise under or in connection with these Terms to the competent court of your country of habitual residence if this country of habitual residence is an EU Member State, which courts are (with the exclusion of any other court) competent to settle any such a dispute. We will bring any dispute which may arise under or in connection with these Terms to the competent court of your country of habitual residence if this is in an EU Member State or otherwise to a competent court of Prague.
+These Terms are governed by the laws of Romania and the European Union without regard to conflict of laws principles. If the laws of your country of residence or establishment mandate that contracts with consumers be governed by local law, then these Terms are governed by the laws of your country of residence or establishment. Any dispute arising from or in connection with these Terms, including any question regarding their existence, validity or termination, will be referred to and finally resolved by the competent courts of Romania. However, if you are a consumer and resident of any European Union country, you will benefit from any mandatory provisions of, and legal rights available to you under, the laws of that country. Nothing in these Terms affects your rights as a consumer to rely on any such local law mandatory provisions and legal rights. You may also bring any dispute which may arise under or in connection with these Terms to the competent court of your country of habitual residence if this country of habitual residence is an EU Member State, which courts are (with the exclusion of any other court) competent to settle any such a dispute. We will bring any dispute which may arise under or in connection with these Terms to the competent court of your country of habitual residence if this is in an EU Member State or otherwise to a competent court of Bucharest, Romania.
 As a consumer, if you are a resident of the European Union, you may be entitled to submit your complaint to an out-of-court dispute resolution entity. You can find information about such entities on the European Commission’s online dispute resolution platform here, as well as in our Help Canter. Neither party is required to participate in out-of-court dispute resolution.
 23. Arbitration Clause
 You and the Company agree that any dispute, claim, or controversy arising out of or relating to these Terms or the breach, termination, enforcement, interpretation, or validity thereof, or to the use of the Platform or Services (collectively, "Disputes") will be settled by binding arbitration, except that each party retains the right to seek injunctive or other equitable relief in a court of competent jurisdiction to prevent the actual or threatened infringement, misappropriation, or violation of a party's copyrights, trademarks, trade secrets, patents, or other intellectual property rights. Arbitration will be administered by the Czech Arbitration Court in Prague in accordance with its rules. The arbitration will be conducted in Prague, in English and Czech  by a single arbitrator appointed in accordance with the rules. The arbitrator's decision shall be final and binding, and judgment may be entered thereon in any court of competent jurisdiction. This arbitration clause does not apply to consumers where prohibited by law, and consumers may opt out within 30 days of accepting these Terms by sending notice to [support email]. Costs of arbitration will be borne as determined by the arbitrator, except where prohibited by law.
 
 Cancellation Policy
-This Cancellation Policy applies to all bookings made through the WeekPragueR Platform. Given the weekend-only nature of bookings (Friday 18:00 to Sunday 20:00), cancellation policies are designed to balance flexibility for Renters with protection for Owners. Owners may select one of the following cancellation policies for their Listings when creating or managing them. The selected policy will be clearly displayed on the Listing page and in the booking confirmation. All times are based on the local time of the Listing (Prague, Czechia). This policy may be overridden in cases of unforeseen large-scale events (e.g., declared public health emergencies, government travel restrictions, natural disasters) that prevent or legally prohibit the completion of the booking, allowing for full refunds or other remedies at our discretion.
+This Cancellation Policy applies to all bookings made through the MyGenie Platform. Given the weekend-only nature of bookings (Friday 18:00 to Sunday 20:00), cancellation policies are designed to balance flexibility for Renters with protection for Owners. Owners may select one of the following cancellation policies for their Listings when creating or managing them. The selected policy will be clearly displayed on the Listing page and in the booking confirmation. All times are based on the local time of the Listing (Prague, Czechia). This policy may be overridden in cases of unforeseen large-scale events (e.g., declared public health emergencies, government travel restrictions, natural disasters) that prevent or legally prohibit the completion of the booking, allowing for full refunds or other remedies at our discretion.
 
 
 Key Principles
 
 Refunds Generally: Refunds include the Listing price, cleaning fees (unless the cancellation occurs after check-in), and other add-ons (e.g., insurance, unless non-refundable as specified). Service fees charged by the Platform (25% commission from Renters) are non-refundable in all cases, except under the Major Disruptive Events.
 Owner Cancellations: Owners should not cancel without a valid reason (e.g., under the Major Disruptive Events or applicable law). If an Owner cancels, Renters receive a full refund, and the Owner may face penalties, including fees, account suspension, or blocked calendar dates.
-Cleaners Cancellations: Owners should not cancel without a valid reason (e.g., under the Major Disruptive Events or applicable law). If an Cleaner cancels, under 24 hours may face penalties, including fees, account suspension, or blocked calendar dates.
+partners Cancellations: Owners should not cancel without a valid reason (e.g., under the Major Disruptive Events or applicable law). If an Cleaner cancels, under 24 hours may face penalties, including fees, account suspension, or blocked calendar dates.
 Non-Refundable Option: Owners may offer a discounted non-refundable rate (e.g., 10% discount) for bookings where no refunds are provided, except under the Major Disruptive Events.
 Modifications: Booking modifications (e.g., changing dates) are treated as cancellations if they reduce the booking value, subject to the applicable policy.
 Major Disruptive Events: Covers events like epidemics (excluding endemic diseases), travel restrictions, military actions, utility outages, or natural disasters occurring after booking that impact the location. Eligible Renters or Owners can cancel without penalties; refunds or credits are provided. Contact support to claim, providing documentation if requested.
@@ -237,20 +237,20 @@ Changes: We may update this policy with 30 days' notice.
 
 
 Service Fees Policy
-This Service Fees Policy details the fees charged by WeekPragueR for using the Platform. Fees enable us to operate the Platform, provide 24/7 support, process payments, and facilitate connections between Owners, Renters, Cleaners, and Admins. All fees are disclosed during booking or listing creation and are non-refundable except as noted in the Cancellation Policy or under applicable law. Fees may vary based on booking details, location, or user type, and include applicable VAT or taxes under Czech law.
+This Service Fees Policy details the fees charged by MyGenie for using the Platform. Fees enable us to operate the Platform, provide 24/7 support, process payments, and facilitate connections between Owners, Renters, partners, and Admins. All fees are disclosed during booking or listing creation and are non-refundable except as noted in the Cancellation Policy or under applicable law. Fees may vary based on booking details, location, or user type, and include applicable VAT or taxes under EU law.
 Fee Structure
 We use a guest-paid commission model, inspired by platforms like Airbnb and Booking.com, where the primary fee is charged to Renters to keep Owner costs low and encourage listings.
 
 Renter Service Fee (Commission)
 Rate: 25% of the booking subtotal (Listing price plus any Owner-added fees, excluding cleaning, insurance, taxes, and Platform service fees).
-Calculation: Applied to the base rental price. For example, on a CZK 2,000 Listing price, the service fee is CZK 500, making the subtotal CZK 2,500 before add-ons.
+Calculation: Applied to the base rental price. For example, on a RON200 Listing price, the service fee is RON50, making the subtotal RON 2,500 before add-ons.
 What It Covers: Platform operations, payment processing, customer support, marketing, and dispute resolution.
-Variations: Reduced to 20% for repeat Renters or bookings over CZK 5,000. Non-refundable, even in cancellations (except full refunds under Major Disruptive Events).
+Variations: Reduced to 20% for repeat Renters or bookings over RON500. Non-refundable, even in cancellations (except full refunds under Major Disruptive Events).
 When Charged: Added during checkout and collected at booking confirmation.
 
 Owner Service Fee
 Rate: 5% of the Listing price (deducted from Owner payout).
-Calculation: On the base price before Renter fees. E.g., on CZK 2,000, Owner pays CZK 100.
+Calculation: On the base price before Renter fees. E.g., on RON200, Owner pays RON 100.
 What It Covers: Listing promotion, verification, and administrative support.
 Variations: Waived for first 3 listings per Owner; 3% for high-volume Owners (10+ bookings/month).
 When Charged: Deducted from payout after booking completion.
@@ -259,12 +259,12 @@ Cleaning Add-On Fee
 Rate: Up to 15% of the rental price, mandatory for all bookings.
 Calculation: Based on space size, activity type, and Owner requirements (e.g., per m²). Paid by Renter, portion (e.g., 80%) goes to Cleaner, remainder to Platform/Owner.
 What It Covers: Mandatory post-booking cleaning to restore spaces.
-Variations: Fixed minimum CZK 200; refundable per Cancellation Policy.
+Variations: Fixed minimum RON20; refundable per Cancellation Policy.
 When Charged: Included in Total Price at checkout.
 
 Insurance Add-On Fee
 Rate: 50% of the Total Price (mandatory).
-Calculation: Applied to full booking cost. E.g., on CZK 2,000 Listing + fees, insurance is half the total.
+Calculation: Applied to full booking cost. E.g., on RON200 Listing + fees, insurance is half the total.
 What It Covers: Coverage for damages, liability during rental.
 Variations: Non-refundable after confirmation.
 When Charged: Added at checkout.
@@ -272,18 +272,18 @@ When Charged: Added at checkout.
 Other Fees
 Payment Processing Fee: 1-3% (depending on method, e.g., credit card), charged to Renter or deducted from payout.
 Overstay Fees: Up to 2x hourly rate, plus service fees, for unauthorized extensions.
-Cancellation Penalties for Owners: CZK 500-1,000 per invalid cancellation, deducted from future payouts.
-Taxes: VAT (21% in Czechia) added where applicable; we handle remittance.
+Cancellation Penalties for Owners: RON50-100 per invalid cancellation, deducted from future payouts.
+Taxes: VAT (21%) added where applicable; we handle remittance.
 
 
 Invoicing and Payments
 
-Billing: Fees invoiced monthly to Owners/Cleaners; Renters pay at booking via integrated providers (e.g., Stripe).
-Payouts: Owners/Cleaners receive net amounts (after fees) within 3-5 business days post-checkout.
+Billing: Fees invoiced monthly to Owners/partners; Renters pay at booking via integrated providers (e.g., Stripe).
+Payouts: Owners/partners receive net amounts (after fees) within 3-5 business days post-checkout.
 Changes: We may adjust fees with 30 days' notice; changes don't affect existing bookings.
 Transparency: Full breakdown shown in app dashboard and emails.
 
-For questions, contact support. This policy complies with GDPR and Czech consumer laws.`;
+For questions, contact support. This policy complies with GDPR and EU consumer laws.`;
 
 export default function TermsOfServicePage() {
     return (

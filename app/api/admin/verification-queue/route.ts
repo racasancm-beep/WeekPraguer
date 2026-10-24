@@ -17,7 +17,7 @@ export async function GET() {
             where: {
                 verified: false,
                 role: {
-                    in: ["OWNER", "CLEANER"],
+                    in: ["OWNER"],
                 },
                 phone: {
                     not: null, // Only show users who started onboarding

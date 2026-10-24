@@ -124,7 +124,7 @@
 
 ### Labor Law (for Cleaning Companies)
 - [ ] Ensure cleaning companies are registered businesses
-- [ ] Platform is not employer of cleaners
+- [ ] Platform is not employer of partners
 - [ ] Independent contractor agreements
 
 ---

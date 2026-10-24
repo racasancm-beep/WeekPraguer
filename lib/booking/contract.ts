@@ -24,10 +24,10 @@ Space: ${spaceName}
 3. TERMS
 Start Date: ${startDate}
 End Date: ${endDate}
-Total Fee: ${totalPrice} CZK
+Total Fee: RON${totalPrice}
 
 4. USAGE
-The Tenant agrees to use the premises solely for office/quiet work purposes.
+The Tenant agrees to use the premises solely for the agreed purpose.
 The Tenant agrees to vacate the premises by the End Date.
 Quiet hours are strictly enforced between 22:00 and 06:00.
 
@@ -35,6 +35,6 @@ Quiet hours are strictly enforced between 22:00 and 06:00.
 The Tenant is liable for any damages caused to the property during the rental period.
 
 6. ACCEPTANCE
-By checking the "I Agree" box on the WeekPragueR platform, the Tenant accepts these terms digitally.
+By checking the "I Agree" box on the MyGenie platform, the Tenant accepts these terms digitally.
   `;
 }

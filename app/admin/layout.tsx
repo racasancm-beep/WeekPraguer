@@ -3,10 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LayoutDashboard, Users, Shield, Settings, LogOut, Menu, BarChart } from "lucide-react";
+import {
+    LayoutDashboard,
+    Users,
+    ShieldCheck,
+    LogOut,
+    Menu,
+    BarChart3,
+    DollarSign,
+    Activity,
+    Building2,
+    Calendar,
+    UserCheck
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 
 export default function AdminLayout({
@@ -18,53 +30,55 @@ export default function AdminLayout({
     const { data: session, status } = useSession();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    // Auth/Role check
-    if (status === "loading") return <div className="flex h-screen items-center justify-center">Loading...</div>;
-    if (!session || session?.user?.role !== "ADMIN") {
-        // return <div>Access Denied</div>;
-    }
+    if (status === "loading") return <div className="flex py-16 items-center justify-center font-bold text-[#008080]">Loading Admin Hub...</div>;
 
     const navigation = [
-        { name: "Overview", href: "/admin/dashboard", icon: LayoutDashboard },
-        { name: "Users", href: "/admin/users", icon: Users },
-        { name: "Analytics", href: "/admin/analytics", icon: BarChart },
-        { name: "Settings", href: "/admin/settings", icon: Settings },
+        { name: "All Graphs & Command", href: "/admin/dashboard", icon: BarChart3 },
+        { name: "All User Profiles", href: "/admin/dashboard#profiles", icon: Users },
+        { name: "Owner Earnings & Graphs", href: "/owner/dashboard/earnings", icon: DollarSign },
+        { name: "Owner AI Intelligence", href: "/owner/intelligence", icon: Activity },
+        { name: "All Space Listings", href: "/owner/dashboard/listings", icon: Building2 },
+        { name: "Owner Bookings", href: "/owner/dashboard/bookings", icon: Calendar },
+        { name: "Renter Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { name: "Verification Queue", href: "/admin/verification", icon: UserCheck },
     ];
 
     const Sidebar = () => (
         <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800">
-            <div className="flex h-16 items-center px-6 border-b dark:border-gray-800">
-                <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-500">
-                    WeekPragueR Admin
-                </span>
+            <div className="flex h-16 items-center justify-between px-6 border-b dark:border-gray-800">
+                <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-6 h-6 text-[#008080]" />
+                    <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#008080] to-violet-600">
+                        MyGenie Admin
+                    </span>
+                </div>
+            </div>
+            <div className="px-4 pt-3">
+                <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] font-bold text-amber-900">
+                    SUPER ADMIN • Full Access to All Graphs, Dashboards &amp; Profiles
+                </div>
             </div>
             <div className="flex-1 overflow-y-auto py-4">
                 <nav className="space-y-1 px-3">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
-                        const isInactive = ["Users", "Analytics", "Settings"].includes(item.name);
                         return (
                             <Link
                                 key={item.name}
-                                href={isInactive ? "#" : item.href}
-                                onClick={(e) => {
-                                    if (isInactive) e.preventDefault();
-                                    else setIsMobileOpen(false);
-                                }}
-                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${isActive
-                                    ? "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400"
-                                    : isInactive
-                                        ? "text-gray-400 opacity-40 grayscale cursor-not-allowed"
+                                href={item.href}
+                                onClick={() => setIsMobileOpen(false)}
+                                className={`flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
+                                    isActive
+                                        ? "bg-[#E6F4F4] text-[#006F6F] dark:bg-teal-900/20 dark:text-teal-300"
                                         : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-                                    }`}
-                                title={isInactive ? "Coming Soon" : ""}
+                                }`}
                             >
                                 <item.icon
-                                    className={`mr-3 h-5 w-5 ${isActive ? "text-purple-600 dark:text-purple-400" : isInactive ? "text-gray-300" : "text-gray-400 group-hover:text-gray-500"
-                                        }`}
+                                    className={`mr-3 h-5 w-5 ${
+                                        isActive ? "text-[#008080]" : "text-gray-400"
+                                    }`}
                                 />
                                 {item.name}
-                                {isInactive && <span className="ml-auto text-[8px] uppercase tracking-tighter opacity-70">Soon</span>}
                             </Link>
                         );
                     })}
@@ -73,10 +87,12 @@ export default function AdminLayout({
             <div className="border-t dark:border-gray-800 p-4">
                 <div className="flex items-center mb-4 px-2">
                     <Avatar className="h-8 w-8 mr-3">
-                        <AvatarFallback>{session?.user?.name?.[0] || "A"}</AvatarFallback>
+                        <AvatarFallback className="bg-[#008080] text-white font-bold">
+                            {session?.user?.name?.[0] || "A"}
+                        </AvatarFallback>
                     </Avatar>
                     <div className="overflow-hidden">
-                        <p className="text-sm font-medium truncate">{session?.user?.name}</p>
+                        <p className="text-sm font-bold truncate">{session?.user?.name || "MyGenie Super Admin"}</p>
                         <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
                     </div>
                 </div>
@@ -93,15 +109,15 @@ export default function AdminLayout({
     );
 
     return (
-        <div className="flex h-screen bg-gray-50 dark:bg-black">
+        <div className="flex min-h-screen bg-gray-50 dark:bg-black">
             {/* Desktop Sidebar */}
-            <div className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50">
+            <div className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 z-40">
                 <Sidebar />
             </div>
 
             {/* Mobile Sidebar */}
             <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b px-4 h-16 flex items-center justify-between">
-                <span className="font-bold text-purple-600">WeekPragueR Admin</span>
+                <span className="font-bold text-[#008080]">MyGenie Admin</span>
                 <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon">
@@ -114,8 +130,8 @@ export default function AdminLayout({
                 </Sheet>
             </div>
 
-            <main className="flex-1 md:pl-64 flex flex-col pt-16 md:pt-0">
-                <div className="flex-1 overflow-y-auto p-4 md:p-8">
+            <main className="flex-1 md:ml-64 flex flex-col pt-16 md:pt-0 min-w-0">
+                <div className="flex-1 p-4 md:p-8">
                     {children}
                 </div>
             </main>

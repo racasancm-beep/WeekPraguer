@@ -6,22 +6,14 @@ export default withAuth(
         const token = req.nextauth.token;
         const path = req.nextUrl.pathname;
 
-        // 1. Protection for Owner Routes
+        // 1. Protection for Owner Routes (accessible to OWNER and ADMIN)
         if (path.startsWith("/owner")) {
-            if (!token || token.role !== "OWNER") {
-                // Redirect to dashboard or unauthorized page
+            if (!token || (token.role !== "OWNER" && token.role !== "ADMIN")) {
                 return NextResponse.redirect(new URL("/dashboard", req.url));
             }
         }
 
-        // 2. Protection for Cleaner Routes
-        if (path.startsWith("/cleaner")) {
-            if (!token || token.role !== "CLEANER") {
-                return NextResponse.redirect(new URL("/dashboard", req.url));
-            }
-        }
-
-        // 3. Protection for Admin Routes
+        // 2. Protection for Admin Routes (accessible to ADMIN)
         if (path.startsWith("/admin")) {
             if (!token || token.role !== "ADMIN") {
                 return NextResponse.redirect(new URL("/dashboard", req.url));
@@ -30,7 +22,7 @@ export default withAuth(
     },
     {
         callbacks: {
-            authorized: ({ token }) => !!token, // Requires the user to be logged in for any matched route
+            authorized: ({ token }) => !!token,
         },
     }
 );
@@ -38,7 +30,6 @@ export default withAuth(
 export const config = {
     matcher: [
         "/owner/:path*",
-        "/cleaner/:path*",
         "/admin/:path*",
         "/portal",
         "/dashboard/:path*"

@@ -28,7 +28,7 @@ export default function GDPRPage() {
                         <section className="mb-8">
                             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Our Commitment to GDPR</h2>
                             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                                WeekPragueR is committed to protecting the privacy and security of our users' personal data. We comply with the General Data Protection Regulation (GDPR) for all users in the European Economic Area (EEA) and beyond.
+                                MyGenie is committed to protecting the privacy and security of our users' personal data. We comply with the General Data Protection Regulation (GDPR) for all users in the European Economic Area (EEA) and beyond.
                             </p>
                         </section>
 
@@ -53,7 +53,7 @@ export default function GDPRPage() {
 
                         <div className="mt-12 p-6 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
                             <p className="text-sm text-emerald-700 dark:text-emerald-300 font-medium">
-                                Contact our DPO: dpo@weekpragueR.com
+                                Contact our DPO: dpo@MyGenie.com
                             </p>
                         </div>
                     </div>

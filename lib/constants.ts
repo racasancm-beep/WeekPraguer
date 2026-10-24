@@ -1,14 +1,14 @@
 import { Wifi, Monitor, Coffee, Car, Wind, Printer, Lock, Users, Zap, Video } from "lucide-react";
 
 export const AMENITIES = [
-    { id: "wifi", label: "High-Speed Wifi", icon: Wifi },
-    { id: "projector", label: "Projector / Screen", icon: Monitor },
-    { id: "kitchen", label: "Kitchen Access", icon: Coffee },
-    { id: "parking", label: "On-site Parking", icon: Car },
-    { id: "ac", label: "Air Conditioning", icon: Wind },
-    { id: "printer", label: "Printing / Scanning", icon: Printer },
-    { id: "storage", label: "Secure Storage", icon: Lock },
-    { id: "meeting_rooms", label: "Meeting Rooms", icon: Users },
-    { id: "power_backup", label: "Power Backup", icon: Zap },
-    { id: "video_conf", label: "Video Conf. Setup", icon: Video },
+    { id: "wifi", label: "WiFi Alta Velocidad", icon: Wifi },
+    { id: "projector", label: "Proyector / Pantalla", icon: Monitor },
+    { id: "kitchen", label: "Cocina Equipada", icon: Coffee },
+    { id: "parking", label: "Aparcamiento", icon: Car },
+    { id: "ac", label: "Aire Acondicionado", icon: Wind },
+    { id: "printer", label: "Impresora / Escáner", icon: Printer },
+    { id: "storage", label: "Almacenamiento Seguro", icon: Lock },
+    { id: "meeting_rooms", label: "Salas de Reuniones", icon: Users },
+    { id: "power_backup", label: "Tomas de Corriente", icon: Zap },
+    { id: "video_conf", label: "Equipo de Videoconferencia", icon: Video },
 ];

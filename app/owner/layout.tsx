@@ -1,12 +1,11 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Building2, Calendar, Settings, LogOut, DollarSign } from "lucide-react";
+import { LayoutDashboard, Building2, Calendar, LogOut, DollarSign, Activity, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
 
 export default function OwnerLayout({
     children,
@@ -16,29 +15,30 @@ export default function OwnerLayout({
     const { data: session, status } = useSession();
     const router = useRouter();
     const pathname = usePathname();
+    const role = (session?.user as any)?.role;
+    const isAdmin = role === "ADMIN";
 
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
-        } else if (status === "authenticated" && (session?.user as any)?.role !== "OWNER") {
-            router.push("/dashboard"); // Redirect non-owners
+        } else if (status === "authenticated" && role !== "OWNER" && role !== "ADMIN") {
+            router.push("/dashboard");
         }
-    }, [status, session, router]);
+    }, [status, role, router]);
 
     if (status === "loading") {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
-    if (!session || (session.user as any)?.role !== "OWNER") {
+    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
         return null;
     }
 
     const navigation = [
-        { name: "Dashboard", href: "/owner/dashboard", icon: LayoutDashboard },
+        { name: "Earnings & Graphs", href: "/owner/dashboard/earnings", icon: DollarSign },
+        { name: "AI Intelligence Graphs", href: "/owner/intelligence", icon: Activity },
         { name: "My Listings", href: "/owner/dashboard/listings", icon: Building2 },
         { name: "Bookings", href: "/owner/dashboard/bookings", icon: Calendar },
-        { name: "Earnings", href: "/owner/dashboard/earnings", icon: DollarSign },
-        { name: "Settings", href: "/owner/dashboard/settings", icon: Settings },
     ];
 
     return (
@@ -48,33 +48,39 @@ export default function OwnerLayout({
                 <div className="flex flex-col h-full">
                     <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
                         <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                            WeekPragueR
+                            MyGenie
                         </span>
                         <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            Owner
+                            {isAdmin ? "Admin → Owner" : "Owner"}
                         </span>
                     </div>
+
+                    {isAdmin && (
+                        <div className="p-3 bg-amber-50 border-b border-amber-200">
+                            <Link href="/admin/dashboard">
+                                <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs">
+                                    <ShieldCheck className="w-4 h-4 mr-1.5" />
+                                    Back to ADMIN Hub
+                                </Button>
+                            </Link>
+                        </div>
+                    )}
 
                     <div className="flex-1 py-6 px-4 space-y-1">
                         {navigation.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                            const isInactive = ["Bookings", "Earnings", "Settings"].includes(item.name);
                             return (
                                 <Link
                                     key={item.name}
-                                    href={isInactive ? "#" : item.href}
-                                    onClick={(e) => isInactive && e.preventDefault()}
-                                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${isActive
-                                        ? "bg-primary/10 text-primary"
-                                        : isInactive
-                                            ? "text-gray-400 opacity-40 grayscale cursor-not-allowed"
+                                    href={item.href}
+                                    className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                                        isActive
+                                            ? "bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300 font-bold"
                                             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                        }`}
-                                    title={isInactive ? "Coming Soon" : ""}
+                                    }`}
                                 >
-                                    <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-primary" : isInactive ? "text-gray-300" : "text-gray-400"}`} />
+                                    <item.icon className={`mr-3 h-5 w-5 ${isActive ? "text-violet-600" : "text-gray-400"}`} />
                                     {item.name}
-                                    {isInactive && <span className="ml-auto text-[8px] uppercase tracking-tighter opacity-70">Soon</span>}
                                 </Link>
                             );
                         })}
@@ -110,7 +116,13 @@ export default function OwnerLayout({
             <div className="md:ml-64 min-h-screen flex flex-col">
                 <header className="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 md:hidden">
                     <span className="text-lg font-bold">Owner Dashboard</span>
-                    {/* Mobile menu trigger would go here */}
+                    {isAdmin && (
+                        <Link href="/admin/dashboard">
+                            <Button size="sm" variant="outline" className="text-xs font-bold">
+                                Back to Admin
+                            </Button>
+                        </Link>
+                    )}
                 </header>
                 <main className="flex-1 p-4 sm:p-6 lg:p-8">
                     {children}

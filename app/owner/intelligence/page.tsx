@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -52,7 +52,7 @@ export default function OwnerIntelligencePage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">
-                            {data.forecast.toLocaleString()} CZK
+                            {data.forecast.toLocaleString()} RON
                         </div>
                         <div className="flex items-center gap-1 mt-2 text-green-600 font-medium text-sm">
                             <TrendingUp className="w-4 h-4" />
@@ -93,7 +93,7 @@ export default function OwnerIntelligencePage() {
                                     </linearGradient>
                                 </defs>
                                 <XAxis dataKey="month" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} CZK`} />
+                                <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value} RON`} />
                                 <Tooltip />
                                 <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorRevenue)" />
                             </AreaChart>

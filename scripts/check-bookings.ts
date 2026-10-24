@@ -9,7 +9,7 @@ async function main() {
             id: true,
             totalPrice: true,
             cleaningFee: true,
-            cleanerEarnings: true,
+            
             space: {
                 select: { name: true, size: true }
             }
@@ -17,7 +17,7 @@ async function main() {
     });
     console.log("Bookings Summary:");
     bookings.forEach(b => {
-        console.log(`- Space: ${b.space.name} (${b.space.size}m2), Total: ${b.totalPrice}, CleaningFee: ${b.cleaningFee}, CleanerEarnings: ${b.cleanerEarnings}`);
+        console.log(`- Space: ${b.space.name} (${b.space.size}m2), Total: ${b.totalPrice}, CleaningFee: ${b.cleaningFee}`);
     });
 }
 

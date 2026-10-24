@@ -41,34 +41,13 @@ export async function POST(req: Request) {
 
             for (const slot of slots) {
                 // Parse "YYYY-MM-DD" safely
-                const [y, m, d] = slot.date.split("-").map(Number);
+                const dateStr = typeof slot.date === "string" ? slot.date : String(slot.date); const datePart = dateStr.includes("T") ? dateStr.split("T")[0] : dateStr; const [y, m, d] = datePart.split("-").map(Number);
                 const [sH, sM] = slot.startTime.split(":").map(Number);
                 const [eH, eM] = slot.endTime.split(":").map(Number);
 
                 // Create date objects for validation and storage (using UTC as the platform's baseline)
                 const start = new Date(Date.UTC(y, m - 1, d, sH, sM));
                 const end = new Date(Date.UTC(y, m - 1, d, eH, eM));
-
-                // Force Friday Full Day to 18-22
-                if (start.getUTCDay() === 5 && slot.isFullDay) {
-                    start.setUTCHours(18, 0, 0, 0);
-                    end.setUTCHours(22, 0, 0, 0);
-                }
-
-                // Validation: Friday 18:00 - 22:00
-                if (start.getUTCDay() === 5) {
-                    if (start.getUTCHours() < 18) {
-                        throw new Error("Friday bookings are only available after 18:00");
-                    }
-                    if (end.getUTCHours() > 22 || (end.getUTCHours() === 22 && end.getUTCMinutes() > 0)) {
-                        throw new Error("Friday bookings must end by 22:00");
-                    }
-                }
-
-                // Validation: Sunday until 20:00
-                if (start.getUTCDay() === 0 && (end.getUTCHours() > 20 || (end.getUTCHours() === 20 && end.getUTCMinutes() > 0))) {
-                    throw new Error("Sunday bookings must end by 20:00");
-                }
 
                 // Check Overlaps
                 const overlapping = await tx.booking.findFirst({
@@ -105,8 +84,7 @@ export async function POST(req: Request) {
                         commission: pricing.commission,
                         ownerEarnings: pricing.ownerPayout,
                         adminEarnings: pricing.commission, // Admin takes commission 
-                        cleanerEarnings: pricing.cleanerPayout,
-                        status: "CONFIRMED",
+                        status: "PENDING",
                         termsAcceptedAt: new Date(),
                         termsAcceptedIp: ip,
                     },
@@ -124,3 +102,6 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
     }
 }
+
+
+

@@ -2,25 +2,55 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { format, isWeekend, differenceInHours } from "date-fns";
+import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AMENITIES } from "@/lib/constants";
 import { useSession } from "next-auth/react";
-import { Clock, Calendar as CalendarIcon, Trash2, Sparkles } from "lucide-react";
+import {
+    Clock,
+    MapPin,
+    Users,
+    Ruler,
+    Sparkles,
+    Shield,
+    ChevronLeft,
+    ChevronRight,
+    Wifi,
+    Wind,
+    Utensils,
+    Car,
+    Monitor,
+    Calendar as CalendarIcon,
+    ArrowLeft,
+    ExternalLink
+} from "lucide-react";
+import Link from "next/link";
+import { formatPrice } from "@/lib/utils";
+import MapComponent from "@/components/ui/map-component";
 
 interface SpaceDetailed {
     id: string;
     name: string;
     description: string;
     city: string;
+    district?: string;
     address: string;
+    category?: string;
+    latitude?: number;
+    longitude?: number;
+    size: number;
+    capacity: number;
     hourlyRate: number;
     dailyRate: number;
     weekendRate: number;
-    amenitiesList: string; // JSON string
-    photos: { url: string }[];
+    hasWifi: boolean;
+    hasAC: boolean;
+    hasKitchen: boolean;
+    hasParking: boolean;
+    hasProjector: boolean;
+    amenitiesList: string;
+    photos: { id?: string; url: string }[];
 }
 
 interface BookingSlot {
@@ -35,7 +65,9 @@ export default function SpaceDetailsPage() {
     const router = useRouter();
     const { data: session } = useSession();
     const [space, setSpace] = useState<SpaceDetailed | null>(null);
+    const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
     const [bookedDates, setBookedDates] = useState<Date[]>([]);
+    const [existingBookings, setExistingBookings] = useState<any[]>([]);
     const [selectedDates, setSelectedDates] = useState<Date[]>([]);
     const [slots, setSlots] = useState<Record<string, BookingSlot>>({});
 
@@ -58,11 +90,12 @@ export default function SpaceDetailsPage() {
             const bookingsRes = await fetch(`/api/spaces/${id}/bookings`);
             if (bookingsRes.ok) {
                 const bData = await bookingsRes.json();
+                setExistingBookings(bData);
                 const dates = bData.map((b: any) => new Date(b.startTime));
                 setBookedDates(dates);
             }
         } catch (error) {
-            toast.error("Failed to load space");
+            toast.error("Error loading space details");
         } finally {
             setLoading(false);
         }
@@ -70,70 +103,43 @@ export default function SpaceDetailsPage() {
 
     const handleDateSelect = (dates: Date[] | undefined) => {
         const newDates = dates || [];
-        setSelectedDates([...newDates]); // Ensure new array reference for re-render
+        setSelectedDates(newDates);
 
-        // Update slots
-        setSlots(prev => {
-            const next = { ...prev };
-
-            // Add new slots
-            newDates.forEach(d => {
-                const key = d.toDateString();
-                if (!next[key]) {
-                    const isFriday = d.getDay() === 5;
-                    const isSunday = d.getDay() === 0;
-                    next[key] = {
-                        date: d,
-                        isFullDay: !isFriday,
-                        startTime: isFriday ? "18:00" : "09:00",
-                        endTime: isFriday ? "22:00" : (isSunday ? "20:00" : "18:00")
-                    };
-                }
-            });
-
-            // Remove unselected slots
-            Object.keys(next).forEach(key => {
-                if (!newDates.find(d => d.toDateString() === key)) {
-                    delete next[key];
-                }
-            });
-
-            return next;
+        // Update slots dictionary
+        const newSlots: Record<string, BookingSlot> = {};
+        newDates.forEach((d) => {
+            const key = d.toISOString().split("T")[0];
+            if (slots[key]) {
+                newSlots[key] = slots[key];
+            } else {
+                newSlots[key] = {
+                    date: d,
+                    isFullDay: false,
+                    startTime: "09:00",
+                    endTime: "13:00",
+                };
+            }
         });
-    };
-
-    const selectWholeWeekend = () => {
-        // Find upcoming Friday, Saturday, Sunday
-        const today = new Date();
-        const nextFri = new Date();
-        nextFri.setDate(today.getDate() + ((5 + 7 - today.getDay()) % 7));
-
-        const nextSat = new Date(nextFri);
-        nextSat.setDate(nextFri.getDate() + 1);
-
-        const nextSun = new Date(nextFri);
-        nextSun.setDate(nextFri.getDate() + 2);
-
-        handleDateSelect([nextFri, nextSat, nextSun]);
+        setSlots(newSlots);
     };
 
     const updateSlot = (key: string, updates: Partial<BookingSlot>) => {
-        setSlots(prev => ({
+        setSlots((prev) => ({
             ...prev,
-            [key]: { ...prev[key], ...updates }
+            [key]: { ...prev[key], ...updates },
         }));
     };
 
     const calculateTotalPrice = () => {
         if (!space) return 0;
         let total = 0;
-        Object.values(slots).forEach(slot => {
+        Object.values(slots).forEach((slot) => {
             if (slot.isFullDay) {
                 total += space.dailyRate;
             } else {
-                const startHour = parseInt(slot.startTime.split(":")[0]);
-                const endHour = parseInt(slot.endTime.split(":")[0]);
-                const hours = endHour - startHour;
+                const startHour = parseInt(slot.startTime.split(":")[0], 10);
+                const endHour = parseInt(slot.endTime.split(":")[0], 10);
+                const hours = Math.max(1, endHour - startHour);
                 total += hours * space.hourlyRate;
             }
         });
@@ -142,250 +148,445 @@ export default function SpaceDetailsPage() {
 
     const handleBook = async () => {
         if (!session) {
-            router.push("/login");
+            toast.error("Please sign in to book this space");
+            router.push(`/login?callbackUrl=/spaces/${id}`);
             return;
         }
-        if (Object.keys(slots).length === 0) {
-            toast.error("Please select at least one day.");
+
+        if (selectedDates.length === 0) {
+            toast.error("Please select at least one date");
             return;
         }
+
         if (!agreed) {
-            toast.error("You must agree to the contract terms.");
+            toast.error("You must agree to the space rules & terms");
             return;
         }
 
         setBookingLoading(true);
         try {
-            // Send all slots as a single request
+            // Sort dates
+            const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+            const firstDate = sortedDates[0];
+            const lastDate = sortedDates[sortedDates.length - 1];
+
             const res = await fetch("/api/bookings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    spaceId: id,
-                    slots: Object.values(slots).map(s => ({
-                        date: format(s.date, "yyyy-MM-dd"),
-                        isFullDay: s.isFullDay,
-                        startTime: s.startTime,
-                        endTime: s.endTime
-                    }))
+                    spaceId: space?.id,
+                    startTime: firstDate,
+                    endTime: lastDate,
+                    totalPrice: calculateTotalPrice(),
+                    slots: Object.values(slots).map(s => {
+                        const d = new Date(s.date);
+                        return {
+                            ...s,
+                            date: [
+                                d.getFullYear(),
+                                String(d.getMonth() + 1).padStart(2, '0'),
+                                String(d.getDate()).padStart(2, '0')
+                            ].join('-')
+                        };
+                    }),
                 }),
             });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Booking failed");
-
-            toast.success("Booking Request Sent!");
-            router.push("/dashboard");
-        } catch (error: any) {
-            toast.error(error.message);
+            if (res.ok) {
+                toast.success("Booking request submitted successfully!");
+                router.push("/dashboard");
+            } else {
+                const err = await res.json();
+                toast.error(err.message || "Failed to create booking");
+            }
+        } catch (error) {
+            toast.error("An error occurred during booking");
         } finally {
             setBookingLoading(false);
         }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-    if (!space) return <div className="min-h-screen flex items-center justify-center">Space not found</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm font-semibold text-gray-500">Loading space...</p>
+                </div>
+            </div>
+        );
+    }
 
-    const amenities = JSON.parse(space.amenitiesList || "[]");
+    if (!space) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Space not found</h2>
+                <p className="text-gray-500 mb-6">The requested space does not exist or has been removed.</p>
+                <Link href="/explore">
+                    <Button className="bg-violet-600 text-white rounded-xl">Back to Explore</Button>
+                </Link>
+            </div>
+        );
+    }
+
+    let amenities: string[] = [];
+    try {
+        amenities = JSON.parse(space.amenitiesList || "[]");
+    } catch {
+        amenities = ["High-Speed WiFi", "Natural Light", "Climate Control"];
+    }
+
     const totalPrice = calculateTotalPrice();
+    const photos = space.photos || [];
+    const activePhoto = photos[selectedPhotoIndex]?.url || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8 grid lg:grid-cols-12 gap-12">
-            {/* Left Column: Details (8 cols) */}
-            <div className="lg:col-span-8 space-y-8">
-                <div>
-                    <h1 className="text-4xl font-bold mb-2">{space.name}</h1>
-                    <p className="text-xl text-muted-foreground">{space.city}, {space.address}</p>
-                </div>
-
-                <div className="aspect-video bg-muted rounded-2xl overflow-hidden shadow-inner">
-                    {space.photos?.[0] ? (
-                        <img src={space.photos[0].url} alt="Space" className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground">No Photos Available</div>
+        <div className="min-h-screen bg-gray-50/50 pb-20">
+            {/* Header breadcrumb */}
+            <div className="bg-white border-b border-gray-100">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+                    <Link href="/explore" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-violet-600 transition-colors">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to spaces
+                    </Link>
+                    {space.category && (
+                        <span className="text-xs font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-3 py-1 rounded-full">
+                            {space.category}
+                        </span>
                     )}
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <h3 className="text-2xl font-semibold flex items-center gap-2">
-                            <Clock className="w-6 h-6 text-violet-600" />
-                            About this space
-                        </h3>
-                        <p className="text-lg text-gray-600 leading-relaxed">{space.description}</p>
-                    </div>
-
-                    <div className="space-y-4">
-                        <h3 className="text-2xl font-semibold flex items-center gap-2">
-                            <Sparkles className="w-6 h-6 text-violet-600" />
-                            Amenities
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {amenities.map((a: string) => {
-                                const am = AMENITIES.find(item => item.id === a);
-                                return (
-                                    <span key={a} className="px-4 py-2 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 rounded-xl text-sm font-medium border border-violet-100 dark:border-violet-800">
-                                        {am?.label || a}
-                                    </span>
-                                );
-                            })}
-                        </div>
-                    </div>
                 </div>
             </div>
 
-            {/* Right Column: Dynamic Booking Card (4 cols) */}
-            <div className="lg:col-span-4">
-                <div className="p-8 border rounded-3xl shadow-2xl sticky top-24 bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 space-y-6">
-                    <div>
-                        <div className="flex justify-between items-end mb-1">
-                            <span className="text-3xl font-bold text-gray-900 dark:text-white">{space.hourlyRate} CZK</span>
-                            <span className="text-gray-500 mb-1">/ hour</span>
-                        </div>
-                        <p className="text-sm text-muted-foreground">or {space.dailyRate} CZK / full day</p>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+                {/* Space Title & Location */}
+                <div className="mb-6">
+                    <div className="flex flex-wrap items-center gap-3 mb-2">
+                        {space.category && (
+                            <span className="text-xs font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-3 py-1 rounded-full">
+                                {space.category}
+                            </span>
+                        )}
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                            <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                            Verified Host
+                        </span>
                     </div>
 
-                    <hr className="border-gray-100 dark:border-gray-800" />
+                    <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2">
+                        {space.name}
+                    </h1>
 
-                    <div className="space-y-4">
-                        <label className="text-sm font-bold uppercase tracking-wider text-gray-500">Pick Dates</label>
-                        <div className="border rounded-2xl p-2 bg-gray-50 dark:bg-gray-800/50">
-                            <Calendar
-                                mode="multiple"
-                                selected={selectedDates}
-                                onSelect={handleDateSelect}
-                                disabled={(d) => {
-                                    const day = d.getDay();
-                                    const isEnabledDay = day === 0 || day === 5 || day === 6;
-                                    return (
-                                        !isEnabledDay ||
-                                        d < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                                        bookedDates.some(booked =>
-                                            booked.getDate() === d.getDate() &&
-                                            booked.getMonth() === d.getMonth() &&
-                                            booked.getFullYear() === d.getFullYear()
-                                        )
-                                    );
-                                }}
-                                className="scale-95"
-                            />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-[10px] h-7 border-dashed border-violet-300 text-violet-600 hover:bg-violet-50"
-                                onClick={selectWholeWeekend}
-                            >
-                                <CalendarIcon className="w-3 h-3 mr-1" />
-                                Select Entire Next Weekend
-                            </Button>
-                            <p className="text-[10px] text-center text-violet-600 font-medium">
-                                * Fri (18:00 - 22:00), Sat (9:00 - 18:00) & Sun (9:00 - 20:00).
-                            </p>
-                        </div>
+                    <div className="flex items-center text-sm text-gray-500 gap-1.5">
+                        <MapPin className="w-4 h-4 text-violet-600 flex-shrink-0" />
+                        <span>{space.address}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-gray-700">{space.city}</span>
+                    </div>
+                </div>
+
+                {/* Photo Gallery */}
+                <div className="space-y-3 mb-10">
+                    <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[500px] w-full bg-gray-900 rounded-3xl overflow-hidden shadow-xl">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={activePhoto}
+                            alt={space.name}
+                            className="w-full h-full object-cover"
+                        />
+
+                        {photos.length > 1 && (
+                            <>
+                                <button
+                                    onClick={() => setSelectedPhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1))}
+                                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-gray-900 flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={() => setSelectedPhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0))}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-gray-900 flex items-center justify-center shadow-lg transition-transform active:scale-95"
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+                                <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+                                    {selectedPhotoIndex + 1} / {photos.length} photos
+                                </div>
+                            </>
+                        )}
                     </div>
 
-                    {/* Selected Slots Configuration */}
-                    {Object.keys(slots).length > 0 && (
-                        <div className="space-y-4">
-                            <label className="text-sm font-bold uppercase tracking-wider text-gray-500">Customize Booking</label>
-                            <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
-                                {Object.entries(slots).map(([key, slot]) => (
-                                    <div key={key} className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 space-y-3">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">{format(slot.date, "EEE, MMM do")}</span>
-                                            <div className="flex items-center gap-2">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={slot.isFullDay}
-                                                    onChange={(e) => updateSlot(key, { isFullDay: e.target.checked })}
-                                                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-                                                />
-                                                <span className="text-xs text-gray-600">Full Day</span>
-                                            </div>
-                                        </div>
+                    {/* Thumbnails row */}
+                    {photos.length > 1 && (
+                        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                            {photos.map((p, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setSelectedPhotoIndex(idx)}
+                                    className={`relative w-20 h-14 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${
+                                        selectedPhotoIndex === idx
+                                            ? "border-violet-600 ring-2 ring-violet-200 scale-105"
+                                            : "border-transparent opacity-70 hover:opacity-100"
+                                    }`}
+                                >
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={p.url} alt={`Photo ${idx + 1}`} className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
-                                        {!slot.isFullDay && (
-                                            <div className="flex items-center gap-2 pt-1 border-t border-gray-200 dark:border-gray-700">
-                                                <div className="flex-1 space-y-1">
-                                                    <span className="text-[10px] uppercase text-gray-400">Start</span>
-                                                    <select
-                                                        value={slot.startTime}
-                                                        onChange={(e) => updateSlot(key, { startTime: e.target.value })}
-                                                        className="w-full bg-transparent text-xs font-medium focus:ring-0 border-none p-0 cursor-pointer"
-                                                    >
-                                                        {Array.from({
-                                                            length: slot.date.getDay() === 5 ? 4 : (slot.date.getDay() === 0 ? 12 : 14)
-                                                        }).map((_, i) => {
-                                                            const hour = slot.date.getDay() === 5 ? 18 + i : 8 + i;
-                                                            const hStr = `${hour.toString().padStart(2, '0')}:00`;
-                                                            return <option key={hStr} value={hStr}>{hStr}</option>
-                                                        })}
-                                                    </select>
-                                                </div>
-                                                <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
-                                                <div className="flex-1 space-y-1">
-                                                    <span className="text-[10px] uppercase text-gray-400">End</span>
-                                                    <select
-                                                        value={slot.endTime}
-                                                        onChange={(e) => updateSlot(key, { endTime: e.target.value })}
-                                                        className="w-full bg-transparent text-xs font-medium focus:ring-0 border-none p-0 cursor-pointer"
-                                                    >
-                                                        {Array.from({
-                                                            length: slot.date.getDay() === 5 ? 4 : (slot.date.getDay() === 0 ? 12 : 14)
-                                                        }).map((_, i) => {
-                                                            const hour = slot.date.getDay() === 5 ? 19 + i : 9 + i;
-                                                            const hStr = `${hour.toString().padStart(2, '0')}:00`;
-                                                            return <option key={hStr} value={hStr}>{hStr}</option>
-                                                        })}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                {/* Content Grid */}
+                <div className="grid lg:grid-cols-12 gap-10">
+                    {/* Left Column (8 cols): Info, Details, Amenities, Location */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {/* Quick Stats Banner */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 font-medium">Capacity</div>
+                                    <div className="text-sm font-bold text-gray-900">{space.capacity} people</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                    <Ruler className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 font-medium">Size</div>
+                                    <div className="text-sm font-bold text-gray-900">{space.size} m²</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                    <Wifi className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 font-medium">Connectivity</div>
+                                    <div className="text-sm font-bold text-gray-900">{space.hasWifi ? "High-Speed WiFi" : "On request"}</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                    <Clock className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 font-medium">Rental</div>
+                                    <div className="text-sm font-bold text-gray-900">Hourly / Daily</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <Clock className="w-5 h-5 text-violet-600" />
+                                Space Description
+                            </h3>
+                            <div className="text-gray-600 leading-relaxed text-sm sm:text-base whitespace-pre-line font-normal">
+                                {space.description}
+                            </div>
+                        </div>
+
+                        {/* Amenities */}
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-violet-600" />
+                                Amenities & Included Services
+                            </h3>
+                            <div className="flex flex-wrap gap-2.5">
+                                {amenities.map((a: string, i: number) => (
+                                    <span
+                                        key={i}
+                                        className="px-4 py-2 bg-violet-50 text-violet-800 rounded-2xl text-xs font-semibold border border-violet-100"
+                                    >
+                                        ✓ {a}
+                                    </span>
                                 ))}
                             </div>
                         </div>
-                    )}
 
-                    {Object.keys(slots).length > 0 && (
-                        <div className="pt-4 space-y-3 border-t border-gray-100 dark:border-gray-800">
-                            <div className="flex justify-between items-center text-xl font-black pt-2">
-                                <span>Total Price</span>
-                                <span className="text-violet-600">{totalPrice.toLocaleString()} CZK</span>
+                        {/* Google Map & Location Section */}
+                        <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-violet-600" />
+                                    Location & Google Map
+                                </h3>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {space.address}{space.district ? `, ${space.district}` : ""}, {space.city}
+                                </span>
+                            </div>
+
+                            <div className="h-80 w-full rounded-2xl overflow-hidden border border-gray-100 shadow-inner">
+                                <MapComponent
+                                    lat={space.latitude}
+                                    lng={space.longitude}
+                                    address={`${space.address}, ${space.city}`}
+                                    zoom={15}
+                                />
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    <div className="pt-2 space-y-4">
-                        <div className="flex items-center gap-3 p-3 bg-violet-50 dark:bg-violet-900/10 rounded-xl border border-violet-100 dark:border-violet-800">
-                            <input
-                                type="checkbox"
-                                id="contract"
-                                checked={agreed}
-                                onChange={(e) => setAgreed(e.target.checked)}
-                                className="h-5 w-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-                            />
-                            <label htmlFor="contract" className="text-xs text-gray-600 dark:text-gray-400 leading-tight">
-                                I agree to the <a
-                                    href={`/api/bookings/contract-preview?spaceName=${encodeURIComponent(space.name)}&price=${totalPrice}`}
-                                    target="_blank"
-                                    className="font-bold text-violet-600 underline"
-                                >
-                                    Digital Contract
-                                </a>
-                            </label>
+                    {/* Right Column (4 cols): Dynamic Booking Card */}
+                    <div className="lg:col-span-4">
+                        <div className="p-6 md:p-8 border rounded-3xl shadow-xl sticky top-24 bg-white border-gray-100 space-y-6">
+                            <div>
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <span className="text-3xl font-black text-gray-900">{formatPrice(space.hourlyRate)}</span>
+                                    <span className="text-sm text-gray-500 font-medium">/ hour</span>
+                                </div>
+                                <p className="text-xs text-gray-500">
+                                    or <span className="font-bold text-gray-700">{formatPrice(space.dailyRate)}</span> / full day
+                                </p>
+                            </div>
+
+                            <hr className="border-gray-100" />
+
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
+                                    Select Dates
+                                </label>
+                                <div className="border rounded-2xl p-2 bg-gray-50/50 flex justify-center">
+                                    <Calendar
+                                        mode="multiple"
+                                        selected={selectedDates}
+                                        onSelect={handleDateSelect}
+                                        disabled={(d) => {
+                                            return (
+                                                d < new Date(new Date().setHours(0, 0, 0, 0)) ||
+                                                bookedDates.some(
+                                                    (booked) =>
+                                                        booked.getDate() === d.getDate() &&
+                                                        booked.getMonth() === d.getMonth() &&
+                                                        booked.getFullYear() === d.getFullYear()
+                                                )
+                                            );
+                                        }}
+                                        className="scale-95"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Slot Configurations */}
+                            {Object.keys(slots).length > 0 && (
+                                <div className="space-y-3">
+                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
+                                        Configure Hours
+                                    </label>
+                                    <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                                        {Object.entries(slots).map(([key, slot]) => (
+                                            <div key={key} className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 space-y-2">
+                                                <div className="flex justify-between items-center text-xs font-bold text-gray-800">
+                                                    <span>{format(slot.date, "EEEE, MMMM d")}</span>
+                                                    <label className="flex items-center gap-1.5 cursor-pointer font-normal text-gray-600">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={slot.isFullDay}
+                                                            onChange={(e) => updateSlot(key, { isFullDay: e.target.checked })}
+                                                            className="rounded text-violet-600"
+                                                        />
+                                                        Full day
+                                                    </label>
+                                                </div>
+
+                                                {!slot.isFullDay && (
+                                                    <div className="flex items-center gap-2 pt-1 border-t border-gray-200">
+                                                        <div className="flex-1">
+                                                            <span className="text-[10px] text-gray-400 block font-semibold">Start</span>
+                                                            <select
+                                                                value={slot.startTime}
+                                                                onChange={(e) => updateSlot(key, { startTime: e.target.value })}
+                                                                className="w-full text-xs font-semibold bg-white p-1 rounded border border-gray-200"
+                                                            >
+                                                                {Array.from({ length: 14 }).map((_, i) => {
+    const hourNum = 8 + i;
+    const h = hourNum.toString().padStart(2, "0") + ":00";
+    const isBooked = existingBookings.some(b => {
+        const bStart = new Date(b.startTime);
+        const bEnd = new Date(b.endTime);
+        if (bStart.toISOString().split('T')[0] === key) {
+            const bStartHour = bStart.getUTCHours();
+            const bEndHour = bEnd.getUTCHours();
+            return hourNum >= bStartHour && hourNum < bEndHour;
+        }
+        return false;
+    });
+    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? '(Booked)' : ''}</option>;
+})}
+                                                            </select>
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <span className="text-[10px] text-gray-400 block font-semibold">End</span>
+                                                            <select
+                                                                value={slot.endTime}
+                                                                onChange={(e) => updateSlot(key, { endTime: e.target.value })}
+                                                                className="w-full text-xs font-semibold bg-white p-1 rounded border border-gray-200"
+                                                            >
+                                                                {Array.from({ length: 14 }).map((_, i) => {
+    const hourNum = 9 + i;
+    const h = hourNum.toString().padStart(2, "0") + ":00";
+    const isBooked = existingBookings.some(b => {
+        const bStart = new Date(b.startTime);
+        const bEnd = new Date(b.endTime);
+        if (bStart.toISOString().split('T')[0] === key) {
+            const bStartHour = bStart.getUTCHours();
+            const bEndHour = bEnd.getUTCHours();
+            return (hourNum - 1) >= bStartHour && (hourNum - 1) < bEndHour;
+        }
+        return false;
+    });
+    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? '(Booked)' : ''}</option>;
+})}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {Object.keys(slots).length > 0 && (
+                                <div className="pt-2 border-t border-gray-100 space-y-2">
+                                    <div className="flex justify-between items-center text-lg font-black text-gray-900">
+                                        <span>Estimated Total</span>
+                                        <span className="text-violet-600">{formatPrice(totalPrice)}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Terms checkbox */}
+                            <div className="flex items-start gap-2 pt-1">
+                                <input
+                                    type="checkbox"
+                                    id="agree-terms"
+                                    checked={agreed}
+                                    onChange={(e) => setAgreed(e.target.checked)}
+                                    className="mt-1 rounded text-violet-600 focus:ring-violet-500"
+                                />
+                                <label htmlFor="agree-terms" className="text-xs text-gray-500 leading-tight">
+                                    I agree to the space rules and the{" "}
+                                    <Link href="/terms" className="text-violet-600 hover:underline">terms of service</Link>.
+                                </label>
+                            </div>
+
+                            <Button
+                                onClick={handleBook}
+                                disabled={bookingLoading}
+                                className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-bold shadow-lg shadow-violet-200"
+                            >
+                                {bookingLoading ? "Processing..." : "Request Booking"}
+                            </Button>
                         </div>
-
-                        <Button
-                            className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 hover:scale-[1.02] transition-transform"
-                            onClick={handleBook}
-                            disabled={bookingLoading || Object.keys(slots).length === 0}
-                        >
-                            {bookingLoading ? "Processing..." : "Reserve Your Slots"}
-                        </Button>
-                        <p className="text-[10px] text-center text-gray-400">Payments are processed securely via Stripe. You won't be charged yet.</p>
                     </div>
                 </div>
             </div>

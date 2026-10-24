@@ -7,7 +7,7 @@ import { Calendar as CalendarIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar"; // Will need to create/verify this shadcn component
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -77,9 +77,9 @@ export function BookingWidget({ spaceId, dailyRate, weekendRate }: BookingWidget
     return (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border shadow-sm sticky top-24">
             <h3 className="text-xl font-bold mb-1">
-                {dailyRate} CZK <span className="text-sm font-normal text-gray-500">/day</span>
+                {formatPrice(dailyRate)} <span className="text-sm font-normal text-gray-500">/día</span>
             </h3>
-            <p className="text-sm text-gray-500 mb-6">Weekend Rate: {weekendRate} CZK</p>
+            <p className="text-sm text-gray-500 mb-6">Fin de semana: {formatPrice(weekendRate)}</p>
 
             <div className="space-y-4">
                 <div className="grid gap-2">
@@ -97,19 +97,18 @@ export function BookingWidget({ spaceId, dailyRate, weekendRate }: BookingWidget
                                 {date?.from ? (
                                     date.to ? (
                                         <>
-                                            {format(date.from, "LLL dd, y")} -{" "}
-                                            {format(date.to, "LLL dd, y")}
+                                            {format(date.from, "dd/MM/yyyy")} -{" "}
+                                            {format(date.to, "dd/MM/yyyy")}
                                         </>
                                     ) : (
-                                        format(date.from, "LLL dd, y")
+                                        format(date.from, "dd/MM/yyyy")
                                     )
                                 ) : (
-                                    <span>Pick dates</span>
+                                    <span>Seleccionar fechas</span>
                                 )}
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="end">
-                            {/* Using standard Calendar for now. Would need to customize for weekend-only restriction visually */}
                             <Calendar
                                 initialFocus
                                 mode="range"
@@ -117,7 +116,7 @@ export function BookingWidget({ spaceId, dailyRate, weekendRate }: BookingWidget
                                 selected={date}
                                 onSelect={setDate}
                                 numberOfMonths={2}
-                                disabled={(date) => date < new Date() || !isWeekendDay(date)}
+                                disabled={(date) => date < new Date()}
                             />
                         </PopoverContent>
                     </Popover>
@@ -126,7 +125,7 @@ export function BookingWidget({ spaceId, dailyRate, weekendRate }: BookingWidget
                 {date?.from && date?.to && (
                     <div className="flex justify-between py-4 border-t">
                         <span className="font-medium">Total</span>
-                        <span className="font-bold text-lg">{calculateTotal()} CZK</span>
+                        <span className="font-bold text-lg text-violet-600">{formatPrice(calculateTotal())}</span>
                     </div>
                 )}
 
@@ -138,7 +137,7 @@ export function BookingWidget({ spaceId, dailyRate, weekendRate }: BookingWidget
                 </Button>
 
                 <p className="text-xs text-center text-gray-500 mt-2">
-                    You won't be charged yet.
+                    You won&apos;t be charged yet.
                 </p>
             </div>
         </div>

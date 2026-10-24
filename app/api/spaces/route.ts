@@ -43,20 +43,25 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const city = searchParams.get("city");
+    const category = searchParams.get("category");
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const capacity = searchParams.get("capacity");
 
-    const where: any = {};
+    const where: any = { active: true };
 
     if (city) {
-        where.city = { contains: city };
+        where.city = { contains: city, mode: "insensitive" };
+    }
+
+    if (category) {
+        where.category = { contains: category, mode: "insensitive" };
     }
 
     if (minPrice || maxPrice) {
-        where.weekendRate = {};
-        if (minPrice) where.weekendRate.gte = parseFloat(minPrice);
-        if (maxPrice) where.weekendRate.lte = parseFloat(maxPrice);
+        where.hourlyRate = {};
+        if (minPrice) where.hourlyRate.gte = parseFloat(minPrice);
+        if (maxPrice) where.hourlyRate.lte = parseFloat(maxPrice);
     }
 
     if (capacity) {
