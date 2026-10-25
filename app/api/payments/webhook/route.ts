@@ -1,11 +1,8 @@
-
 import { NextRequest, NextResponse } from "next/server";
-
-export const dynamic = 'force-dynamic';
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
-const prisma = new PrismaClient();
+export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -64,7 +61,5 @@ export async function POST(req: NextRequest) {
     } catch (error) {
         console.error("Webhook Handler Error:", error);
         return NextResponse.json({ error: "Webhook handler failed" }, { status: 500 });
-    } finally {
-        await prisma.$disconnect();
     }
 }

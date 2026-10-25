@@ -1,17 +1,8 @@
-import { PrismaClient } from "@prisma/client";
-import { startOfWeek, endOfWeek, isWeekend, isWithinInterval, parseISO } from "date-fns";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { isWeekend } from "date-fns";
 
 export async function checkAvailability(spaceId: string, startTime: Date, endTime: Date) {
-    // 1. Enforce Weekend Only Rule
-    // Weekend is defined as Fri 18:00 to Sun 20:00?
-    // Or simply Saturday and Sunday. 
-    // Let's go with stricter rule: Start and End must be on Sat/Sun (or late Fri).
-    // Implementation: Check if start and end are on weekend days.
-
     if (!isWeekend(startTime) || !isWeekend(endTime)) {
-        // Allow Friday evening after 18:00?
         const startDay = startTime.getDay();
         const startHour = startTime.getHours();
 
@@ -22,7 +13,6 @@ export async function checkAvailability(spaceId: string, startTime: Date, endTim
         }
     }
 
-    // 2. Check for Overlaps
     const overlapping = await prisma.booking.findFirst({
         where: {
             spaceId,

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
 import { Calendar, Lock, User, Briefcase, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ type UserRole = "OWNER" | "RENTER";
 
 function RegisterForm() {
     const router = useRouter();
+    const { data: session, status } = useSession();
     const { t } = useLanguage();
     const searchParams = useSearchParams();
     const initialRole = searchParams.get("role")?.toUpperCase() as UserRole;
@@ -28,6 +30,16 @@ function RegisterForm() {
     });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // If user is already logged in as OWNER or ADMIN and clicks "List a Space", take them straight to Add New Space
+    useEffect(() => {
+        if (status === "authenticated" && session?.user) {
+            const userRole = (session.user as any).role;
+            if (userRole === "OWNER" || userRole === "ADMIN") {
+                router.replace("/owner/dashboard/listings/create");
+            }
+        }
+    }, [status, session, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -44,7 +56,22 @@ function RegisterForm() {
 
             if (response.ok) {
                 toast.success(t("register.createBtn"));
-                router.push("/login?registered=true");
+                const signInResult = await signIn("credentials", {
+                    email: formData.email.trim(),
+                    password: formData.password,
+                    redirect: false,
+                });
+
+                if (signInResult?.ok) {
+                    if (role === "OWNER") {
+                        router.push("/owner/dashboard/listings/create");
+                    } else {
+                        router.push("/dashboard");
+                    }
+                    router.refresh();
+                } else {
+                    router.push("/login?registered=true");
+                }
             } else {
                 toast.error(data.message || "Registration failed");
             }

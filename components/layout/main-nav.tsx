@@ -10,7 +10,10 @@ import { useSession } from "next-auth/react";
 export function MainNav() {
     const { t } = useLanguage();
     const { data: session } = useSession();
-    const isAdmin = (session?.user as any)?.role === "ADMIN";
+    const role = (session?.user as any)?.role;
+    const isAdmin = role === "ADMIN";
+    const isOwnerOrAdmin = role === "OWNER" || role === "ADMIN";
+    const listSpaceHref = session ? (isOwnerOrAdmin ? "/owner/dashboard/listings/create" : "/owner/dashboard/listings/create") : "/register?role=OWNER";
     const tickerText = t("nav.tickerText");
 
     return (
@@ -102,7 +105,7 @@ export function MainNav() {
 
                         <LanguageSelector variant="dropdown" />
 
-                        <Link href="/register?role=OWNER">
+                        <Link href={listSpaceHref}>
                             <Button className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-6 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
                                 {t("nav.listSpace")}
                             </Button>

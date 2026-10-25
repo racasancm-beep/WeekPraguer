@@ -4,38 +4,63 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from "zod";
 
+const DEFAULT_OFFICE_PHOTO = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
 
 const spaceSchema = z.object({
-    name: z.string().min(3),
-    description: z.string().min(10),
-    address: z.string().min(5),
-    city: z.string().default("Prague"),
+    name: z.string().min(2),
+    description: z.string().min(3),
+    address: z.string().min(3),
+    city: z.string().default("București"),
     district: z.string().optional(),
-    latitude: z.number(),
-    longitude: z.number(),
-    size: z.number().positive(),
-    capacity: z.number().int().positive(),
-    officeCount: z.number().int().optional(),
+    latitude: z.coerce.number().optional().default(44.4268),
+    longitude: z.coerce.number().optional().default(26.1025),
+    size: z.coerce.number().positive(),
+    capacity: z.coerce.number().int().positive(),
+    officeCount: z.coerce.number().int().optional().default(1),
     // Pricing
-    hourlyRate: z.number().positive(),
-    dailyRate: z.number().positive(),
-    weekendRate: z.number().positive(),
+    hourlyRate: z.coerce.number().positive(),
+    dailyRate: z.coerce.number().optional(),
+    weekendRate: z.coerce.number().optional(),
     // Amenities
-    hasWifi: z.boolean(),
-    hasProjector: z.boolean(),
-    hasKitchen: z.boolean(),
-    hasParking: z.boolean(),
-    hasAC: z.boolean(),
+    hasWifi: z.boolean().optional().default(true),
+    hasProjector: z.boolean().optional().default(false),
+    hasKitchen: z.boolean().optional().default(false),
+    hasParking: z.boolean().optional().default(false),
+    hasAC: z.boolean().optional().default(false),
     selfCleaning: z.boolean().optional().default(false),
-    amenitiesList: z.array(z.string()).optional(),
-    // Photos (just URLs for now)
-    photos: z.array(z.string()).min(1),
+    amenitiesList: z.array(z.string()).optional().default([]),
+    // Photos
+    photos: z.array(z.string()).optional().default([]),
 });
+
+async function resolveOwnerId(session: any): Promise<string | null> {
+    const sessionUserId = (session?.user as any)?.id;
+    const sessionEmail = session?.user?.email;
+
+    if (sessionUserId) {
+        const byId = await prisma.user.findUnique({ where: { id: sessionUserId }, select: { id: true } });
+        if (byId) return byId.id;
+    }
+
+    if (sessionEmail) {
+        const byEmail = await prisma.user.findFirst({
+            where: { email: { equals: sessionEmail.trim(), mode: "insensitive" } },
+            select: { id: true },
+        });
+        if (byEmail) return byEmail.id;
+    }
+
+    const fallbackOwner = await prisma.user.findFirst({
+        where: { role: { in: ["OWNER", "ADMIN"] } },
+        select: { id: true },
+    });
+    return fallbackOwner?.id || null;
+}
 
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || (session.user as any).role !== "OWNER") {
+        if (!session || !session.user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -44,41 +69,46 @@ export async function POST(req: Request) {
 
         if (!result.success) {
             return NextResponse.json(
-                { message: "Invalid input", errors: result.error.errors },
+                { message: result.error.errors[0]?.message || "Invalid input", errors: result.error.errors },
                 { status: 400 }
             );
         }
 
         const data = result.data;
-        const ownerId = (session.user as any).id;
+        const ownerId = await resolveOwnerId(session);
+        if (!ownerId) {
+            return NextResponse.json({ message: "Owner account not found" }, { status: 400 });
+        }
 
-        // Create space with photos
+        const photoUrls = data.photos && data.photos.length > 0 ? data.photos : [DEFAULT_OFFICE_PHOTO];
+        const dailyRate = data.dailyRate && data.dailyRate > 0 ? data.dailyRate : data.hourlyRate * 8;
+        const weekendRate = data.weekendRate && data.weekendRate > 0 ? data.weekendRate : data.hourlyRate * 16;
+
         const space = await prisma.space.create({
             data: {
                 ownerId,
                 name: data.name,
                 description: data.description,
                 address: data.address,
-                city: data.city,
-                district: data.district,
-                latitude: data.latitude,
-                longitude: data.longitude,
-                size: data.size,
-                capacity: data.capacity,
-                officeCount: data.officeCount || 0,
+                city: data.city || "București",
+                district: data.district || "",
+                latitude: data.latitude ?? 44.4268,
+                longitude: data.longitude ?? 26.1025,
+                size: Math.round(data.size),
+                capacity: Math.round(data.capacity),
+                officeCount: data.officeCount || 1,
                 hourlyRate: data.hourlyRate,
-                dailyRate: data.dailyRate,
-                weekendRate: data.weekendRate,
-                hasWifi: data.hasWifi,
-                hasProjector: data.hasProjector,
-                hasKitchen: data.hasKitchen,
-                hasParking: data.hasParking,
-                hasAC: data.hasAC,
-                selfCleaning: data.selfCleaning,
+                dailyRate,
+                weekendRate,
+                hasWifi: Boolean(data.hasWifi),
+                hasProjector: Boolean(data.hasProjector),
+                hasKitchen: Boolean(data.hasKitchen),
+                hasParking: Boolean(data.hasParking),
+                hasAC: Boolean(data.hasAC),
+                selfCleaning: Boolean(data.selfCleaning),
                 amenitiesList: data.amenitiesList ? JSON.stringify(data.amenitiesList) : null,
-                // Create related photos
                 photos: {
-                    create: data.photos.map(url => ({ url }))
+                    create: photoUrls.map(url => ({ url }))
                 }
             },
         });
@@ -96,27 +126,40 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || (session.user as any).role !== "OWNER") {
+        if (!session || !session.user) {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
+        const role = (session.user as any)?.role;
+        const { searchParams } = new URL(req.url);
+        const targetUserId = searchParams.get("userId") || undefined;
+
+        let ownerIdFilter: string | undefined;
+        if (role === "ADMIN") {
+            ownerIdFilter = targetUserId;
+        } else {
+            ownerIdFilter = (await resolveOwnerId(session)) || (session.user as any).id;
+        }
+
         const spaces = await prisma.space.findMany({
-            where: {
-                ownerId: (session.user as any).id,
-            },
+            where: ownerIdFilter ? { ownerId: ownerIdFilter } : {},
             include: {
                 photos: true,
+                owner: { select: { name: true, email: true } },
             },
             orderBy: {
                 createdAt: "desc",
             },
         });
 
-        return NextResponse.json(spaces);
+        return NextResponse.json({
+            spaces,
+            isAdminAllView: role === "ADMIN" && !targetUserId,
+        });
     } catch (error) {
         console.error("Fetch spaces error:", error);
         return NextResponse.json(
-            { message: "Failed to fetch spaces" },
+            { message: "Failed to fetch spaces", spaces: [] },
             { status: 500 }
         );
     }

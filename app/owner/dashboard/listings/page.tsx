@@ -1,41 +1,60 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
-import { redirect } from "next/navigation";
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { OwnerListingsView } from "@/components/owner/owner-listings-view";
+import { useLanguage } from "@/lib/i18n/language-context";
 
-const prisma = new PrismaClient();
+function ListingsPageContent() {
+    const searchParams = useSearchParams();
+    const userId = searchParams?.get("userId");
+    const { t } = useLanguage();
+    const [spaces, setSpaces] = useState<any[]>([]);
+    const [isAdminAllView, setIsAdminAllView] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-async function getOwnerSpaces(ownerId?: string) {
-    return await prisma.space.findMany({
-        where: ownerId ? { ownerId } : {},
-        include: { photos: true, owner: { select: { name: true, email: true } } },
-        orderBy: { createdAt: "desc" },
-    });
-}
+    useEffect(() => {
+        const fetchSpaces = async () => {
+            try {
+                const url = userId
+                    ? `/api/owner/spaces?userId=${encodeURIComponent(userId)}`
+                    : "/api/owner/spaces";
+                const res = await fetch(url);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) {
+                        setSpaces(data);
+                    } else {
+                        setSpaces(data.spaces || []);
+                        setIsAdminAllView(Boolean(data.isAdminAllView));
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load spaces:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSpaces();
+    }, [userId]);
 
-export default async function MyListingsPage({
-    searchParams,
-}: {
-    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role;
-    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
-        redirect("/login");
+    if (loading) {
+        return <div className="p-8">{t("common.loading")}</div>;
     }
-
-    const params = searchParams ? await searchParams : {};
-    const targetUserId = typeof params.userId === "string" ? params.userId : undefined;
-
-    const spaces = (await getOwnerSpaces(
-        role === "ADMIN" ? targetUserId : (session.user as any).id
-    )) as any[];
 
     return (
         <OwnerListingsView
             spaces={spaces}
-            isAdminAllView={role === "ADMIN" && !targetUserId}
+            isAdminAllView={isAdminAllView}
         />
+    );
+}
+
+export default function MyListingsPage() {
+    const { t } = useLanguage();
+    return (
+        <Suspense fallback={<div className="p-8">{t("common.loading")}</div>}>
+            <ListingsPageContent />
+        </Suspense>
     );
 }

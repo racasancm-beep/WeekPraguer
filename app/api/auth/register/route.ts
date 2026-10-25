@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-
 import { prisma } from "@/lib/prisma";
 
 // Validation schema
@@ -29,11 +27,17 @@ export async function POST(req: Request) {
             );
         }
 
-        const { email, password, name, role, phone } = result.data;
+        const { password, name, role, phone } = result.data;
+        const email = result.data.email.trim().toLowerCase();
 
-        // Check if user already exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
+        // Check if user already exists (case-insensitive)
+        const existingUser = await prisma.user.findFirst({
+            where: {
+                email: {
+                    equals: email,
+                    mode: "insensitive",
+                },
+            },
         });
 
         if (existingUser) {
@@ -50,7 +54,7 @@ export async function POST(req: Request) {
         const user = await prisma.user.create({
             data: {
                 email,
-                name,
+                name: name.trim(),
                 password: hashedPassword,
                 role,
                 phone,

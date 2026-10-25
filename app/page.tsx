@@ -16,9 +16,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { useSession } from "next-auth/react";
 
 export default function HomePage() {
     const { t } = useLanguage();
+    const { data: session } = useSession();
 
     // Genie interactive hover & solidification state (silent - no sound)
     const [isGenieHovered, setIsGenieHovered] = useState(false);
@@ -383,7 +385,7 @@ export default function HomePage() {
                                 {t("host.subtitle")}
                             </p>
                             <div className="flex gap-4 pt-2">
-                                <Link href="/register?role=OWNER">
+                                <Link href={session ? "/owner/dashboard/listings/create" : "/register?role=OWNER"}>
                                     <Button size="lg" className="bg-white text-[#006F6F] hover:bg-teal-50 font-bold rounded-2xl px-8 h-14 shadow-lg shadow-black/10">
                                         {t("host.button")}
                                         <ArrowRight className="ml-2 w-4 h-4" />

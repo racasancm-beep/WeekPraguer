@@ -28,7 +28,7 @@ export async function POST(req: Request) {
                 hourlyRate: body.hourlyRate,
                 dailyRate: body.dailyRate,
                 weekendRate: body.weekendRate,
-                amenitiesList: JSON.stringify(body.amenities || body.amenitiesList || []),
+                amenitiesList: JSON.stringify(body.amenities || (body as any).amenitiesList || []),
                 latitude: typeof (json as any).latitude === "number" ? (json as any).latitude : 44.4268,
                 longitude: typeof (json as any).longitude === "number" ? (json as any).longitude : 26.1025,
             },

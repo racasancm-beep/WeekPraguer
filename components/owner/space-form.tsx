@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,16 +12,34 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import MapComponent from "@/components/ui/map-component";
-import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
 import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
 import { useLanguage } from "@/lib/i18n/language-context";
 
-const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
+const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
+    "bucurești": { lat: 44.4268, lng: 26.1025 },
+    "bucuresti": { lat: 44.4268, lng: 26.1025 },
+    "bucharest": { lat: 44.4268, lng: 26.1025 },
+    "cluj-napoca": { lat: 46.7712, lng: 23.6236 },
+    "cluj": { lat: 46.7712, lng: 23.6236 },
+    "timișoara": { lat: 45.7489, lng: 21.2087 },
+    "timisoara": { lat: 45.7489, lng: 21.2087 },
+    "iași": { lat: 47.1585, lng: 27.6014 },
+    "iasi": { lat: 47.1585, lng: 27.6014 },
+    "constanța": { lat: 44.1792, lng: 28.6499 },
+    "constanta": { lat: 44.1792, lng: 28.6499 },
+    "brașov": { lat: 45.6427, lng: 25.5887 },
+    "brasov": { lat: 45.6427, lng: 25.5887 },
+    "craiova": { lat: 44.3302, lng: 23.7949 },
+    "galați": { lat: 45.4353, lng: 28.008 },
+    "galati": { lat: 45.4353, lng: 28.008 },
+    "oradea": { lat: 47.0465, lng: 21.9189 },
+    "sibiu": { lat: 45.7983, lng: 24.1256 },
+};
 
 const formSchema = z.object({
-    name: z.string().min(3),
-    description: z.string().min(10),
-    address: z.string().min(5),
+    name: z.string().min(2, "Required"),
+    description: z.string().min(5, "Required"),
+    address: z.string().min(3, "Required"),
     city: z.string().default("București"),
     district: z.string().optional(),
     latitude: z.coerce.number().optional(),
@@ -30,8 +48,8 @@ const formSchema = z.object({
     capacity: z.coerce.number().int().positive(),
     officeCount: z.coerce.number().int().optional(),
     hourlyRate: z.coerce.number().positive(),
-    dailyRate: z.coerce.number().positive(),
-    weekendRate: z.coerce.number().positive(),
+    dailyRate: z.coerce.number().optional(),
+    weekendRate: z.coerce.number().optional(),
     hasWifi: z.boolean().default(true),
     hasProjector: z.boolean().default(false),
     hasKitchen: z.boolean().default(false),
@@ -49,15 +67,8 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
     const router = useRouter();
     const { t, translateAmenity } = useLanguage();
     const [loading, setLoading] = useState(false);
-    const [photos, setPhotos] = useState<string[]>([]);
+    const [photos, setPhotos] = useState<string[]>(initialData?.photos?.map((p: any) => p.url || p) || []);
     const [photoUrl, setPhotoUrl] = useState("");
-    const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-
-    const { isLoaded } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
-        libraries
-    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -69,12 +80,12 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             district: "",
             latitude: 44.4268,
             longitude: 26.1025,
-            size: undefined,
-            capacity: undefined,
-            officeCount: 0,
-            hourlyRate: undefined,
-            dailyRate: undefined,
-            weekendRate: undefined,
+            size: 50,
+            capacity: 10,
+            officeCount: 1,
+            hourlyRate: 100,
+            dailyRate: 600,
+            weekendRate: 1100,
             hasWifi: true,
             hasProjector: false,
             hasKitchen: false,
@@ -86,8 +97,8 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
     });
 
     const addPhoto = () => {
-        if (!photoUrl) return;
-        setPhotos([...photos, photoUrl]);
+        if (!photoUrl.trim()) return;
+        setPhotos([...photos, photoUrl.trim()]);
         setPhotoUrl("");
     };
 
@@ -95,56 +106,40 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
         setPhotos(photos.filter((_, i) => i !== index));
     };
 
-    const onPlaceChanged = () => {
-        if (autocompleteRef.current) {
-            const place = autocompleteRef.current.getPlace();
-
-            if (place.geometry && place.geometry.location) {
-                const lat = place.geometry.location.lat();
-                const lng = place.geometry.location.lng();
-
-                form.setValue("latitude", lat);
-                form.setValue("longitude", lng);
-
-                if (place.formatted_address) {
-                    form.setValue("address", place.formatted_address);
-                }
-
-                let city = "București";
-                let district = "";
-
-                place.address_components?.forEach(component => {
-                    if (component.types.includes("locality")) {
-                        city = component.long_name;
-                    }
-                    if (component.types.includes("sublocality") || component.types.includes("neighborhood")) {
-                        district = component.long_name;
-                    }
-                });
-
-                form.setValue("city", city);
-                form.setValue("district", district);
-            }
+    const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        form.setValue("city", val);
+        const coords = CITY_COORDS[val.trim().toLowerCase()];
+        if (coords) {
+            form.setValue("latitude", coords.lat);
+            form.setValue("longitude", coords.lng);
         }
     };
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
-        if (photos.length === 0) {
-            toast.error(t("owner.form.photos"));
-            return;
-        }
-
         setLoading(true);
         try {
+            const finalPhotos =
+                photos.length > 0
+                    ? photos
+                    : photoUrl.trim()
+                    ? [photoUrl.trim()]
+                    : ["https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80"];
+
             const response = await fetch("/api/owner/spaces", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...values, photos }),
+                body: JSON.stringify({
+                    ...values,
+                    dailyRate: values.dailyRate || values.hourlyRate * 8,
+                    weekendRate: values.weekendRate || values.hourlyRate * 16,
+                    photos: finalPhotos,
+                }),
             });
 
             if (response.ok) {
                 toast.success(t("owner.form.createBtn"));
-                router.push("/owner/dashboard");
+                router.push("/owner/dashboard/listings");
                 router.refresh();
             } else {
                 const data = await response.json();
@@ -157,6 +152,8 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
         }
     };
 
+    const watchedAmenities = form.watch("amenitiesList") || [];
+
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl bg-white dark:bg-gray-800 p-6 rounded-xl border">
             <div className="space-y-4">
@@ -164,7 +161,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 <div className="grid gap-4">
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.spaceName")}</label>
-                        <Input {...form.register("name")} placeholder="e.g. Modern Loft" />
+                        <Input {...form.register("name")} placeholder="e.g. Modern Office Victoriei" />
                         {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
                     </div>
 
@@ -181,25 +178,16 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.address")}</label>
-                        {isLoaded ? (
-                            <Autocomplete
-                                onLoad={(autocomplete) => { autocompleteRef.current = autocomplete; }}
-                                onPlaceChanged={onPlaceChanged}
-                            >
-                                <Input {...form.register("address")} />
-                            </Autocomplete>
-                        ) : (
-                            <Input {...form.register("address")} placeholder={t("common.loading")} disabled />
-                        )}
+                        <Input {...form.register("address")} placeholder="Calea Victoriei 120, București" />
                         {form.formState.errors.address && <p className="text-red-500 text-xs mt-1">{form.formState.errors.address.message}</p>}
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.city")}</label>
-                        <Input {...form.register("city")} />
+                        <Input {...form.register("city")} onChange={handleCityChange} />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.district")}</label>
-                        <Input {...form.register("district")} />
+                        <Input {...form.register("district")} placeholder="Sector 1" />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.latitude")}</label>
@@ -209,16 +197,13 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.longitude")}</label>
                         <Input type="number" step="any" {...form.register("longitude")} />
                     </div>
-                    <div className="col-span-2 h-48 rounded-md overflow-hidden border mt-2">
-                        <div className="w-full h-full bg-gray-100">
-                            {isLoaded && (
-                                <MapComponent
-                                    lat={form.watch("latitude")}
-                                    lng={form.watch("longitude")}
-                                    zoom={15}
-                                />
-                            )}
-                        </div>
+                    <div className="col-span-2 h-56 rounded-md overflow-hidden border mt-2">
+                        <MapComponent
+                            lat={Number(form.watch("latitude")) || 44.4268}
+                            lng={Number(form.watch("longitude")) || 26.1025}
+                            zoom={14}
+                            address={form.watch("address")}
+                        />
                     </div>
                 </div>
             </div>
@@ -243,7 +228,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="flex items-center space-x-2">
                         <Checkbox id="wifi" onCheckedChange={c => form.setValue("hasWifi", c as boolean)} defaultChecked={true} />
-                        <label htmlFor="wifi" className="text-sm font-medium">{translateAmenity("Fast Wi-Fi")}</label>
+                        <label htmlFor="wifi" className="text-sm font-medium">{translateAmenity("High-Speed Wi-Fi")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Checkbox id="proj" onCheckedChange={c => form.setValue("hasProjector", c as boolean)} />
@@ -266,9 +251,9 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                             <div key={amenity} className="flex items-center space-x-2">
                                 <Checkbox
                                     id={`amenity-${amenity}`}
-                                    checked={form.watch("amenitiesList").includes(amenity)}
+                                    checked={watchedAmenities.includes(amenity)}
                                     onCheckedChange={(checked) => {
-                                        const current = form.getValues("amenitiesList");
+                                        const current = form.getValues("amenitiesList") || [];
                                         if (checked) {
                                             form.setValue("amenitiesList", [...current, amenity]);
                                         } else {
@@ -290,15 +275,15 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 <div className="grid grid-cols-3 gap-4">
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.hourlyRate")}</label>
-                        <Input type="number" {...form.register("hourlyRate")} placeholder="500" />
+                        <Input type="number" {...form.register("hourlyRate")} placeholder="100" />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.dailyRate")}</label>
-                        <Input type="number" {...form.register("dailyRate")} placeholder="4000" />
+                        <Input type="number" {...form.register("dailyRate")} placeholder="600" />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.weekendRate")}</label>
-                        <Input type="number" {...form.register("weekendRate")} placeholder="7500" />
+                        <Input type="number" {...form.register("weekendRate")} placeholder="1100" />
                     </div>
                 </div>
 
@@ -410,7 +395,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             </div>
 
             <div className="pt-4 border-t">
-                <Button type="submit" className="w-full h-12 text-lg" disabled={loading}>
+                <Button type="submit" className="w-full h-12 text-lg bg-[#008080] hover:bg-[#006F6F] text-white font-bold" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {loading ? t("owner.form.creatingBtn") : t("owner.form.createBtn")}
                 </Button>

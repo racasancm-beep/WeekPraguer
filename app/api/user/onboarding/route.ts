@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
@@ -17,14 +15,14 @@ export async function POST(req: Request) {
         const { phone, companyName, vatId, billingAddress, serviceRadius } = data;
 
         await prisma.user.update({
-            where: { id: session.user.id },
+            where: { id: (session.user as any).id },
             data: {
                 phone,
                 companyName,
                 vatId,
                 billingAddress,
                 serviceRadius,
-                verified: false // Set to false so admin has to verify again? Or maybe true for basic info.
+                verified: false
             },
         });
 
