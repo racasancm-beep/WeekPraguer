@@ -9,9 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function LoginPage() {
     const router = useRouter();
+    const { t } = useLanguage();
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -32,12 +34,12 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                toast.error("Invalid email or password");
+                toast.error(t("login.invalidCredentials"));
                 return;
             }
 
             if (result?.ok) {
-                toast.success("Welcome back!");
+                toast.success(t("login.welcomeBack"));
                 router.push("/portal");
                 router.refresh();
             }
@@ -63,12 +65,12 @@ export default function LoginPage() {
             });
 
             if (result?.error) {
-                toast.error("Admin sign-in failed");
+                toast.error(t("login.invalidCredentials"));
                 return;
             }
 
             if (result?.ok) {
-                toast.success("Signed in as ADMIN — Full Platform Access");
+                toast.success("ADMIN — Full Platform Access");
                 router.push("/admin/dashboard");
                 router.refresh();
             }
@@ -89,9 +91,9 @@ export default function LoginPage() {
                             My<span className="text-[#008080]">Genie</span>
                         </span>
                     </Link>
-                    <CardTitle className="text-3xl font-bold">Welcome Back</CardTitle>
+                    <CardTitle className="text-3xl font-bold">{t("login.welcomeBack")}</CardTitle>
                     <CardDescription className="text-base">
-                        Sign in to your account to continue
+                        {t("login.subtitle")}
                     </CardDescription>
                 </CardHeader>
 
@@ -101,18 +103,18 @@ export default function LoginPage() {
                         <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                                 <ShieldCheck className="w-5 h-5 text-amber-300" />
-                                <span className="text-sm font-black uppercase tracking-wider">ADMIN Super Profile</span>
+                                <span className="text-sm font-black uppercase tracking-wider">{t("login.adminProfile")}</span>
                             </div>
                             <span className="text-[10px] font-bold bg-amber-400/20 text-amber-200 px-2 py-0.5 rounded-full border border-amber-300/30">
-                                All Graphs &amp; Profiles
+                                {t("login.adminBadge")}
                             </span>
                         </div>
                         <p className="text-xs text-teal-100 mb-3 leading-relaxed">
-                            Full access to all platform graphs, Owner &amp; Renter dashboards, and every user profile.
+                            {t("login.adminDesc")}
                         </p>
                         <div className="bg-black/20 rounded-xl px-3 py-2 mb-3 text-xs font-mono flex flex-col gap-0.5 border border-white/10">
-                            <div><span className="text-teal-200">Email:</span> <strong className="text-white">admin@mygenie.com</strong></div>
-                            <div><span className="text-teal-200">Password:</span> <strong className="text-white">admin123</strong></div>
+                            <div><span className="text-teal-200">{t("login.emailLabel")}</span> <strong className="text-white">admin@mygenie.com</strong></div>
+                            <div><span className="text-teal-200">{t("login.passwordLabel")}</span> <strong className="text-white">admin123</strong></div>
                         </div>
                         <Button
                             type="button"
@@ -121,7 +123,7 @@ export default function LoginPage() {
                             className="w-full h-11 bg-amber-400 hover:bg-amber-300 text-gray-950 font-black rounded-xl shadow-md transition-all"
                         >
                             <BarChart3 className="w-4 h-4 mr-2" />
-                            {adminLoading ? "Opening Admin Command Center..." : "Log In as ADMIN (1-Click)"}
+                            {adminLoading ? t("login.adminLoading") : t("login.adminBtn")}
                         </Button>
                     </div>
 
@@ -130,14 +132,14 @@ export default function LoginPage() {
                             <div className="w-full border-t border-gray-200"></div>
                         </div>
                         <div className="relative flex justify-center text-xs uppercase font-bold tracking-wider">
-                            <span className="px-2 bg-white dark:bg-gray-900 text-gray-400">Or sign in with credentials</span>
+                            <span className="px-2 bg-white dark:bg-gray-900 text-gray-400">{t("login.orCredentials")}</span>
                         </div>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium mb-2">
-                                Email Address
+                                {t("login.emailAddress")}
                             </label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -156,10 +158,10 @@ export default function LoginPage() {
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <label htmlFor="password" className="block text-sm font-medium">
-                                    Password
+                                    {t("login.password")}
                                 </label>
                                 <Link href="/forgot-password" className="text-sm text-primary hover:underline">
-                                    Forgot?
+                                    {t("login.forgot")}
                                 </Link>
                             </div>
                             <div className="relative">
@@ -188,13 +190,13 @@ export default function LoginPage() {
                         </div>
 
                         <Button type="submit" className="w-full h-12 text-base bg-[#008080] hover:bg-[#006F6F] text-white font-bold" disabled={loading || adminLoading}>
-                            {loading ? "Signing in..." : "Sign In"}
+                            {loading ? t("login.signingIn") : t("login.signInBtn")}
                         </Button>
 
                         <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                            Don&apos;t have an account?{" "}
+                            {t("login.noAccount")}{" "}
                             <Link href="/register" className="text-[#008080] font-semibold hover:underline">
-                                Sign up for free
+                                {t("login.signUpFree")}
                             </Link>
                         </p>
                     </form>

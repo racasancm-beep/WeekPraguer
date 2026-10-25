@@ -5,7 +5,7 @@ import { useLanguage, LANGUAGES, Language } from "@/lib/i18n/language-context";
 import { Globe, ChevronDown, Check } from "lucide-react";
 
 export function LanguageSelector({ variant = "dropdown" }: { variant?: "dropdown" | "pill" }) {
-    const { language, setLanguage } = useLanguage();
+    const { language, setLanguage, t } = useLanguage();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -62,7 +62,7 @@ export function LanguageSelector({ variant = "dropdown" }: { variant?: "dropdown
             {open && (
                 <div className="absolute right-0 mt-2 w-44 rounded-2xl bg-white shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
                     <div className="px-3 py-1.5 border-b border-gray-100 text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                        Select Language
+                        {t("common.selectLanguage")}
                     </div>
                     {LANGUAGES.map((l) => {
                         const active = l.code === language;

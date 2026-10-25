@@ -7,6 +7,7 @@ import L from "leaflet";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Navigation, RotateCcw, Search, Loader2 } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 // Google Maps style red pin SVG icon
 const googlePinSvg = encodeURIComponent(`
@@ -155,6 +156,7 @@ export default function InteractiveMap({
     showDirectionsLink = true,
     spaces,
 }: InteractiveMapProps) {
+    const { t } = useLanguage();
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -299,7 +301,7 @@ export default function InteractiveMap({
                                 value={searchQuery}
                                 onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search Google Maps (city, street, place)..."
+                                placeholder={t("map.searchPlaceholder")}
                                 className="w-full text-xs font-semibold text-gray-800 bg-transparent focus:outline-none"
                             />
                         </form>
@@ -335,7 +337,7 @@ export default function InteractiveMap({
                             className="pointer-events-auto inline-flex items-center gap-1.5 bg-[#008080] hover:bg-[#006666] text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg transition-colors"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
-                            Show All Spaces
+                            {t("map.showAllSpaces")}
                         </button>
                     )}
                 </div>
@@ -352,7 +354,7 @@ export default function InteractiveMap({
                             : "text-gray-700 hover:bg-gray-100"
                     }`}
                 >
-                    Map
+                    {t("map.map")}
                 </button>
                 <button
                     type="button"
@@ -363,7 +365,7 @@ export default function InteractiveMap({
                             : "text-gray-700 hover:bg-gray-100"
                     }`}
                 >
-                    Satellite
+                    {t("map.satellite")}
                 </button>
             </div>
 
@@ -398,7 +400,7 @@ export default function InteractiveMap({
                             >
                                 <Popup className="rounded-xl">
                                     <div className="text-xs font-bold text-gray-900">
-                                        Selected Search Area
+                                        {t("map.selectedArea")}
                                     </div>
                                     <div className="text-[11px] text-gray-500">
                                         {clickedLatParam.toFixed(4)}, {clickedLngParam.toFixed(4)}
@@ -436,7 +438,7 @@ export default function InteractiveMap({
                                                 href={`/spaces/${space.id}`}
                                                 className="text-xs font-bold bg-[#008080] !text-white px-2.5 py-1 rounded-lg hover:bg-[#006666] transition-colors"
                                             >
-                                                View Space →
+                                                {t("map.viewSpace")}
                                             </Link>
                                         </div>
                                     </div>
@@ -448,7 +450,7 @@ export default function InteractiveMap({
                     <Marker position={center} icon={googlePinIcon}>
                         <Popup className="rounded-xl">
                             <div className="font-bold text-gray-900 text-xs">
-                                {address || "Space Location"}
+                                {address || t("map.spaceLocation")}
                             </div>
                         </Popup>
                     </Marker>
@@ -465,7 +467,7 @@ export default function InteractiveMap({
                     className="absolute bottom-3 left-3 z-[1000] inline-flex items-center gap-1.5 bg-white/95 hover:bg-white text-gray-900 text-xs font-bold px-3 py-2 rounded-xl shadow-md border border-gray-200 transition-all"
                 >
                     <Navigation className="w-3.5 h-3.5 text-[#008080]" />
-                    Open in Google Maps
+                    {t("map.openInGoogleMaps")}
                 </a>
             )}
         </div>

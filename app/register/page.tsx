@@ -3,16 +3,18 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Calendar, Mail, Lock, User, Briefcase, Eye, EyeOff } from "lucide-react";
+import { Calendar, Lock, User, Briefcase, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 type UserRole = "OWNER" | "RENTER";
 
 function RegisterForm() {
     const router = useRouter();
+    const { t } = useLanguage();
     const searchParams = useSearchParams();
     const initialRole = searchParams.get("role")?.toUpperCase() as UserRole;
     const [role, setRole] = useState<UserRole>(
@@ -41,7 +43,7 @@ function RegisterForm() {
             const data = await response.json();
 
             if (response.ok) {
-                toast.success("Account created successfully!");
+                toast.success(t("register.createBtn"));
                 router.push("/login?registered=true");
             } else {
                 toast.error(data.message || "Registration failed");
@@ -57,33 +59,33 @@ function RegisterForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
             {/* Role Selection */}
             <div>
-                <label className="block text-sm font-medium mb-3">I want to:</label>
-                <div className="grid grid-cols-3 gap-3">
+                <label className="block text-sm font-medium mb-3">{t("register.iWantTo")}</label>
+                <div className="grid grid-cols-2 gap-3">
                     <button
                         type="button"
                         onClick={() => setRole("RENTER")}
-                        className={`p-4 rounded-lg border-2 transition-all ${role === "RENTER"
-                            ? "border-primary bg-primary/10"
-                            : "border-gray-200 hover:border-gray-300"
-                            }`}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                            role === "RENTER"
+                                ? "border-[#008080] bg-[#008080]/10"
+                                : "border-gray-200 hover:border-gray-300"
+                        }`}
                     >
-                        <Briefcase className="w-6 h-6 mx-auto mb-2" />
-                        <div className="text-sm font-medium">Rent Space</div>
+                        <Briefcase className="w-6 h-6 mx-auto mb-2 text-[#008080]" />
+                        <div className="text-sm font-medium">{t("register.rentSpace")}</div>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setRole("OWNER")}
-                        className={`p-4 rounded-lg border-2 transition-all ${role === "OWNER"
-                            ? "border-primary bg-primary/10"
-                            : "border-gray-200 hover:border-gray-300"
-                            }`}
+                        className={`p-4 rounded-lg border-2 transition-all ${
+                            role === "OWNER"
+                                ? "border-[#008080] bg-[#008080]/10"
+                                : "border-gray-200 hover:border-gray-300"
+                        }`}
                     >
-                        <User className="w-6 h-6 mx-auto mb-2" />
-                        <div className="text-sm font-medium">List Space</div>
+                        <User className="w-6 h-6 mx-auto mb-2 text-[#008080]" />
+                        <div className="text-sm font-medium">{t("register.listSpace")}</div>
                     </button>
-
-                    
                 </div>
             </div>
 
@@ -91,12 +93,12 @@ function RegisterForm() {
             <div className="space-y-4">
                 <div>
                     <label htmlFor="name" className="block text-sm font-medium mb-2">
-                        Full Name
+                        {t("register.fullName")}
                     </label>
                     <Input
                         id="name"
                         type="text"
-                        placeholder="John Doe"
+                        placeholder={t("register.fullNamePlaceholder")}
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
@@ -105,12 +107,12 @@ function RegisterForm() {
 
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium mb-2">
-                        Email Address
+                        {t("register.emailAddress")}
                     </label>
                     <Input
                         id="email"
                         type="email"
-                        placeholder="john@example.com"
+                        placeholder="user@mygenieurope.com"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
@@ -119,7 +121,7 @@ function RegisterForm() {
 
                 <div>
                     <label htmlFor="password" className="block text-sm font-medium mb-2">
-                        Password
+                        {t("register.password")}
                     </label>
                     <div className="relative">
                         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -149,12 +151,12 @@ function RegisterForm() {
 
                 <div>
                     <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                        Phone Number <span className="text-gray-400 font-normal">(optional)</span>
+                        {t("register.phone")} <span className="text-gray-400 font-normal">{t("register.optional")}</span>
                     </label>
                     <Input
                         id="phone"
                         type="tel"
-                        placeholder="+34 600 000 000"
+                        placeholder="+40 700 000 000"
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     />
@@ -166,23 +168,23 @@ function RegisterForm() {
                 <input
                     type="checkbox"
                     required
-                    className="mt-1 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                    className="mt-1 w-4 h-4 text-[#008080] border-gray-300 rounded focus:ring-[#008080]"
                 />
                 <label className="text-sm text-gray-600 dark:text-gray-400">
-                    I agree to the{" "}
-                    <Link href="/terms" className="text-primary hover:underline">
-                        Terms of Service
+                    {t("register.gdprPrefix")}{" "}
+                    <Link href="/terms" className="text-[#008080] hover:underline">
+                        {t("footer.terms")}
                     </Link>{" "}
-                    and{" "}
-                    <Link href="/privacy" className="text-primary hover:underline">
-                        Privacy Policy
+                    {t("register.and")}{" "}
+                    <Link href="/privacy" className="text-[#008080] hover:underline">
+                        {t("footer.privacy")}
                     </Link>
-                    , and consent to my data being processed in accordance with GDPR.
+                    {t("register.gdprSuffix")}
                 </label>
             </div>
 
-            <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-                {loading ? "Creating Account..." : "Create Account"}
+            <Button type="submit" className="w-full h-12 text-base bg-[#008080] hover:bg-[#006F6F] text-white font-bold" disabled={loading}>
+                {loading ? t("register.creating") : t("register.createBtn")}
             </Button>
 
             {/* Divider */}
@@ -191,7 +193,7 @@ function RegisterForm() {
                     <div className="w-full border-t border-gray-200"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">Or continue with</span>
+                    <span className="px-2 bg-white dark:bg-gray-900 text-gray-500">{t("register.orContinueWith")}</span>
                 </div>
             </div>
 
@@ -227,9 +229,9 @@ function RegisterForm() {
             </div>
 
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                Already have an account?{" "}
-                <Link href="/login" className="text-primary font-medium hover:underline">
-                    Sign in
+                {t("register.alreadyHaveAccount")}{" "}
+                <Link href="/login" className="text-[#008080] font-semibold hover:underline">
+                    {t("register.signIn")}
                 </Link>
             </p>
         </form>
@@ -237,24 +239,25 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+    const { t } = useLanguage();
     return (
         <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-purple-900 flex items-center justify-center p-4">
-            <Card className="w-full max-w-2xl shadow-2xl">
+            <Card className="w-full max-w-2xl shadow-2xl border-t-4 border-t-[#008080]">
                 <CardHeader className="text-center">
                     <Link href="/" className="flex items-center justify-center gap-2 mb-4">
-                        <Calendar className="w-8 h-8 text-primary" />
-                        <span className="text-2xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                            MyGenie
+                        <Calendar className="w-8 h-8 text-[#008080]" />
+                        <span className="text-2xl font-black text-gray-900 dark:text-white">
+                            My<span className="text-[#008080]">Genie</span>
                         </span>
                     </Link>
-                    <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
+                    <CardTitle className="text-3xl font-bold">{t("register.title")}</CardTitle>
                     <CardDescription className="text-base">
-                        Join the community of unique hourly spaces
+                        {t("register.subtitle")}
                     </CardDescription>
                 </CardHeader>
 
                 <CardContent>
-                    <Suspense fallback={<div className="text-center p-8">Loading...</div>}>
+                    <Suspense fallback={<div className="text-center p-8">{t("common.loading")}</div>}>
                         <RegisterForm />
                     </Suspense>
                 </CardContent>

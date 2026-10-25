@@ -9,35 +9,34 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Sparkles, Building2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
-
 import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
 
-const SPACE_CATEGORIES = [
-    { id: "", label: "Toate categoriile de spații" },
-    { id: "cocina", label: "Bucătării" },
-    { id: "coworking", label: "Coworking" },
-    { id: "estudio", label: "Studiouri" },
-    { id: "sala", label: "Săli & Evenimente" },
-    { id: "gimnasio", label: "Săli de sport" },
-    { id: "terraza", label: "Terase & Outdoor" },
-    { id: "eventos", label: "Evenimente private" },
-    { id: "yoga", label: "Yoga & Meditație" },
-    { id: "fotografía", label: "Fotografie & Producție" },
-    { id: "taller", label: "Ateliere & Cursuri" },
+const SPACE_CATEGORY_KEYS = [
+    { id: "", key: "catOpt.all" },
+    { id: "cocina", key: "catOpt.cocina" },
+    { id: "coworking", key: "catOpt.coworking" },
+    { id: "estudio", key: "catOpt.estudio" },
+    { id: "sala", key: "catOpt.sala" },
+    { id: "gimnasio", key: "catOpt.gimnasio" },
+    { id: "terraza", key: "catOpt.terraza" },
+    { id: "eventos", key: "catOpt.eventos" },
+    { id: "yoga", key: "catOpt.yoga" },
+    { id: "fotografía", key: "catOpt.fotografia" },
+    { id: "taller", key: "catOpt.taller" },
 ];
 
-const TOP_SERVICES_OPTIONS = [
-    { id: "", label: "Toate serviciile (Top 10)" },
-    { id: "curatenie", label: "1. Curățenie & Igienizare" },
-    { id: "catering", label: "2. Catering & Coffee Break" },
-    { id: "fotografie", label: "3. Fotografie & Video" },
-    { id: "sonorizare", label: "4. Sonorizare & DJ" },
-    { id: "proiectoare", label: "5. Proiectoare & Ecrane LED" },
-    { id: "asistenta", label: "6. Asistență Tehnică & IT" },
-    { id: "securitate", label: "7. Securitate & Control Acces" },
-    { id: "bar", label: "8. Bar Mobil & Barista" },
-    { id: "decor", label: "9. Decor & Aranjamente" },
-    { id: "hostess", label: "10. Hostess & Primire Oaspeți" },
+const TOP_SERVICES_KEYS = [
+    { id: "", key: "srvOpt.all" },
+    { id: "curatenie", key: "srvOpt.curatenie" },
+    { id: "catering", key: "srvOpt.catering" },
+    { id: "fotografie", key: "srvOpt.fotografie" },
+    { id: "sonorizare", key: "srvOpt.sonorizare" },
+    { id: "proiectoare", key: "srvOpt.proiectoare" },
+    { id: "asistenta", key: "srvOpt.asistenta" },
+    { id: "securitate", key: "srvOpt.securitate" },
+    { id: "bar", key: "srvOpt.bar" },
+    { id: "decor", key: "srvOpt.decor" },
+    { id: "hostess", key: "srvOpt.hostess" },
 ];
 
 const POPULAR_CITIES = [
@@ -61,7 +60,7 @@ interface SpaceFiltersProps {
 }
 
 export function SpaceFilters({ initialType, initialCategory, initialQuery, initialCity }: SpaceFiltersProps = {}) {
-    const { t } = useLanguage();
+    const { t, translateAmenity } = useLanguage();
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
@@ -189,15 +188,15 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
             <div>
                 {/* Header & Clear */}
                 <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center justify-between">
-                    <span>Search filters</span>
+                    <span>{t("filters.title")}</span>
                     {(mounted && (city || category || query || capacity || selectedAmenities.length > 0 || priceRange[1] < 200)) && (
                         <button onClick={clearFilters} className="text-xs text-[#008080] hover:underline font-normal">
-                            Clear
+                            {t("filters.clear")}
                         </button>
                     )}
                 </h3>
 
-                {/* Filter Mode Switch: Spații vs Servicii */}
+                {/* Filter Mode Switch: Spaces vs Services */}
                 <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-5 text-xs font-bold border border-gray-200/60 dark:border-gray-700">
                     <button
                         type="button"
@@ -209,7 +208,7 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                         }`}
                     >
                         <Building2 className="w-3.5 h-3.5" />
-                        Spații
+                        {t("filters.modeSpaces")}
                     </button>
                     <button
                         type="button"
@@ -221,16 +220,18 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                         }`}
                     >
                         <Sparkles className="w-3.5 h-3.5" />
-                        Servicii
+                        {t("filters.modeServices")}
                     </button>
                 </div>
 
                 <div className="space-y-5">
                     {/* Search Query */}
                     <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Search</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            {t("filters.search")}
+                        </Label>
                         <Input
-                            placeholder={isServiceMode ? "Caută servicii, furnizori..." : "Nume, zonă, cuvinte cheie..."}
+                            placeholder={isServiceMode ? t("filters.searchServicesPlaceholder") : t("filters.searchSpacesPlaceholder")}
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
@@ -242,11 +243,11 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                     <div className="space-y-1.5">
                         <div className="flex items-center justify-between">
                             <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                                {isServiceMode ? "Categorie Servicii (Top 10)" : "Categorie Spațiu"}
+                                {isServiceMode ? t("filters.serviceCategory") : t("filters.spaceCategory")}
                             </Label>
                             {isServiceMode && (
                                 <span className="text-[10px] bg-[#E6F4F4] text-[#008080] px-2 py-0.5 rounded-full font-bold">
-                                    Servicii
+                                    {t("filters.modeServices")}
                                 </span>
                             )}
                         </div>
@@ -263,24 +264,28 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                             }}
                             className="w-full h-10 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#008080]"
                         >
-                            {(isServiceMode ? TOP_SERVICES_OPTIONS : SPACE_CATEGORIES).map(c => (
-                                <option key={c.id} value={c.id}>{c.label}</option>
+                            {(isServiceMode ? TOP_SERVICES_KEYS : SPACE_CATEGORY_KEYS).map((c) => (
+                                <option key={c.id} value={c.id}>
+                                    {t(c.key)}
+                                </option>
                             ))}
                         </select>
                     </div>
 
                     {/* Location */}
                     <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">City</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            {t("filters.city")}
+                        </Label>
                         <Input
-                            placeholder="e.g. București, Cluj-Napoca..."
+                            placeholder={t("filters.cityPlaceholder")}
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
                             className="text-sm"
                         />
                         <div className="flex flex-wrap gap-1.5 pt-1.5">
-                            {POPULAR_CITIES.slice(0, 6).map(c => (
+                            {POPULAR_CITIES.slice(0, 6).map((c) => (
                                 <button
                                     key={c}
                                     type="button"
@@ -292,8 +297,7 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                                             params.set("city", newCity);
                                             params.delete("lat");
                                             params.delete("lng");
-                                        }
-                                        else params.delete("city");
+                                        } else params.delete("city");
                                         router.push(`${pathname}?${params.toString()}`);
                                     }}
                                     className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
@@ -310,10 +314,12 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
 
                     {/* Capacity */}
                     <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Min. Capacity</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            {t("filters.capacity")}
+                        </Label>
                         <Input
                             type="number"
-                            placeholder="e.g. 10 people"
+                            placeholder={t("filters.capacityPlaceholder")}
                             value={capacity}
                             onChange={(e) => setCapacity(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
@@ -324,8 +330,12 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                     {/* Price Range */}
                     <div className="space-y-2">
                         <div className="flex justify-between items-center text-xs">
-                            <Label className="font-semibold uppercase tracking-wider text-gray-500">Max Price / hour</Label>
-                            <span className="font-bold text-[#008080]">{!mounted || priceRange[1] >= 200 ? "No limit" : `${priceRange[1]} RON/h`}</span>
+                            <Label className="font-semibold uppercase tracking-wider text-gray-500">
+                                {t("filters.price")}
+                            </Label>
+                            <span className="font-bold text-[#008080]">
+                                {!mounted || priceRange[1] >= 200 ? t("filters.noLimit") : `${priceRange[1]} RON/h`}
+                            </span>
                         </div>
                         <Slider
                             defaultValue={[priceRange[1]]}
@@ -337,15 +347,17 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                         />
                         {mounted && priceRange[1] < 200 && (
                             <div className="pt-2">
-                                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 block mb-1">Sort by Price</Label>
+                                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 block mb-1">
+                                    {t("filters.sortByPrice")}
+                                </Label>
                                 <select
                                     value={sort}
                                     onChange={(e) => setSort(e.target.value)}
                                     className="w-full text-xs p-1.5 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800"
                                 >
-                                    <option value="">Default (Popularitate)</option>
-                                    <option value="price_asc">Preț: Mic la Mare (Ascending)</option>
-                                    <option value="price_desc">Preț: Mare la Mic (Descending)</option>
+                                    <option value="">{t("filters.sortDefault")}</option>
+                                    <option value="price_asc">{t("filters.sortPriceAsc")}</option>
+                                    <option value="price_desc">{t("filters.sortPriceDesc")}</option>
                                 </select>
                             </div>
                         )}
@@ -353,7 +365,9 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
 
                     {/* Amenities */}
                     <div className="space-y-2 relative z-30">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Amenities</Label>
+                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            {t("filters.amenities")}
+                        </Label>
                         <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                             {AMENITIES_OPTIONS.map((amenity) => (
                                 <div key={amenity} className="flex items-center space-x-2">
@@ -364,12 +378,15 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                                             if (checked) {
                                                 setSelectedAmenities([...selectedAmenities, amenity]);
                                             } else {
-                                                setSelectedAmenities(selectedAmenities.filter(a => a !== amenity));
+                                                setSelectedAmenities(selectedAmenities.filter((a) => a !== amenity));
                                             }
                                         }}
                                     />
-                                    <label htmlFor={amenity} className="text-xs text-gray-600 dark:text-gray-300 font-normal cursor-pointer select-none">
-                                        {amenity}
+                                    <label
+                                        htmlFor={amenity}
+                                        className="text-xs text-gray-600 dark:text-gray-300 font-normal cursor-pointer select-none"
+                                    >
+                                        {translateAmenity(amenity)}
                                     </label>
                                 </div>
                             ))}
@@ -473,11 +490,11 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                             </div>
 
                             <Button onClick={applyFilters} className="relative z-20 w-full bg-[#008080] hover:bg-[#006F6F] text-white">
-                                Apply filters
+                                {t("filters.apply")}
                             </Button>
                         </div>
                         <Button onClick={clearFilters} variant="outline" className="relative z-20 w-full text-xs">
-                            Reset
+                            {t("filters.reset")}
                         </Button>
                     </div>
                 </div>

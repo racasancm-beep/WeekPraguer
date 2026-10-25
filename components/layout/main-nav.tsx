@@ -64,38 +64,38 @@ export function MainNav() {
                         
                         <div className="relative group">
                             <div className="flex items-center gap-1 text-sm font-bold text-gray-600 group-hover:text-[#008080] transition-colors tracking-wide outline-none cursor-pointer py-4">
-                                Servicii <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
+                                {t("nav.services")} <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
                             </div>
                             <div className="absolute top-full left-0 w-56 p-2 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                 {/* Ad block */}
                                 <div className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 mb-2 rounded border border-yellow-200 text-center">
-                                    SPONSORIZAT: 10% reducere la curățenie
+                                    {t("nav.sponsoredCleaning")}
                                 </div>
                                 <Link href="/explore?type=servicii&category=curatenie" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Package className="w-4 h-4 text-[#008080]" /> Curățenie
+                                    <Package className="w-4 h-4 text-[#008080]" /> {t("nav.cleaning")}
                                 </Link>
                                 <Link href="/explore?type=servicii&category=securitate" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Shield className="w-4 h-4 text-[#008080]" /> Asigurare &amp; Pază
+                                    <Shield className="w-4 h-4 text-[#008080]" /> {t("nav.security")}
                                 </Link>
                                 <Link href="/explore?type=servicii&category=asistenta" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Settings className="w-4 h-4 text-[#008080]" /> Management &amp; IT
+                                    <Settings className="w-4 h-4 text-[#008080]" /> {t("nav.itManagement")}
                                 </Link>
                             </div>
                         </div>
 
                         <div className="relative group">
                             <div className="flex items-center gap-1 text-sm font-bold text-gray-600 group-hover:text-[#008080] transition-colors tracking-wide outline-none cursor-pointer py-4">
-                                Renting <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
+                                {t("nav.renting")} <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
                             </div>
                             <div className="absolute top-full left-0 w-56 p-2 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                 <Link href="/explore" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Key className="w-4 h-4 text-[#008080]" /> Pe termen lung
+                                    <Key className="w-4 h-4 text-[#008080]" /> {t("nav.longTerm")}
                                 </Link>
                                 <Link href="/explore" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Building className="w-4 h-4 text-[#008080]" /> Spații comerciale
+                                    <Building className="w-4 h-4 text-[#008080]" /> {t("nav.commercialSpaces")}
                                 </Link>
                                 <Link href="/explore" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Map className="w-4 h-4 text-[#008080]" /> Harta locațiilor
+                                    <Map className="w-4 h-4 text-[#008080]" /> {t("nav.locationsMap")}
                                 </Link>
                             </div>
                         </div>
@@ -106,7 +106,7 @@ export function MainNav() {
                                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black uppercase tracking-wider hover:bg-amber-200 transition-colors"
                             >
                                 <ShieldCheck className="w-4 h-4 text-amber-700" />
-                                ADMIN Hub
+                                {t("nav.adminHub")}
                             </Link>
                         ) : session ? (
                             <Link
@@ -114,7 +114,7 @@ export function MainNav() {
                                 className="flex items-center gap-1.5 text-sm font-bold text-[#008080] hover:text-[#006F6F] transition-colors"
                             >
                                 <LayoutDashboard className="w-4 h-4" />
-                                Dashboard
+                                {t("nav.dashboard")}
                             </Link>
                         ) : (
                             <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">

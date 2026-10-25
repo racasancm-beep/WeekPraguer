@@ -1,5 +1,6 @@
 import { SpaceFilters } from "@/components/explore/space-filters";
 import { SpaceGrid } from "@/components/explore/space-grid";
+import { ExploreHeader } from "@/components/explore/explore-header";
 import MapComponent from "@/components/ui/map-component";
 import React from "react";
 
@@ -184,19 +185,7 @@ export default async function ExploreSpacesPage({
     return (
         <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div>
-                        <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-                            {isServiceMode ? "Explorează Servicii & Spații" : "Explore Spaces by the Hour"}
-                        </h1>
-                        <p className="text-gray-500 mt-1 text-sm font-medium">
-                            {isServiceMode
-                                ? `Găsește spații cu servicii verificate (${spaces.length} spații disponibile).`
-                                : `Find and book unique spaces for any project or event (${spaces.length} spaces available).`
-                            }
-                        </p>
-                    </div>
-                </div>
+                <ExploreHeader isServiceMode={isServiceMode} count={spaces.length} />
 
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Sidebar Filters */}

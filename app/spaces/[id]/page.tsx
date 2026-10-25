@@ -28,6 +28,7 @@ import {
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import MapComponent from "@/components/ui/map-component";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 interface SpaceDetailed {
     id: string;
@@ -61,6 +62,7 @@ interface BookingSlot {
 }
 
 export default function SpaceDetailsPage() {
+    const { t, translateAmenity, translateCategory } = useLanguage();
     const { id } = useParams();
     const router = useRouter();
     const { data: session } = useSession();
@@ -148,18 +150,18 @@ export default function SpaceDetailsPage() {
 
     const handleBook = async () => {
         if (!session) {
-            toast.error("Please sign in to book this space");
+            toast.error(t("space.errSignIn"));
             router.push(`/login?callbackUrl=/spaces/${id}`);
             return;
         }
 
         if (selectedDates.length === 0) {
-            toast.error("Please select at least one date");
+            toast.error(t("space.errSelectDate"));
             return;
         }
 
         if (!agreed) {
-            toast.error("You must agree to the space rules & terms");
+            toast.error(t("space.errAgreeTerms"));
             return;
         }
 
@@ -193,7 +195,7 @@ export default function SpaceDetailsPage() {
             });
 
             if (res.ok) {
-                toast.success("Booking request submitted successfully!");
+                toast.success(t("space.bookingSuccess"));
                 router.push("/dashboard");
             } else {
                 const err = await res.json();
@@ -211,7 +213,7 @@ export default function SpaceDetailsPage() {
             <div className="min-h-screen flex items-center justify-center bg-gray-50">
                 <div className="flex flex-col items-center gap-3">
                     <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm font-semibold text-gray-500">Loading space...</p>
+                    <p className="text-sm font-semibold text-gray-500">{t("space.loading")}</p>
                 </div>
             </div>
         );
@@ -220,10 +222,10 @@ export default function SpaceDetailsPage() {
     if (!space) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Space not found</h2>
-                <p className="text-gray-500 mb-6">The requested space does not exist or has been removed.</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{t("space.notFound")}</h2>
+                <p className="text-gray-500 mb-6">{t("space.notFoundDesc")}</p>
                 <Link href="/explore">
-                    <Button className="bg-violet-600 text-white rounded-xl">Back to Explore</Button>
+                    <Button className="bg-violet-600 text-white rounded-xl">{t("space.backToExplore")}</Button>
                 </Link>
             </div>
         );
@@ -247,11 +249,11 @@ export default function SpaceDetailsPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
                     <Link href="/explore" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-violet-600 transition-colors">
                         <ArrowLeft className="w-4 h-4" />
-                        Back to spaces
+                        {t("space.backToSpaces")}
                     </Link>
                     {space.category && (
                         <span className="text-xs font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-3 py-1 rounded-full">
-                            {space.category}
+                            {translateCategory(space.category)}
                         </span>
                     )}
                 </div>
@@ -263,12 +265,12 @@ export default function SpaceDetailsPage() {
                     <div className="flex flex-wrap items-center gap-3 mb-2">
                         {space.category && (
                             <span className="text-xs font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-3 py-1 rounded-full">
-                                {space.category}
+                                {translateCategory(space.category)}
                             </span>
                         )}
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
                             <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                            Verified Host
+                            {t("space.verifiedHost")}
                         </span>
                     </div>
 
@@ -309,7 +311,7 @@ export default function SpaceDetailsPage() {
                                     <ChevronRight className="w-5 h-5" />
                                 </button>
                                 <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-full">
-                                    {selectedPhotoIndex + 1} / {photos.length} photos
+                                    {selectedPhotoIndex + 1} / {photos.length} {t("space.photos")}
                                 </div>
                             </>
                         )}
@@ -347,8 +349,8 @@ export default function SpaceDetailsPage() {
                                     <Users className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-400 font-medium">Capacity</div>
-                                    <div className="text-sm font-bold text-gray-900">{space.capacity} people</div>
+                                    <div className="text-xs text-gray-400 font-medium">{t("space.capacity")}</div>
+                                    <div className="text-sm font-bold text-gray-900">{space.capacity} {t("space.people")}</div>
                                 </div>
                             </div>
 
@@ -357,7 +359,7 @@ export default function SpaceDetailsPage() {
                                     <Ruler className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-400 font-medium">Size</div>
+                                    <div className="text-xs text-gray-400 font-medium">{t("space.size")}</div>
                                     <div className="text-sm font-bold text-gray-900">{space.size} m²</div>
                                 </div>
                             </div>
@@ -367,8 +369,8 @@ export default function SpaceDetailsPage() {
                                     <Wifi className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-400 font-medium">Connectivity</div>
-                                    <div className="text-sm font-bold text-gray-900">{space.hasWifi ? "High-Speed WiFi" : "On request"}</div>
+                                    <div className="text-xs text-gray-400 font-medium">{t("space.connectivity")}</div>
+                                    <div className="text-sm font-bold text-gray-900">{space.hasWifi ? t("space.highSpeedWifi") : t("space.onRequest")}</div>
                                 </div>
                             </div>
 
@@ -377,8 +379,8 @@ export default function SpaceDetailsPage() {
                                     <Clock className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <div className="text-xs text-gray-400 font-medium">Rental</div>
-                                    <div className="text-sm font-bold text-gray-900">Hourly / Daily</div>
+                                    <div className="text-xs text-gray-400 font-medium">{t("space.rental")}</div>
+                                    <div className="text-sm font-bold text-gray-900">{t("space.hourlyDaily")}</div>
                                 </div>
                             </div>
                         </div>
@@ -387,7 +389,7 @@ export default function SpaceDetailsPage() {
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4">
                             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                 <Clock className="w-5 h-5 text-violet-600" />
-                                Space Description
+                                {t("space.descriptionTitle")}
                             </h3>
                             <div className="text-gray-600 leading-relaxed text-sm sm:text-base whitespace-pre-line font-normal">
                                 {space.description}
@@ -398,7 +400,7 @@ export default function SpaceDetailsPage() {
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4">
                             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                 <Sparkles className="w-5 h-5 text-violet-600" />
-                                Amenities & Included Services
+                                {t("space.amenitiesTitle")}
                             </h3>
                             <div className="flex flex-wrap gap-2.5">
                                 {amenities.map((a: string, i: number) => (
@@ -406,7 +408,7 @@ export default function SpaceDetailsPage() {
                                         key={i}
                                         className="px-4 py-2 bg-violet-50 text-violet-800 rounded-2xl text-xs font-semibold border border-violet-100"
                                     >
-                                        ✓ {a}
+                                        ✓ {translateAmenity(a)}
                                     </span>
                                 ))}
                             </div>
@@ -417,7 +419,7 @@ export default function SpaceDetailsPage() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                                     <MapPin className="w-5 h-5 text-violet-600" />
-                                    Location & Google Map
+                                    {t("space.locationTitle")}
                                 </h3>
                                 <span className="text-xs text-gray-500 font-medium">
                                     {space.address}{space.district ? `, ${space.district}` : ""}, {space.city}
@@ -441,10 +443,10 @@ export default function SpaceDetailsPage() {
                             <div>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <span className="text-3xl font-black text-gray-900">{formatPrice(space.hourlyRate)}</span>
-                                    <span className="text-sm text-gray-500 font-medium">/ hour</span>
+                                    <span className="text-sm text-gray-500 font-medium">{t("space.perHour")}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">
-                                    or <span className="font-bold text-gray-700">{formatPrice(space.dailyRate)}</span> / full day
+                                    {t("space.or")} <span className="font-bold text-gray-700">{formatPrice(space.dailyRate)}</span> {t("space.perFullDay")}
                                 </p>
                             </div>
 
@@ -452,7 +454,7 @@ export default function SpaceDetailsPage() {
 
                             <div className="space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
-                                    Select Dates
+                                    {t("space.selectDates")}
                                 </label>
                                 <div className="border rounded-2xl p-2 bg-gray-50/50 flex justify-center">
                                     <Calendar
@@ -479,7 +481,7 @@ export default function SpaceDetailsPage() {
                             {Object.keys(slots).length > 0 && (
                                 <div className="space-y-3">
                                     <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
-                                        Configure Hours
+                                        {t("space.configureHours")}
                                     </label>
                                     <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
                                         {Object.entries(slots).map(([key, slot]) => (
@@ -493,14 +495,14 @@ export default function SpaceDetailsPage() {
                                                             onChange={(e) => updateSlot(key, { isFullDay: e.target.checked })}
                                                             className="rounded text-violet-600"
                                                         />
-                                                        Full day
+                                                        {t("space.fullDay")}
                                                     </label>
                                                 </div>
 
                                                 {!slot.isFullDay && (
                                                     <div className="flex items-center gap-2 pt-1 border-t border-gray-200">
                                                         <div className="flex-1">
-                                                            <span className="text-[10px] text-gray-400 block font-semibold">Start</span>
+                                                            <span className="text-[10px] text-gray-400 block font-semibold">{t("space.start")}</span>
                                                             <select
                                                                 value={slot.startTime}
                                                                 onChange={(e) => updateSlot(key, { startTime: e.target.value })}
@@ -519,12 +521,12 @@ export default function SpaceDetailsPage() {
         }
         return false;
     });
-    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? '(Booked)' : ''}</option>;
+    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? t("space.booked") : ''}</option>;
 })}
                                                             </select>
                                                         </div>
                                                         <div className="flex-1">
-                                                            <span className="text-[10px] text-gray-400 block font-semibold">End</span>
+                                                            <span className="text-[10px] text-gray-400 block font-semibold">{t("space.end")}</span>
                                                             <select
                                                                 value={slot.endTime}
                                                                 onChange={(e) => updateSlot(key, { endTime: e.target.value })}
@@ -543,7 +545,7 @@ export default function SpaceDetailsPage() {
         }
         return false;
     });
-    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? '(Booked)' : ''}</option>;
+    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? t("space.booked") : ''}</option>;
 })}
                                                             </select>
                                                         </div>
@@ -558,7 +560,7 @@ export default function SpaceDetailsPage() {
                             {Object.keys(slots).length > 0 && (
                                 <div className="pt-2 border-t border-gray-100 space-y-2">
                                     <div className="flex justify-between items-center text-lg font-black text-gray-900">
-                                        <span>Estimated Total</span>
+                                        <span>{t("space.estimatedTotal")}</span>
                                         <span className="text-violet-600">{formatPrice(totalPrice)}</span>
                                     </div>
                                 </div>
@@ -574,8 +576,8 @@ export default function SpaceDetailsPage() {
                                     className="mt-1 rounded text-violet-600 focus:ring-violet-500"
                                 />
                                 <label htmlFor="agree-terms" className="text-xs text-gray-500 leading-tight">
-                                    I agree to the space rules and the{" "}
-                                    <Link href="/terms" className="text-violet-600 hover:underline">terms of service</Link>.
+                                    {t("space.agreePrefix")}{" "}
+                                    <Link href="/terms" className="text-violet-600 hover:underline">{t("space.termsLink")}</Link>.
                                 </label>
                             </div>
 
@@ -584,7 +586,7 @@ export default function SpaceDetailsPage() {
                                 disabled={bookingLoading}
                                 className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-bold shadow-lg shadow-violet-200"
                             >
-                                {bookingLoading ? "Processing..." : "Request Booking"}
+                                {bookingLoading ? t("space.processing") : t("space.requestBooking")}
                             </Button>
                         </div>
                     </div>
