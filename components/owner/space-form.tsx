@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, Plus, X } from "lucide-react";
+import { Loader2, MapPin, Plus, X } from "lucide-react";
 import MapComponent from "@/components/ui/map-component";
 import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -34,7 +34,71 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
     "galati": { lat: 45.4353, lng: 28.008 },
     "oradea": { lat: 47.0465, lng: 21.9189 },
     "sibiu": { lat: 45.7983, lng: 24.1256 },
+    "prague": { lat: 50.0755, lng: 14.4378 },
+    "praha": { lat: 50.0755, lng: 14.4378 },
+    "praga": { lat: 50.0755, lng: 14.4378 },
+    "budapest": { lat: 47.4979, lng: 19.0402 },
+    "budapesta": { lat: 47.4979, lng: 19.0402 },
+    "vienna": { lat: 48.2082, lng: 16.3738 },
+    "wien": { lat: 48.2082, lng: 16.3738 },
+    "viena": { lat: 48.2082, lng: 16.3738 },
+    "berlin": { lat: 52.52, lng: 13.405 },
+    "munich": { lat: 48.1351, lng: 11.582 },
+    "munchen": { lat: 48.1351, lng: 11.582 },
+    "warsaw": { lat: 52.2297, lng: 21.0122 },
+    "bratislava": { lat: 48.1486, lng: 17.1077 },
 };
+
+const DISTRICT_COORDS: Record<string, { lat: number; lng: number }> = {
+    "prague 1": { lat: 50.0875, lng: 14.4213 },
+    "praha 1": { lat: 50.0875, lng: 14.4213 },
+    "prague 2": { lat: 50.0742, lng: 14.4376 },
+    "praha 2": { lat: 50.0742, lng: 14.4376 },
+    "prague 3": { lat: 50.0837, lng: 14.4659 },
+    "praha 3": { lat: 50.0837, lng: 14.4659 },
+    "prague 4": { lat: 50.0378, lng: 14.4494 },
+    "praha 4": { lat: 50.0378, lng: 14.4494 },
+    "prague 5": { lat: 50.0566, lng: 14.3712 },
+    "praha 5": { lat: 50.0566, lng: 14.3712 },
+    "prague 6": { lat: 50.0994, lng: 14.3547 },
+    "praha 6": { lat: 50.0994, lng: 14.3547 },
+    "prague 7": { lat: 50.1038, lng: 14.4307 },
+    "praha 7": { lat: 50.1038, lng: 14.4307 },
+    "prague 8": { lat: 50.1086, lng: 14.4764 },
+    "praha 8": { lat: 50.1086, lng: 14.4764 },
+    "prague 9": { lat: 50.1116, lng: 14.5105 },
+    "praha 9": { lat: 50.1116, lng: 14.5105 },
+    "prague 10": { lat: 50.0686, lng: 14.4876 },
+    "praha 10": { lat: 50.0686, lng: 14.4876 },
+    "sector 1": { lat: 44.4678, lng: 26.0781 },
+    "sector 2": { lat: 44.4495, lng: 26.1322 },
+    "sector 3": { lat: 44.4178, lng: 26.1558 },
+    "sector 4": { lat: 44.3879, lng: 26.1194 },
+    "sector 5": { lat: 44.4072, lng: 26.0596 },
+    "sector 6": { lat: 44.4342, lng: 26.0188 },
+};
+
+async function geocodeQuery(query: string): Promise<{ lat: number; lng: number; label?: string } | null> {
+    const q = query.trim();
+    if (q.length < 2) return null;
+    try {
+        const res = await fetch(`/api/maps/search?q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+            const data = await res.json();
+            const first = data.places?.[0];
+            if (first && typeof first.lat === "number" && typeof first.lng === "number") {
+                return {
+                    lat: Number(first.lat.toFixed(6)),
+                    lng: Number(first.lng.toFixed(6)),
+                    label: first.name || first.address || q,
+                };
+            }
+        }
+    } catch {
+        // Ignore network errors and rely on fallback
+    }
+    return null;
+}
 
 const formSchema = z.object({
     name: z.string().min(2, "Required"),
@@ -67,8 +131,14 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
     const router = useRouter();
     const { t, translateAmenity } = useLanguage();
     const [loading, setLoading] = useState(false);
+    const [geocoding, setGeocoding] = useState(false);
+    const [mapZoom, setMapZoom] = useState<number>(13);
+    const [mapFocusLabel, setMapFocusLabel] = useState<string>("București");
     const [photos, setPhotos] = useState<string[]>(initialData?.photos?.map((p: any) => p.url || p) || []);
     const [photoUrl, setPhotoUrl] = useState("");
+    const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const stepTwoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastResolvedCityRef = useRef<string>("bucurești");
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -96,6 +166,121 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
         },
     });
 
+    const watchedCity = form.watch("city") || "";
+    const watchedDistrict = form.watch("district") || "";
+    const watchedAddress = form.watch("address") || "";
+    const watchedLat = form.watch("latitude");
+    const watchedLng = form.watch("longitude");
+
+    const updateCoordinates = useCallback(
+        (lat: number, lng: number, zoomLevel?: number, focusText?: string) => {
+            const roundedLat = Number(lat.toFixed(6));
+            const roundedLng = Number(lng.toFixed(6));
+            form.setValue("latitude", roundedLat, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            form.setValue("longitude", roundedLng, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+            if (typeof zoomLevel === "number") {
+                setMapZoom(zoomLevel);
+            }
+            if (focusText) {
+                setMapFocusLabel(focusText);
+            }
+        },
+        [form]
+    );
+
+    // Automatically open Google Map at City first, then move to District / Address and update Latitude & Longitude
+    useEffect(() => {
+        if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+        if (stepTwoTimerRef.current) clearTimeout(stepTwoTimerRef.current);
+
+        const cityClean = watchedCity.trim();
+        const districtClean = watchedDistrict.trim();
+        const addressClean = watchedAddress.trim();
+
+        if (!cityClean && !districtClean && !addressClean) return;
+
+        // Instant lookup for known City so map jumps immediately while typing
+        const cityNorm = cityClean.toLowerCase();
+        const localCity = CITY_COORDS[cityNorm];
+        const cityChanged = cityNorm && cityNorm !== lastResolvedCityRef.current;
+
+        if (cityChanged && localCity) {
+            lastResolvedCityRef.current = cityNorm;
+            updateCoordinates(localCity.lat, localCity.lng, 12, cityClean);
+        }
+
+        geocodeTimerRef.current = setTimeout(async () => {
+            setGeocoding(true);
+            try {
+                // Step 1: Ensure Google Map opens at the City location first whenever City is set/changed
+                let cityCoords = localCity || null;
+                if (cityClean && (!cityCoords || cityChanged)) {
+                    const remoteCity = await geocodeQuery(cityClean);
+                    if (remoteCity) {
+                        cityCoords = { lat: remoteCity.lat, lng: remoteCity.lng };
+                    }
+                    if (cityCoords) {
+                        lastResolvedCityRef.current = cityNorm;
+                        updateCoordinates(cityCoords.lat, cityCoords.lng, 12, cityClean);
+                    }
+                }
+
+                // Step 2: If District (or Address) is set, move from the City to the District and update Lat/Lng
+                const targetSubLocation = districtClean || addressClean;
+                if (targetSubLocation && targetSubLocation.toLowerCase() !== cityNorm) {
+                    const runDistrictMove = async () => {
+                        const distKey = targetSubLocation.toLowerCase();
+                        const quickDist = DISTRICT_COORDS[distKey];
+                        if (quickDist) {
+                            updateCoordinates(
+                                quickDist.lat,
+                                quickDist.lng,
+                                14,
+                                cityClean ? `${cityClean} → ${targetSubLocation}` : targetSubLocation
+                            );
+                        }
+
+                        // Query Google Maps Places API for exact District + Address in that City
+                        const fullQuery = [
+                            addressClean && addressClean.toLowerCase() !== distKey ? addressClean : "",
+                            districtClean,
+                            cityClean,
+                        ]
+                            .filter(Boolean)
+                            .join(", ");
+
+                        const remoteDistrict = await geocodeQuery(fullQuery);
+                        if (remoteDistrict) {
+                            updateCoordinates(
+                                remoteDistrict.lat,
+                                remoteDistrict.lng,
+                                addressClean && addressClean.toLowerCase() !== distKey ? 15 : 14,
+                                cityClean ? `${cityClean} → ${districtClean || addressClean}` : fullQuery
+                            );
+                        }
+                        setGeocoding(false);
+                    };
+
+                    if (cityChanged) {
+                        // Brief pause after opening at the City so the user sees the map open at City and move to District
+                        stepTwoTimerRef.current = setTimeout(runDistrictMove, 650);
+                        return;
+                    } else {
+                        await runDistrictMove();
+                        return;
+                    }
+                }
+            } finally {
+                setGeocoding(false);
+            }
+        }, 380);
+
+        return () => {
+            if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
+            if (stepTwoTimerRef.current) clearTimeout(stepTwoTimerRef.current);
+        };
+    }, [watchedCity, watchedDistrict, watchedAddress, updateCoordinates]);
+
     const addPhoto = () => {
         if (!photoUrl.trim()) return;
         setPhotos([...photos, photoUrl.trim()]);
@@ -106,19 +291,27 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
         setPhotos(photos.filter((_, i) => i !== index));
     };
 
-    const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        form.setValue("city", val);
-        const coords = CITY_COORDS[val.trim().toLowerCase()];
-        if (coords) {
-            form.setValue("latitude", coords.lat);
-            form.setValue("longitude", coords.lng);
-        }
-    };
-
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         setLoading(true);
         try {
+            let finalLat = Number(values.latitude);
+            let finalLng = Number(values.longitude);
+
+            // Ensure coordinates match the entered City & District on submit
+            const locationQuery = [values.address, values.district, values.city]
+                .map((s) => s?.trim())
+                .filter(Boolean)
+                .join(", ");
+
+            if (locationQuery) {
+                const resolved = await geocodeQuery(locationQuery);
+                if (resolved) {
+                    finalLat = resolved.lat;
+                    finalLng = resolved.lng;
+                    updateCoordinates(finalLat, finalLng, 14, locationQuery);
+                }
+            }
+
             const finalPhotos =
                 photos.length > 0
                     ? photos
@@ -131,6 +324,8 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...values,
+                    latitude: Number.isFinite(finalLat) ? finalLat : 44.4268,
+                    longitude: Number.isFinite(finalLng) ? finalLng : 26.1025,
                     dailyRate: values.dailyRate || values.hourlyRate * 8,
                     weekendRate: values.weekendRate || values.hourlyRate * 16,
                     photos: finalPhotos,
@@ -153,6 +348,10 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
     };
 
     const watchedAmenities = form.watch("amenitiesList") || [];
+    const fullLocationLabel = [watchedAddress, watchedDistrict, watchedCity]
+        .map((s) => s?.trim())
+        .filter(Boolean)
+        .join(", ");
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl bg-white dark:bg-gray-800 p-6 rounded-xl border">
@@ -174,7 +373,17 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">{t("owner.form.location")}</h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">{t("owner.form.location")}</h3>
+                    <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#008080] bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
+                        {geocoding ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#008080]" />
+                        ) : (
+                            <MapPin className="w-3.5 h-3.5 text-[#008080]" />
+                        )}
+                        <span>{mapFocusLabel}</span>
+                    </div>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.address")}</label>
@@ -183,26 +392,49 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.city")}</label>
-                        <Input {...form.register("city")} onChange={handleCityChange} />
+                        <Input {...form.register("city")} placeholder="București, Prague..." />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.district")}</label>
-                        <Input {...form.register("district")} placeholder="Sector 1" />
+                        <Input {...form.register("district")} placeholder="Sector 1, Prague 8..." />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.latitude")}</label>
-                        <Input type="number" step="any" {...form.register("latitude")} />
+                        <Input
+                            type="number"
+                            step="any"
+                            value={watchedLat ?? ""}
+                            onChange={(e) =>
+                                form.setValue("latitude", parseFloat(e.target.value) || 0, {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                })
+                            }
+                        />
                     </div>
                     <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.longitude")}</label>
-                        <Input type="number" step="any" {...form.register("longitude")} />
+                        <Input
+                            type="number"
+                            step="any"
+                            value={watchedLng ?? ""}
+                            onChange={(e) =>
+                                form.setValue("longitude", parseFloat(e.target.value) || 0, {
+                                    shouldValidate: true,
+                                    shouldDirty: true,
+                                })
+                            }
+                        />
                     </div>
-                    <div className="col-span-2 h-56 rounded-md overflow-hidden border mt-2">
+                    <div className="col-span-2 h-64 rounded-md overflow-hidden border mt-2">
                         <MapComponent
-                            lat={Number(form.watch("latitude")) || 44.4268}
-                            lng={Number(form.watch("longitude")) || 26.1025}
-                            zoom={14}
-                            address={form.watch("address")}
+                            lat={Number(watchedLat) || 44.4268}
+                            lng={Number(watchedLng) || 26.1025}
+                            zoom={mapZoom}
+                            address={fullLocationLabel || watchedCity}
+                            onLocationChange={(newLat, newLng) => {
+                                updateCoordinates(newLat, newLng, mapZoom);
+                            }}
                         />
                     </div>
                 </div>

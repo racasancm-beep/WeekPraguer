@@ -24,6 +24,7 @@ interface MapComponentProps {
     address?: string;
     showDirectionsLink?: boolean;
     spaces?: any[];
+    onLocationChange?: (lat: number, lng: number) => void;
 }
 
 export default function MapComponent({
@@ -33,6 +34,7 @@ export default function MapComponent({
     address,
     showDirectionsLink = true,
     spaces,
+    onLocationChange,
 }: MapComponentProps) {
     const center = useMemo(
         () => ({
@@ -58,6 +60,7 @@ export default function MapComponent({
                     address={address}
                     showDirectionsLink={showDirectionsLink}
                     spaces={spaces}
+                    onLocationChange={onLocationChange}
                 />
             </Suspense>
         </div>

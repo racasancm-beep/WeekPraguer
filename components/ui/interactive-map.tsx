@@ -44,6 +44,7 @@ const searchAreaPinIcon = new L.Icon({
 
 const ROMANIA_CITIES_COORDS: Record<string, { lat: number; lng: number }> = {
     bucuresti: { lat: 44.4268, lng: 26.1025 },
+    bucharest: { lat: 44.4268, lng: 26.1025 },
     "cluj-napoca": { lat: 46.7712, lng: 23.6236 },
     cluj: { lat: 46.7712, lng: 23.6236 },
     timisoara: { lat: 45.7489, lng: 21.2087 },
@@ -55,6 +56,19 @@ const ROMANIA_CITIES_COORDS: Record<string, { lat: number; lng: number }> = {
     oradea: { lat: 47.0465, lng: 21.9189 },
     sibiu: { lat: 45.7983, lng: 24.1256 },
     braila: { lat: 45.2692, lng: 27.9575 },
+    prague: { lat: 50.0755, lng: 14.4378 },
+    praha: { lat: 50.0755, lng: 14.4378 },
+    praga: { lat: 50.0755, lng: 14.4378 },
+    budapest: { lat: 47.4979, lng: 19.0402 },
+    budapesta: { lat: 47.4979, lng: 19.0402 },
+    vienna: { lat: 48.2082, lng: 16.3738 },
+    wien: { lat: 48.2082, lng: 16.3738 },
+    viena: { lat: 48.2082, lng: 16.3738 },
+    berlin: { lat: 52.52, lng: 13.405 },
+    munich: { lat: 48.1351, lng: 11.582 },
+    munchen: { lat: 48.1351, lng: 11.582 },
+    warsaw: { lat: 52.2297, lng: 21.0122 },
+    bratislava: { lat: 48.1486, lng: 17.1077 },
 };
 
 function normalizeCityName(str: string) {
@@ -94,6 +108,7 @@ export interface InteractiveMapProps {
     address?: string;
     showDirectionsLink?: boolean;
     spaces?: any[];
+    onLocationChange?: (lat: number, lng: number) => void;
 }
 
 function MapViewUpdater({
@@ -113,21 +128,31 @@ function MapViewUpdater({
         if (shouldFitBounds && positions.length > 1) {
             const bounds = L.latLngBounds(positions);
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
-        } else {
-            map.setView(center, zoom, { animate: true });
+        } else if (Number.isFinite(center[0]) && Number.isFinite(center[1])) {
+            map.flyTo(center, zoom, { animate: true, duration: 0.75 });
         }
-    }, [map, center, zoom, positions, shouldFitBounds]);
+    }, [map, center[0], center[1], zoom, positions, shouldFitBounds]);
 
     return null;
 }
 
-function MapClickHandler({ enabled }: { enabled: boolean }) {
+function MapClickHandler({
+    enabled,
+    onLocationChange,
+}: {
+    enabled: boolean;
+    onLocationChange?: (lat: number, lng: number) => void;
+}) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
     useMapEvents({
         click(e) {
+            if (onLocationChange) {
+                onLocationChange(Number(e.latlng.lat.toFixed(6)), Number(e.latlng.lng.toFixed(6)));
+                return;
+            }
             if (!enabled) return;
             const params = new URLSearchParams(searchParams?.toString() || "");
             params.delete("city");
@@ -155,6 +180,7 @@ export default function InteractiveMap({
     address,
     showDirectionsLink = true,
     spaces,
+    onLocationChange,
 }: InteractiveMapProps) {
     const { t } = useLanguage();
     const router = useRouter();
@@ -389,7 +415,7 @@ export default function InteractiveMap({
                     shouldFitBounds={isExploreMode && !hasExplicitFilter && positions.length > 1}
                 />
 
-                <MapClickHandler enabled={isExploreMode} />
+                <MapClickHandler enabled={isExploreMode} onLocationChange={onLocationChange} />
 
                 {isExploreMode ? (
                     <>
@@ -447,7 +473,24 @@ export default function InteractiveMap({
                         ))}
                     </>
                 ) : (
-                    <Marker position={center} icon={googlePinIcon}>
+                    <Marker
+                        position={center}
+                        icon={googlePinIcon}
+                        draggable={Boolean(onLocationChange)}
+                        eventHandlers={
+                            onLocationChange
+                                ? {
+                                      dragend: (e) => {
+                                          const pos = e.target.getLatLng();
+                                          onLocationChange(
+                                              Number(pos.lat.toFixed(6)),
+                                              Number(pos.lng.toFixed(6))
+                                          );
+                                      },
+                                  }
+                                : undefined
+                        }
+                    >
                         <Popup className="rounded-xl">
                             <div className="font-bold text-gray-900 text-xs">
                                 {address || t("map.spaceLocation")}
