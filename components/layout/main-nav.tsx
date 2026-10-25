@@ -1,51 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Search, Globe, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useLanguage, LANGUAGES } from "@/lib/i18n/language-context";
+import { useLanguage } from "@/lib/i18n/language-context";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useSession } from "next-auth/react";
 
 export function MainNav() {
-    const { t, language, setLanguage } = useLanguage();
+    const { t } = useLanguage();
     const { data: session } = useSession();
     const isAdmin = (session?.user as any)?.role === "ADMIN";
+    const tickerText = t("nav.tickerText");
 
     return (
         <div className="sticky top-0 w-full z-50" suppressHydrationWarning>
-            {/* Top Multi-Language Bar */}
-            <div className="bg-[#008080] text-white text-xs py-2 px-4 shadow-sm border-b border-[#006F6F]">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 font-medium">
-                        <Globe className="w-3.5 h-3.5 opacity-80" />
-                        <span>{t("hero.badge")}</span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 bg-[#006F6F]/60 p-0.5 rounded-full border border-white/20">
-                        {LANGUAGES.map((l) => {
-                            const active = l.code === language;
-                            return (
-                                <button
-                                    key={l.code}
-                                    type="button"
-                                    onClick={() => setLanguage(l.code)}
-                                    className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all ${
-                                        active
-                                            ? "bg-white text-[#008080] shadow-sm"
-                                            : "text-white/90 hover:text-white hover:bg-white/10"
-                                    }`}
-                                >
-                                    <span>{l.flag}</span>
-                                    <span>{l.label}</span>
-                                </button>
-                            );
-                        })}
-                    </div>
+            {/* Top Scrolling Ticker Bar (Language selector removed from here and kept on the second bar) */}
+            <div className="bg-[#008080] text-white text-xs py-2.5 overflow-hidden shadow-sm border-b border-[#006F6F]">
+                <div className="animate-marquee-left whitespace-nowrap font-semibold tracking-wide">
+                    <span className="mx-8">{tickerText}</span>
+                    <span className="mx-8" aria-hidden="true">• {tickerText}</span>
                 </div>
             </div>
 
-            {/* Navigation Bar */}
+            {/* Second Navigation Bar (Contains Language Selection) */}
             <nav className="w-full bg-white/95 backdrop-blur-xl border-b border-[#E2ECEC] shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
                     <Link href="/" className="flex items-center gap-2.5 group">

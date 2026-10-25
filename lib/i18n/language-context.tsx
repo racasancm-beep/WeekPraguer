@@ -49,6 +49,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "nav.listSpace": "Publică un Spațiu",
         "nav.dashboard": "Panou Control",
         "nav.adminHub": "Panou ADMIN",
+        "nav.tickerText": "Găsește Spații de Birouri Profesionale • Locații Premium • Termeni Flexibili • Rezervare Instantanee • Rezervă birouri și săli de ședințe complet utilate • ⭐ Evaluare Clienți 4.8/5 • 🏢 100+ Spații Verificate • 87 Birouri Disponibile Astăzi • 📍 Zone de Afaceri de Top",
 
         // Hero
         "hero.badge": "Închiriază și împarte spații cu ora",
@@ -485,6 +486,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "nav.listSpace": "List a Space",
         "nav.dashboard": "Dashboard",
         "nav.adminHub": "ADMIN Hub",
+        "nav.tickerText": "Find Professional Office Space • Premium Locations • Flexible Terms • Instant Booking • Book fully equipped offices and meeting rooms • ⭐ 4.8/5 Customer Rating • 🏢 100+ Verified Spaces • 87 Offices Available Today • 📍 Prime Business Districts",
 
         // Hero
         "hero.badge": "Rent and share spaces by the hour",
@@ -921,6 +923,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "nav.listSpace": "Helyszín közzététele",
         "nav.dashboard": "Vezérlőpult",
         "nav.adminHub": "ADMIN Központ",
+        "nav.tickerText": "Találjon Professzionális Irodahelyiséget • Prémium Helyszínek • Rugalmas Feltételek • Azonnali Foglalás • Foglaljon teljesen felszerelt irodákat és tárgyalókat • ⭐ 4.8/5 Ügyfélértékelés • 🏢 100+ Ellenőrzött Helyszín • 87 Elérhető Iroda Ma • 📍 Kiemelt Üzleti Negyedek",
 
         // Hero
         "hero.badge": "Bérelj és ossz meg helyiségeket óránként",
@@ -1357,6 +1360,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "nav.listSpace": "Raum inserieren",
         "nav.dashboard": "Dashboard",
         "nav.adminHub": "ADMIN-Zentrum",
+        "nav.tickerText": "Professionelle Büroflächen finden • Premium-Standorte • Flexible Konditionen • Sofortbuchung • Voll ausgestattete Büros und Konferenzräume buchen • ⭐ 4.8/5 Kundenbewertung • 🏢 100+ Geprüfte Flächen • 87 Büros heute verfügbar • 📍 Erstklassige Geschäftsviertel",
 
         // Hero
         "hero.badge": "Räume stundenweise mieten & teilen",
