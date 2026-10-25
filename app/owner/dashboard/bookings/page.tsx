@@ -1,15 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import Link from "next/link";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function BookingsPage() {
     const [pendingBookings, setPendingBookings] = useState<any[]>([]);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchData();
@@ -30,18 +31,18 @@ export default function BookingsPage() {
         }
     };
 
-    if (loading) return <div className="p-8">Loading bookings...</div>;
+    if (loading) return <div className="p-8">{t("owner.bookings.loading")}</div>;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Bookings</h1>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{t("owner.bookings.title")}</h1>
             </div>
 
             {/* Pending Requests */}
             {pendingBookings.length > 0 ? (
                 <div className="mb-8">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">Pending Requests (Action Required)</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.pendingTitle")}</h2>
                     <div className="grid gap-4">
                         {pendingBookings.map((booking) => (
                             <Card key={booking.id} className="border-yellow-200 bg-yellow-50/30">
@@ -51,7 +52,7 @@ export default function BookingsPage() {
                                         <p className="text-sm text-gray-600">
                                             {new Date(booking.startTime).toLocaleString()} - {new Date(booking.endTime).toLocaleString()}
                                         </p>
-                                        <p className="text-xs text-gray-500 mt-1">Requested by: {booking.renter?.name || "Client"}</p>
+                                        <p className="text-xs text-gray-500 mt-1">{t("owner.bookings.requestedBy")}: {booking.renter?.name || "Client"}</p>
                                     </div>
                                     <div className="flex gap-2">
                                         <Button 
@@ -62,21 +63,21 @@ export default function BookingsPage() {
                                                     body: JSON.stringify({ action: 'APPROVE' })
                                                 });
                                                 if (res.ok) {
-                                                    toast.success('Booking approved!');
+                                                    toast.success(t("owner.bookings.approvedToast"));
                                                     fetchData();
                                                 }
                                             }}
                                             className="bg-green-600 hover:bg-green-700 text-white text-xs h-8"
                                         >
-                                            Approve
+                                            {t("admin.verification.approve")}
                                         </Button>
                                         
                                         <Button 
                                             variant="outline"
                                             onClick={async () => {
-                                                const newStart = prompt('Enter new start time (YYYY-MM-DD HH:mm)');
+                                                const newStart = prompt('YYYY-MM-DD HH:mm');
                                                 if (!newStart) return;
-                                                const newEnd = prompt('Enter new end time (YYYY-MM-DD HH:mm)');
+                                                const newEnd = prompt('YYYY-MM-DD HH:mm');
                                                 if (!newEnd) return;
                                                 
                                                 const res = await fetch(`/api/owner/bookings/${booking.id}`, {
@@ -89,13 +90,13 @@ export default function BookingsPage() {
                                                     })
                                                 });
                                                 if (res.ok) {
-                                                    toast.success('Alternative suggested!');
+                                                    toast.success(t("owner.bookings.suggestedToast"));
                                                     fetchData();
                                                 }
                                             }}
                                             className="text-xs h-8"
                                         >
-                                            Suggest Alternative
+                                            {t("owner.bookings.suggestAlternative")}
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -105,12 +106,12 @@ export default function BookingsPage() {
                 </div>
             ) : (
                 <div className="bg-white p-8 rounded-2xl text-center border border-gray-200">
-                    <p className="text-gray-500">No pending booking requests.</p>
+                    <p className="text-gray-500">{t("owner.bookings.noPending")}</p>
                 </div>
             )}
 
             <div className="mt-8">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Confirmed Bookings History</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.historyTitle")}</h2>
                 <div className="grid gap-4">
                     {recentBookings.map((booking) => (
                         <Card key={booking.id} className="bg-white border-gray-200">
@@ -120,11 +121,11 @@ export default function BookingsPage() {
                                     <p className="text-sm text-gray-600">
                                         {new Date(booking.startTime).toLocaleString()} - {new Date(booking.endTime).toLocaleString()}
                                     </p>
-                                    <p className="text-xs text-gray-500 mt-1">Booked by: {booking.renter?.name || "Client"}</p>
+                                    <p className="text-xs text-gray-500 mt-1">{t("owner.bookings.bookedBy")}: {booking.renter?.name || "Client"}</p>
                                 </div>
                                 <div>
                                     <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
-                                        {booking.status}
+                                        {booking.status === "CONFIRMED" ? t("renter.status.approved") : booking.status}
                                     </span>
                                 </div>
                             </CardContent>

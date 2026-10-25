@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 interface User {
     id: string;
@@ -18,6 +19,7 @@ interface User {
 export default function VerificationQueuePage() {
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchQueue();
@@ -27,7 +29,7 @@ export default function VerificationQueuePage() {
         try {
             const res = await fetch("/api/admin/verification-queue");
             const data = await res.json();
-            setUsers(data.users);
+            setUsers(data.users || []);
         } catch (error) {
             console.error(error);
         } finally {
@@ -45,20 +47,20 @@ export default function VerificationQueuePage() {
 
             if (!res.ok) throw new Error("Failed");
 
-            toast.success("User verified successfully");
+            toast.success(t("admin.verification.success"));
             setUsers(users.filter((u) => u.id !== userId));
         } catch (error) {
-            toast.error("Failed to verify user");
+            toast.error(t("admin.verification.error"));
         }
     };
 
-    if (loading) return <div>Loading queue...</div>;
+    if (loading) return <div>{t("admin.verification.loading")}</div>;
 
     return (
         <div className="p-8">
-            <h1 className="text-3xl font-bold mb-6">Verification Queue</h1>
+            <h1 className="text-3xl font-bold mb-6">{t("admin.verification.title")}</h1>
             {users.length === 0 ? (
-                <p className="text-muted-foreground">No pending verifications.</p>
+                <p className="text-muted-foreground">{t("admin.verification.empty")}</p>
             ) : (
                 <div className="space-y-4">
                     {users.map((user) => (
@@ -67,16 +69,16 @@ export default function VerificationQueuePage() {
                             className="p-4 border rounded-lg bg-card flex justify-between items-center"
                         >
                             <div>
-                                <p className="font-semibold text-lg">{user.name || "No Name"}</p>
+                                <p className="font-semibold text-lg">{user.name || t("admin.verification.noName")}</p>
                                 <p className="text-sm text-muted-foreground">
                                     {user.email} • <span className="font-mono">{user.role}</span>
                                 </p>
-                                {user.companyName && <p className="text-sm">Company: {user.companyName}</p>}
-                                {user.phone && <p className="text-sm">Phone: {user.phone}</p>}
+                                {user.companyName && <p className="text-sm">{t("admin.verification.company")}: {user.companyName}</p>}
+                                {user.phone && <p className="text-sm">{t("admin.field.phone")}: {user.phone}</p>}
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="outline">View Details</Button>
-                                <Button onClick={() => verifyUser(user.id)}>Approve</Button>
+                                <Button variant="outline">{t("admin.verification.viewDetails")}</Button>
+                                <Button onClick={() => verifyUser(user.id)}>{t("admin.verification.approve")}</Button>
                             </div>
                         </div>
                     ))}

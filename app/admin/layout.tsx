@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function AdminLayout({
     children,
@@ -29,18 +30,19 @@ export default function AdminLayout({
     const pathname = usePathname();
     const { data: session, status } = useSession();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const { t } = useLanguage();
 
-    if (status === "loading") return <div className="flex py-16 items-center justify-center font-bold text-[#008080]">Loading Admin Hub...</div>;
+    if (status === "loading") return <div className="flex py-16 items-center justify-center font-bold text-[#008080]">{t("admin.loading")}</div>;
 
     const navigation = [
-        { name: "All Graphs & Command", href: "/admin/dashboard", icon: BarChart3 },
-        { name: "All User Profiles", href: "/admin/dashboard#profiles", icon: Users },
-        { name: "Owner Earnings & Graphs", href: "/owner/dashboard/earnings", icon: DollarSign },
-        { name: "Owner AI Intelligence", href: "/owner/intelligence", icon: Activity },
-        { name: "All Space Listings", href: "/owner/dashboard/listings", icon: Building2 },
-        { name: "Owner Bookings", href: "/owner/dashboard/bookings", icon: Calendar },
-        { name: "Renter Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { name: "Verification Queue", href: "/admin/verification", icon: UserCheck },
+        { name: t("admin.nav.graphsCommand"), href: "/admin/dashboard", icon: BarChart3 },
+        { name: t("admin.nav.userProfiles"), href: "/admin/dashboard#profiles", icon: Users },
+        { name: t("admin.nav.ownerEarnings"), href: "/owner/dashboard/earnings", icon: DollarSign },
+        { name: t("admin.nav.ownerIntelligence"), href: "/owner/intelligence", icon: Activity },
+        { name: t("admin.nav.allSpaces"), href: "/owner/dashboard/listings", icon: Building2 },
+        { name: t("admin.nav.ownerBookings"), href: "/owner/dashboard/bookings", icon: Calendar },
+        { name: t("admin.nav.renterDashboard"), href: "/dashboard", icon: LayoutDashboard },
+        { name: t("admin.nav.verificationQueue"), href: "/admin/verification", icon: UserCheck },
     ];
 
     const Sidebar = () => (
@@ -55,7 +57,7 @@ export default function AdminLayout({
             </div>
             <div className="px-4 pt-3">
                 <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] font-bold text-amber-900">
-                    SUPER ADMIN • Full Access to All Graphs, Dashboards &amp; Profiles
+                    {t("admin.superAdminBanner")}
                 </div>
             </div>
             <div className="flex-1 overflow-y-auto py-4">
@@ -64,7 +66,7 @@ export default function AdminLayout({
                         const isActive = pathname === item.href;
                         return (
                             <Link
-                                key={item.name}
+                                key={item.href}
                                 href={item.href}
                                 onClick={() => setIsMobileOpen(false)}
                                 className={`flex items-center px-3 py-2.5 text-sm font-semibold rounded-xl transition-colors ${
@@ -102,7 +104,7 @@ export default function AdminLayout({
                     onClick={() => signOut({ callbackUrl: "/" })}
                 >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
+                    {t("nav.signOut")}
                 </Button>
             </div>
         </div>

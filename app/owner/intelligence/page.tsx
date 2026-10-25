@@ -1,13 +1,15 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts"; // Changed to Area/Line
-import { TrendingUp, Activity, BarChart3 } from "lucide-react";
+import { XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+import { TrendingUp, Activity } from "lucide-react";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function OwnerIntelligencePage() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetch("/api/owner/intelligence")
@@ -19,36 +21,36 @@ export default function OwnerIntelligencePage() {
             .catch(err => console.error(err));
     }, []);
 
-    if (loading) return <div className="p-8">Loading Intelligence...</div>;
+    if (loading) return <div className="p-8">{t("owner.intelligence.loading")}</div>;
 
     return (
         <div className="p-8 space-y-8">
             <h1 className="text-3xl font-bold flex items-center gap-2">
                 <Activity className="w-8 h-8 text-violet-600" />
-                Owner Intelligence
+                {t("owner.intelligence.title")}
             </h1>
-            <p className="text-muted-foreground text-lg">AI-driven insights to optimize your weekend space listings.</p>
+            <p className="text-muted-foreground text-lg">{t("owner.intelligence.subtitle")}</p>
 
             <div className="grid gap-6 md:grid-cols-3">
                 {/* Utilization Card */}
                 <Card className="border-t-4 border-t-blue-500 shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Weekend Utilization</CardTitle>
-                        <CardDescription>Current Month</CardDescription>
+                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("owner.intelligence.utilization")}</CardTitle>
+                        <CardDescription>{t("owner.intelligence.currentMonth")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">
                             {data.utilization}%
                         </div>
-                        <p className="text-sm text-muted-foreground mt-2">of available weekend slots booked</p>
+                        <p className="text-sm text-muted-foreground mt-2">{t("owner.intelligence.slotsBooked")}</p>
                     </CardContent>
                 </Card>
 
                 {/* Forecast Card */}
                 <Card className="border-t-4 border-t-green-500 shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Revenue Forecast</CardTitle>
-                        <CardDescription>Next Month Projection</CardDescription>
+                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("owner.intelligence.forecast")}</CardTitle>
+                        <CardDescription>{t("owner.intelligence.nextMonth")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">
@@ -56,7 +58,7 @@ export default function OwnerIntelligencePage() {
                         </div>
                         <div className="flex items-center gap-1 mt-2 text-green-600 font-medium text-sm">
                             <TrendingUp className="w-4 h-4" />
-                            <span>+10% predicted growth</span>
+                            <span>+10% {t("owner.intelligence.predictedGrowth")}</span>
                         </div>
                     </CardContent>
                 </Card>
@@ -64,14 +66,14 @@ export default function OwnerIntelligencePage() {
                 {/* Active Spaces */}
                 <Card className="border-t-4 border-t-purple-500 shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Active Spaces</CardTitle>
-                        <CardDescription>Contributing to revenue</CardDescription>
+                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("admin.kpi.activeSpaces")}</CardTitle>
+                        <CardDescription>{t("owner.intelligence.contributing")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">
                             {data.spacesCount}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-2">spaces listed</p>
+                        <p className="text-sm text-muted-foreground mt-2">{t("owner.intelligence.spacesListed")}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -79,8 +81,8 @@ export default function OwnerIntelligencePage() {
             {/* Main Chart */}
             <Card className="col-span-4 shadow-md">
                 <CardHeader>
-                    <CardTitle>Revenue Trend & Forecast</CardTitle>
-                    <CardDescription>Historical performance vs AI prediction</CardDescription>
+                    <CardTitle>{t("owner.intelligence.chartTitle")}</CardTitle>
+                    <CardDescription>{t("owner.intelligence.chartDesc")}</CardDescription>
                 </CardHeader>
                 <CardContent className="pl-0">
                     <div className="h-[400px] w-full">

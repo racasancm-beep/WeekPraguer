@@ -13,22 +13,23 @@ import { toast } from "sonner";
 import { Loader2, Plus, X } from "lucide-react";
 import MapComponent from "@/components/ui/map-component";
 import { Autocomplete, useJsApiLoader } from "@react-google-maps/api";
+import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
 
-// Same schema as backend
 const formSchema = z.object({
-    name: z.string().min(3, "Name is too short"),
-    description: z.string().min(10, "Description is too short"),
-    address: z.string().min(5, "Address is required"),
+    name: z.string().min(3),
+    description: z.string().min(10),
+    address: z.string().min(5),
     city: z.string().default("București"),
     district: z.string().optional(),
     latitude: z.coerce.number().optional(),
     longitude: z.coerce.number().optional(),
-    size: z.coerce.number().positive("Size must be positive"),
-    capacity: z.coerce.number().int().positive("Capacity must be positive"),
+    size: z.coerce.number().positive(),
+    capacity: z.coerce.number().int().positive(),
     officeCount: z.coerce.number().int().optional(),
-    hourlyRate: z.coerce.number().positive("Rate must be positive"),
+    hourlyRate: z.coerce.number().positive(),
     dailyRate: z.coerce.number().positive(),
     weekendRate: z.coerce.number().positive(),
     hasWifi: z.boolean().default(true),
@@ -40,15 +41,13 @@ const formSchema = z.object({
     amenitiesList: z.array(z.string()).default([]),
 });
 
-import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
-import { useSession } from "next-auth/react";
-
 interface SpaceFormProps {
     initialData?: any;
 }
 
 export function SpaceForm({ initialData }: SpaceFormProps) {
     const router = useRouter();
+    const { t, translateAmenity } = useLanguage();
     const [loading, setLoading] = useState(false);
     const [photos, setPhotos] = useState<string[]>([]);
     const [photoUrl, setPhotoUrl] = useState("");
@@ -111,7 +110,6 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     form.setValue("address", place.formatted_address);
                 }
 
-                // Extract City and District from address_components
                 let city = "București";
                 let district = "";
 
@@ -132,7 +130,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
 
     const onSubmit = async (values: z.infer<typeof formSchema>) => {
         if (photos.length === 0) {
-            toast.error("Please add at least one photo URL");
+            toast.error(t("owner.form.photos"));
             return;
         }
 
@@ -145,15 +143,15 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             });
 
             if (response.ok) {
-                toast.success("Space created successfully!");
+                toast.success(t("owner.form.createBtn"));
                 router.push("/owner/dashboard");
                 router.refresh();
             } else {
                 const data = await response.json();
-                toast.error(data.message || "Something went wrong");
+                toast.error(data.message || "Error");
             }
         } catch (error) {
-            toast.error("Failed to create space");
+            toast.error("Error");
         } finally {
             setLoading(false);
         }
@@ -162,53 +160,53 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl bg-white dark:bg-gray-800 p-6 rounded-xl border">
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">Basic Information</h3>
+                <h3 className="text-lg font-medium">{t("owner.form.basicInfo")}</h3>
                 <div className="grid gap-4">
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Space Name</label>
-                        <Input {...form.register("name")} placeholder="e.g. Modern Loft in Vinohrady" />
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.spaceName")}</label>
+                        <Input {...form.register("name")} placeholder="e.g. Modern Loft" />
                         {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
                     </div>
 
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Description</label>
-                        <Textarea {...form.register("description")} placeholder="Describe the space..." />
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.description")}</label>
+                        <Textarea {...form.register("description")} />
                         {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
                     </div>
                 </div>
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">Location</h3>
+                <h3 className="text-lg font-medium">{t("owner.form.location")}</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                        <label className="text-sm font-medium mb-1 block">Address</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.address")}</label>
                         {isLoaded ? (
                             <Autocomplete
                                 onLoad={(autocomplete) => { autocompleteRef.current = autocomplete; }}
                                 onPlaceChanged={onPlaceChanged}
                             >
-                                <Input {...form.register("address")} placeholder="Search for a location..." />
+                                <Input {...form.register("address")} />
                             </Autocomplete>
                         ) : (
-                            <Input {...form.register("address")} placeholder="Loading..." disabled />
+                            <Input {...form.register("address")} placeholder={t("common.loading")} disabled />
                         )}
                         {form.formState.errors.address && <p className="text-red-500 text-xs mt-1">{form.formState.errors.address.message}</p>}
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">City</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.city")}</label>
                         <Input {...form.register("city")} />
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">District (Optional)</label>
-                        <Input {...form.register("district")} placeholder="e.g. Praha 2" />
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.district")}</label>
+                        <Input {...form.register("district")} />
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Latitude</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.latitude")}</label>
                         <Input type="number" step="any" {...form.register("latitude")} />
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Longitude</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.longitude")}</label>
                         <Input type="number" step="any" {...form.register("longitude")} />
                     </div>
                     <div className="col-span-2 h-48 rounded-md overflow-hidden border mt-2">
@@ -226,20 +224,18 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">Specs & Amenities</h3>
+                <h3 className="text-lg font-medium">{t("owner.form.specsAmenities")}</h3>
                 <div className="grid grid-cols-3 gap-4">
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Size (m²)</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.size")}</label>
                         <Input type="number" {...form.register("size")} />
-                        {form.formState.errors.size && <p className="text-red-500 text-xs mt-1">{form.formState.errors.size.message}</p>}
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Capacity (ppl)</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.capacity")}</label>
                         <Input type="number" {...form.register("capacity")} />
-                        {form.formState.errors.capacity && <p className="text-red-500 text-xs mt-1">{form.formState.errors.capacity.message}</p>}
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Offices</label>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.offices")}</label>
                         <Input type="number" {...form.register("officeCount")} />
                     </div>
                 </div>
@@ -247,24 +243,24 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="flex items-center space-x-2">
                         <Checkbox id="wifi" onCheckedChange={c => form.setValue("hasWifi", c as boolean)} defaultChecked={true} />
-                        <label htmlFor="wifi" className="text-sm font-medium">Fast Wi-Fi</label>
+                        <label htmlFor="wifi" className="text-sm font-medium">{translateAmenity("Fast Wi-Fi")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Checkbox id="proj" onCheckedChange={c => form.setValue("hasProjector", c as boolean)} />
-                        <label htmlFor="proj" className="text-sm font-medium">Projector / Screen</label>
+                        <label htmlFor="proj" className="text-sm font-medium">{translateAmenity("Projector / Screen")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Checkbox id="kit" onCheckedChange={c => form.setValue("hasKitchen", c as boolean)} />
-                        <label htmlFor="kit" className="text-sm font-medium">Kitchen Access</label>
+                        <label htmlFor="kit" className="text-sm font-medium">{translateAmenity("Kitchen Access")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <Checkbox id="ac" onCheckedChange={c => form.setValue("hasAC", c as boolean)} />
-                        <label htmlFor="ac" className="text-sm font-medium">Air Conditioning</label>
+                        <label htmlFor="ac" className="text-sm font-medium">{translateAmenity("Air Conditioning")}</label>
                     </div>
                 </div>
 
                 <div className="pt-4 border-t">
-                    <label className="text-sm font-medium mb-3 block text-muted-foreground uppercase tracking-wider">Additional Amenities</label>
+                    <label className="text-sm font-medium mb-3 block text-muted-foreground uppercase tracking-wider">{t("owner.form.additionalAmenities")}</label>
                     <div className="grid grid-cols-2 gap-y-3">
                         {AMENITIES_OPTIONS.map((amenity) => (
                             <div key={amenity} className="flex items-center space-x-2">
@@ -281,7 +277,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                                     }}
                                 />
                                 <label htmlFor={`amenity-${amenity}`} className="text-sm leading-none cursor-pointer">
-                                    {amenity}
+                                    {translateAmenity(amenity)}
                                 </label>
                             </div>
                         ))}
@@ -290,22 +286,19 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             </div>
 
             <div className="space-y-4">
-                <h3 className="text-lg font-medium">Tarifas y Precios (RON RON)</h3>
+                <h3 className="text-lg font-medium">{t("owner.form.ratesPricing")}</h3>
                 <div className="grid grid-cols-3 gap-4">
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Hourly Rate</label>
-                        <Input type="number" {...form.register("hourlyRate")} placeholder="e.g. 500" />
-                        {form.formState.errors.hourlyRate && <p className="text-red-500 text-xs mt-1">{form.formState.errors.hourlyRate.message}</p>}
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.hourlyRate")}</label>
+                        <Input type="number" {...form.register("hourlyRate")} placeholder="500" />
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Daily Rate</label>
-                        <Input type="number" {...form.register("dailyRate")} placeholder="e.g. 4000" />
-                        {form.formState.errors.dailyRate && <p className="text-red-500 text-xs mt-1">{form.formState.errors.dailyRate.message}</p>}
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.dailyRate")}</label>
+                        <Input type="number" {...form.register("dailyRate")} placeholder="4000" />
                     </div>
                     <div>
-                        <label className="text-sm font-medium mb-1 block">Full Weekend</label>
-                        <Input type="number" {...form.register("weekendRate")} placeholder="e.g. 7500" />
-                        {form.formState.errors.weekendRate && <p className="text-red-500 text-xs mt-1">{form.formState.errors.weekendRate.message}</p>}
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.weekendRate")}</label>
+                        <Input type="number" {...form.register("weekendRate")} placeholder="7500" />
                     </div>
                 </div>
 
@@ -321,13 +314,13 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                                 htmlFor="selfCleaning"
                                 className="text-sm font-black leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-violet-900 dark:text-violet-200"
                             >
-                                I will provide cleaning services personally
+                                {t("owner.form.selfCleaningTitle")}
                             </label>
                             <p className="text-[11px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider">
-                                Financial Law Change: 70% Owner / 30% Admin
+                                {t("owner.form.selfCleaningLaw")}
                             </p>
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                                By checking this, you take full responsibility for cleaning the space after every weekend booking. Your revenue share increases from 60% to 70%.
+                                {t("owner.form.selfCleaningDesc")}
                             </p>
                         </div>
                     </div>
@@ -336,12 +329,12 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
 
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Photos</h3>
-                    <span className="text-xs text-muted-foreground">{photos.length} photos added</span>
+                    <h3 className="text-lg font-medium">{t("owner.form.photos")}</h3>
+                    <span className="text-xs text-muted-foreground">{photos.length} {t("owner.form.photosAdded")}</span>
                 </div>
                 <div className="flex gap-2">
                     <Input
-                        placeholder="Enter image URL..."
+                        placeholder={t("owner.form.photoUrlPlaceholder")}
                         value={photoUrl}
                         onChange={e => setPhotoUrl(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addPhoto())}
@@ -377,7 +370,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                         className="bg-violet-100 text-violet-700 hover:bg-violet-200 dark:bg-violet-900/40 dark:text-violet-300"
                     >
                         <Plus className="w-4 h-4 mr-1" />
-                        {photoUrl ? "Add" : "Browse"}
+                        {photoUrl ? t("owner.form.add") : t("owner.form.browse")}
                     </Button>
                 </div>
 
@@ -392,13 +385,12 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                                         type="button"
                                         onClick={() => removePhoto(i)}
                                         className="bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transform hover:scale-110 transition-all shadow-lg"
-                                        title="Remove photo"
                                     >
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
                                 <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md text-white text-[10px] px-2 py-0.5 rounded-full">
-                                    Photo {i + 1}
+                                    {i + 1}
                                 </div>
                             </div>
                         ))}
@@ -410,8 +402,8 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     >
                         <div className="flex flex-col items-center gap-2">
                             <Plus className="w-8 h-8 text-violet-300 group-hover:text-violet-500 transition-colors" />
-                            <p className="text-sm">Click to upload or drag and drop photos</p>
-                            <p className="text-xs text-muted-foreground">Supported formats: JPG, PNG, GIF</p>
+                            <p className="text-sm">{t("owner.form.uploadClick")}</p>
+                            <p className="text-xs text-muted-foreground">{t("owner.form.supportedFormats")}</p>
                         </div>
                     </div>
                 )}
@@ -420,7 +412,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             <div className="pt-4 border-t">
                 <Button type="submit" className="w-full h-12 text-lg" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loading ? "Creating Listing..." : "Create Listing"}
+                    {loading ? t("owner.form.creatingBtn") : t("owner.form.createBtn")}
                 </Button>
             </div>
         </form>

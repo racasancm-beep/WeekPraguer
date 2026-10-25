@@ -36,6 +36,7 @@ import {
     CartesianGrid
 } from "recharts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 interface ProfileSpace {
     id: string;
@@ -106,6 +107,7 @@ export default function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
+    const { t } = useLanguage();
 
     useEffect(() => {
         fetchStats();
@@ -128,16 +130,16 @@ export default function AdminDashboard() {
     if (loading) {
         return (
             <div className="p-8 py-12 flex items-center justify-center font-bold text-lg text-[#008080]">
-                <Activity className="animate-spin mr-2 text-[#008080]" /> Loading Admin Super Control Center...
+                <Activity className="animate-spin mr-2 text-[#008080]" /> {t("admin.loadingCenter")}
             </div>
         );
     }
     if (!data) {
         return (
             <div className="p-8 py-12 text-center space-y-4">
-                <p className="text-lg font-bold text-red-600">Failed to load system state.</p>
+                <p className="text-lg font-bold text-red-600">{t("admin.loadFailed")}</p>
                 <Button onClick={() => { setLoading(true); fetchStats(); }} className="bg-[#008080] hover:bg-[#006666] text-white font-bold">
-                    Retry Loading Admin Data
+                    {t("admin.retry")}
                 </Button>
             </div>
         );
@@ -165,31 +167,31 @@ export default function AdminDashboard() {
                 <div>
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-3 border border-amber-300">
                         <ShieldCheck className="w-4 h-4 text-amber-700" />
-                        SUPER ADMIN PROFILE • UNRESTRICTED ACCESS
+                        {t("admin.badge")}
                     </div>
                     <h1 className="text-4xl lg:text-5xl font-black tracking-tighter text-gray-900 dark:text-white">
-                        MyGenie System Intelligence
+                        {t("admin.title")}
                     </h1>
                     <p className="text-base lg:text-lg text-muted-foreground mt-1">
-                        Complete access to all platform graphs, Owner &amp; Renter dashboards, and every user profile
+                        {t("admin.subtitle")}
                     </p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full lg:w-auto">
                     <Card className="bg-blue-50 border-blue-100 p-4">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase">Total Renter Spend</p>
+                        <p className="text-[10px] font-bold text-blue-600 uppercase">{t("admin.kpi.renterSpend")}</p>
                         <p className="text-xl font-black text-blue-900">{data.globalFinancials.totalRenterSpend.toLocaleString()} RON</p>
                     </Card>
                     <Card className="bg-violet-50 border-violet-100 p-4">
-                        <p className="text-[10px] font-bold text-violet-600 uppercase">Owner Yield (60%)</p>
+                        <p className="text-[10px] font-bold text-violet-600 uppercase">{t("admin.kpi.ownerYield")}</p>
                         <p className="text-xl font-black text-violet-900">{data.globalFinancials.totalOwnerYield.toLocaleString()} RON</p>
                     </Card>
                     <Card className="bg-amber-50 border-amber-100 p-4">
-                        <p className="text-[10px] font-bold text-amber-600 uppercase">Admin Share (25%)</p>
+                        <p className="text-[10px] font-bold text-amber-600 uppercase">{t("admin.kpi.adminShare")}</p>
                         <p className="text-xl font-black text-amber-900">{data.globalFinancials.totalAdminShare.toLocaleString()} RON</p>
                     </Card>
                     <Card className="bg-emerald-50 border-emerald-100 p-4">
-                        <p className="text-[10px] font-bold text-emerald-600 uppercase">Active Spaces</p>
-                        <p className="text-xl font-black text-emerald-900">{data.totalSpaces} Spaces</p>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase">{t("admin.kpi.activeSpaces")}</p>
+                        <p className="text-xl font-black text-emerald-900">{data.totalSpaces} {t("admin.spacesUnit")}</p>
                     </Card>
                 </div>
             </header>
@@ -197,15 +199,15 @@ export default function AdminDashboard() {
             {/* Quick Access to All Platform Dashboards */}
             <section className="space-y-3">
                 <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">
-                    All Platform Dashboards (1-Click Admin Access)
+                    {t("admin.quickAccess")}
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <Link href="/owner/dashboard/earnings">
                         <Card className="p-4 hover:border-violet-500 hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-violet-600">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-bold text-violet-600 uppercase">Owner Dashboard</p>
-                                    <p className="text-base font-black text-gray-900 mt-0.5">Earnings &amp; Graphs</p>
+                                    <p className="text-xs font-bold text-violet-600 uppercase">{t("admin.card.ownerDashboard")}</p>
+                                    <p className="text-base font-black text-gray-900 mt-0.5">{t("admin.card.earningsGraphs")}</p>
                                 </div>
                                 <DollarSign className="w-6 h-6 text-violet-600" />
                             </div>
@@ -216,8 +218,8 @@ export default function AdminDashboard() {
                         <Card className="p-4 hover:border-indigo-500 hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-indigo-600">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-bold text-indigo-600 uppercase">AI Forecast</p>
-                                    <p className="text-base font-black text-gray-900 mt-0.5">Owner Intelligence</p>
+                                    <p className="text-xs font-bold text-indigo-600 uppercase">{t("admin.card.aiForecast")}</p>
+                                    <p className="text-base font-black text-gray-900 mt-0.5">{t("admin.card.ownerIntelligence")}</p>
                                 </div>
                                 <BarChart3 className="w-6 h-6 text-indigo-600" />
                             </div>
@@ -228,8 +230,8 @@ export default function AdminDashboard() {
                         <Card className="p-4 hover:border-teal-500 hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-[#008080]">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-bold text-[#008080] uppercase">All Spaces ({data.totalSpaces})</p>
-                                    <p className="text-base font-black text-gray-900 mt-0.5">Listings Manager</p>
+                                    <p className="text-xs font-bold text-[#008080] uppercase">{t("admin.card.allSpaces")} ({data.totalSpaces})</p>
+                                    <p className="text-base font-black text-gray-900 mt-0.5">{t("admin.card.listingsManager")}</p>
                                 </div>
                                 <Building2 className="w-6 h-6 text-[#008080]" />
                             </div>
@@ -240,8 +242,8 @@ export default function AdminDashboard() {
                         <Card className="p-4 hover:border-amber-500 hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-amber-500">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-bold text-amber-600 uppercase">Host Reservations</p>
-                                    <p className="text-base font-black text-gray-900 mt-0.5">Owner Bookings</p>
+                                    <p className="text-xs font-bold text-amber-600 uppercase">{t("admin.card.hostReservations")}</p>
+                                    <p className="text-base font-black text-gray-900 mt-0.5">{t("admin.card.ownerBookings")}</p>
                                 </div>
                                 <Calendar className="w-6 h-6 text-amber-600" />
                             </div>
@@ -252,8 +254,8 @@ export default function AdminDashboard() {
                         <Card className="p-4 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer border-l-4 border-l-blue-600">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <p className="text-xs font-bold text-blue-600 uppercase">Renter Portal</p>
-                                    <p className="text-base font-black text-gray-900 mt-0.5">Renter Bookings</p>
+                                    <p className="text-xs font-bold text-blue-600 uppercase">{t("admin.card.renterPortal")}</p>
+                                    <p className="text-base font-black text-gray-900 mt-0.5">{t("admin.card.renterBookings")}</p>
                                 </div>
                                 <UserCircle className="w-6 h-6 text-blue-600" />
                             </div>
@@ -267,16 +269,16 @@ export default function AdminDashboard() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-3xl font-black tracking-tight">
-                            All User Profiles ({data.users.all?.length || (data.users.renters.length + data.users.owners.length)})
+                            {t("admin.profilesTitle")} ({data.users.all?.length || (data.users.renters.length + data.users.owners.length)})
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Click <strong>Inspect Profile</strong> to view any user&apos;s full profile &amp; activity, or <strong>Open Dashboard</strong> to view their personal dashboard &amp; graphs.
+                            {t("admin.profilesDesc")}
                         </p>
                     </div>
                     <div className="relative w-full sm:w-80">
                         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                         <Input
-                            placeholder="Search name, email, role, ID..."
+                            placeholder={t("admin.searchPlaceholder")}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9 bg-white"
@@ -304,7 +306,7 @@ export default function AdminDashboard() {
                                         </span>
                                         {selectedProfile.verified && (
                                             <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-400/20 text-emerald-100 px-2 py-0.5 rounded-full border border-emerald-300/40">
-                                                <CheckCircle2 className="w-3 h-3" /> Verified
+                                                <CheckCircle2 className="w-3 h-3" /> {t("admin.verified")}
                                             </span>
                                         )}
                                     </div>
@@ -316,7 +318,7 @@ export default function AdminDashboard() {
                                     <Link href={`/owner/dashboard/earnings?userId=${selectedProfile.id}`}>
                                         <Button size="sm" className="bg-amber-400 hover:bg-amber-300 text-gray-950 font-black">
                                             <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                                            Open Owner Dashboard &amp; Graphs
+                                            {t("admin.openOwnerDashboard")}
                                         </Button>
                                     </Link>
                                 )}
@@ -324,7 +326,7 @@ export default function AdminDashboard() {
                                     <Link href={`/dashboard?userId=${selectedProfile.id}`}>
                                         <Button size="sm" className="bg-amber-400 hover:bg-amber-300 text-gray-950 font-black">
                                             <ExternalLink className="w-3.5 h-3.5 mr-1.5" />
-                                            Open Renter Dashboard
+                                            {t("admin.openRenterDashboard")}
                                         </Button>
                                     </Link>
                                 )}
@@ -341,28 +343,28 @@ export default function AdminDashboard() {
                         <CardContent className="p-6 space-y-6">
                             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
                                 <div className="p-3 rounded-xl bg-white border">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Role</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{t("admin.field.role")}</p>
                                     <p className="text-sm font-black text-gray-900">{selectedProfile.role}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-white border">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Subscription</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{t("admin.field.subscription")}</p>
                                     <p className="text-sm font-black text-violet-700">{selectedProfile.subscriptionTier}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-white border">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Phone</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{t("admin.field.phone")}</p>
                                     <p className="text-sm font-bold text-gray-800">{selectedProfile.phone}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-white border">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Spaces Listed</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{t("admin.field.spacesListed")}</p>
                                     <p className="text-sm font-black text-[#008080]">{selectedProfile.spacesCount}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-white border">
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase">Bookings Count</p>
+                                    <p className="text-[10px] font-bold text-gray-400 uppercase">{t("admin.field.bookingsCount")}</p>
                                     <p className="text-sm font-black text-blue-600">{selectedProfile.bookingsCount}</p>
                                 </div>
                                 <div className="p-3 rounded-xl bg-white border">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase">
-                                        {selectedProfile.role === "OWNER" ? "Owner Yield" : "Total Spend"}
+                                        {selectedProfile.role === "OWNER" ? t("admin.field.ownerYield") : t("admin.field.totalSpend")}
                                     </p>
                                     <p className="text-sm font-black text-emerald-700">
                                         {selectedProfile.role === "OWNER"
@@ -375,7 +377,7 @@ export default function AdminDashboard() {
                             {selectedProfile.ownedSpaces.length > 0 && (
                                 <div>
                                     <h4 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
-                                        Owned Spaces ({selectedProfile.ownedSpaces.length})
+                                        {t("admin.ownedSpaces")} ({selectedProfile.ownedSpaces.length})
                                     </h4>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {selectedProfile.ownedSpaces.map((sp) => (
@@ -383,9 +385,9 @@ export default function AdminDashboard() {
                                                 <div className="p-3 rounded-xl bg-white border hover:border-[#008080] transition-colors flex justify-between items-center">
                                                     <div>
                                                         <p className="text-xs font-bold text-gray-900">{sp.name}</p>
-                                                        <p className="text-[10px] text-gray-500">{sp.city} • {sp.capacity} ppl</p>
+                                                        <p className="text-[10px] text-gray-500">{sp.city} • {sp.capacity} {t("explore.ppl")}</p>
                                                     </div>
-                                                    <span className="text-xs font-black text-[#008080]">{sp.hourlyRate} RON/hr</span>
+                                                    <span className="text-xs font-black text-[#008080]">{sp.hourlyRate} RON/{t("explore.perHour")}</span>
                                                 </div>
                                             </Link>
                                         ))}
@@ -396,7 +398,7 @@ export default function AdminDashboard() {
                             {selectedProfile.recentBookings.length > 0 && (
                                 <div>
                                     <h4 className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
-                                        Recent Bookings ({selectedProfile.recentBookings.length})
+                                        {t("admin.recentBookings")} ({selectedProfile.recentBookings.length})
                                     </h4>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {selectedProfile.recentBookings.map((bk) => (
@@ -424,9 +426,9 @@ export default function AdminDashboard() {
                         <CardHeader className="bg-blue-50/50">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-2xl font-black text-blue-900">Renters</CardTitle>
+                                    <CardTitle className="text-2xl font-black text-blue-900">{t("admin.col.renters")}</CardTitle>
                                     <CardDescription className="font-bold text-blue-600">
-                                        {filteredRenters.length} Profiles
+                                        {filteredRenters.length} {t("admin.col.profiles")}
                                     </CardDescription>
                                 </div>
                                 <UserCircle className="w-8 h-8 text-blue-500" />
@@ -446,7 +448,7 @@ export default function AdminDashboard() {
                                                 <p className="text-xs font-bold text-gray-900 truncate">{u.name}</p>
                                                 <p className="text-[11px] text-gray-500 truncate">{u.email}</p>
                                                 <p className="text-[10px] text-blue-600 font-semibold">
-                                                    {u.bookingsCount} bookings • {u.totalRenterSpend.toLocaleString()} RON
+                                                    {u.bookingsCount} {t("admin.bookingsLower")} • {u.totalRenterSpend.toLocaleString()} RON
                                                 </p>
                                             </div>
                                         </div>
@@ -458,7 +460,7 @@ export default function AdminDashboard() {
                                                 className="h-8 px-2.5 text-[11px] font-bold"
                                             >
                                                 <Eye className="w-3.5 h-3.5 mr-1" />
-                                                Profile
+                                                {t("admin.profileBtn")}
                                             </Button>
                                             <Link href={`/dashboard?userId=${u.id}`}>
                                                 <Button size="sm" className="h-8 px-2.5 text-[11px] font-bold bg-blue-600 hover:bg-blue-700 text-white">
@@ -477,9 +479,9 @@ export default function AdminDashboard() {
                         <CardHeader className="bg-violet-50/50">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-2xl font-black text-violet-900">Owners</CardTitle>
+                                    <CardTitle className="text-2xl font-black text-violet-900">{t("admin.col.owners")}</CardTitle>
                                     <CardDescription className="font-bold text-violet-600">
-                                        {filteredOwners.length} Profiles
+                                        {filteredOwners.length} {t("admin.col.profiles")}
                                     </CardDescription>
                                 </div>
                                 <Home className="w-8 h-8 text-violet-500" />
@@ -499,7 +501,7 @@ export default function AdminDashboard() {
                                                 <p className="text-xs font-bold text-gray-900 truncate">{u.name}</p>
                                                 <p className="text-[11px] text-gray-500 truncate">{u.email}</p>
                                                 <p className="text-[10px] text-violet-600 font-semibold">
-                                                    {u.spacesCount} spaces • {u.totalOwnerEarned.toLocaleString()} RON yield
+                                                    {u.spacesCount} {t("admin.spacesLower")} • {u.totalOwnerEarned.toLocaleString()} RON {t("admin.yieldLower")}
                                                 </p>
                                             </div>
                                         </div>
@@ -511,7 +513,7 @@ export default function AdminDashboard() {
                                                 className="h-8 px-2.5 text-[11px] font-bold"
                                             >
                                                 <Eye className="w-3.5 h-3.5 mr-1" />
-                                                Profile
+                                                {t("admin.profileBtn")}
                                             </Button>
                                             <Link href={`/owner/dashboard/earnings?userId=${u.id}`}>
                                                 <Button size="sm" className="h-8 px-2.5 text-[11px] font-bold bg-violet-600 hover:bg-violet-700 text-white">
@@ -530,9 +532,9 @@ export default function AdminDashboard() {
                         <CardHeader className="bg-amber-50/60">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <CardTitle className="text-2xl font-black text-amber-900">Admins</CardTitle>
+                                    <CardTitle className="text-2xl font-black text-amber-900">{t("admin.col.admins")}</CardTitle>
                                     <CardDescription className="font-bold text-amber-700">
-                                        {filteredAdmins.length} Super Profiles
+                                        {filteredAdmins.length} {t("admin.col.superProfiles")}
                                     </CardDescription>
                                 </div>
                                 <ShieldCheck className="w-8 h-8 text-amber-600" />
@@ -552,7 +554,7 @@ export default function AdminDashboard() {
                                                 <p className="text-xs font-bold text-gray-900 truncate">{u.name}</p>
                                                 <p className="text-[11px] text-gray-500 truncate">{u.email}</p>
                                                 <p className="text-[10px] text-amber-700 font-semibold">
-                                                    Full System Access
+                                                    {t("admin.fullSystemAccess")}
                                                 </p>
                                             </div>
                                         </div>
@@ -563,7 +565,7 @@ export default function AdminDashboard() {
                                             className="h-8 px-2.5 text-[11px] font-bold"
                                         >
                                             <Eye className="w-3.5 h-3.5 mr-1" />
-                                            Profile
+                                            {t("admin.profileBtn")}
                                         </Button>
                                     </div>
                                 ))}
@@ -577,17 +579,17 @@ export default function AdminDashboard() {
             <Card className="border-none shadow-2xl p-6 bg-white dark:bg-gray-950">
                 <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <CardTitle className="text-3xl font-black">1. Platform Hours Utilization Graph</CardTitle>
-                        <CardDescription>Total Available Hours vs Booked Hours across all spaces (18-Month View)</CardDescription>
+                        <CardTitle className="text-3xl font-black">{t("admin.graph1.title")}</CardTitle>
+                        <CardDescription>{t("admin.graph1.desc")}</CardDescription>
                     </div>
                     <div className="flex gap-8">
                         <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-gray-400">Total Portfolio Capacity</p>
-                            <p className="text-2xl font-black">{data.activityTrend[0]?.available?.toLocaleString()} <span className="text-xs text-gray-400">Hours/mo</span></p>
+                            <p className="text-[10px] uppercase font-bold text-gray-400">{t("admin.graph1.capacity")}</p>
+                            <p className="text-2xl font-black">{data.activityTrend[0]?.available?.toLocaleString()} <span className="text-xs text-gray-400">{t("admin.graph1.hoursMo")}</span></p>
                         </div>
                         <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-blue-500">Total Booked Sessions</p>
-                            <p className="text-2xl font-black text-blue-600">{data.totalBookings} <span className="text-xs text-blue-400">Bookings</span></p>
+                            <p className="text-[10px] uppercase font-bold text-blue-500">{t("admin.graph1.bookedSessions")}</p>
+                            <p className="text-2xl font-black text-blue-600">{data.totalBookings} <span className="text-xs text-blue-400">{t("admin.graph1.bookings")}</span></p>
                         </div>
                     </div>
                 </div>
@@ -602,8 +604,8 @@ export default function AdminDashboard() {
                                 cursor={{ fill: "#f8fafc" }}
                             />
                             <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: "24px" }} />
-                            <Bar dataKey="available" name="Available Portfolio (Hours)" fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={22} />
-                            <Bar dataKey="booked" name="Booked Action (Hours)" fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={22} />
+                            <Bar dataKey="available" name={t("admin.graph1.legendAvailable")} fill="#e2e8f0" radius={[6, 6, 0, 0]} barSize={22} />
+                            <Bar dataKey="booked" name={t("admin.graph1.legendBooked")} fill="#3b82f6" radius={[6, 6, 0, 0]} barSize={22} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -612,8 +614,8 @@ export default function AdminDashboard() {
             {/* GRAPH 2: Combined Revenue Distribution Graph */}
             <Card className="border-none shadow-2xl p-6 bg-white dark:bg-gray-950">
                 <div className="mb-6">
-                    <CardTitle className="text-3xl font-black">2. Complete Financial Revenue Distribution Graph</CardTitle>
-                    <CardDescription>Monthly comparison of Renter Spend (100%), Owner Yield (60–70%), and Admin Share (25–30%)</CardDescription>
+                    <CardTitle className="text-3xl font-black">{t("admin.graph2.title")}</CardTitle>
+                    <CardDescription>{t("admin.graph2.desc")}</CardDescription>
                 </div>
                 <div className="h-[380px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -625,9 +627,9 @@ export default function AdminDashboard() {
                                 contentStyle={{ borderRadius: "16px", border: "none", boxShadow: "0 20px 25px -5px rgb(0 0 0 / 0.1)" }}
                             />
                             <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: "24px" }} />
-                            <Bar dataKey="renterRevenue" name="Renter Spend (RON)" fill="#3b82f6" radius={[6, 6, 0, 0]} />
-                            <Bar dataKey="ownerRevenue" name="Owner Yield (RON)" fill="#8b5cf6" radius={[6, 6, 0, 0]} />
-                            <Bar dataKey="adminRevenue" name="Admin Share (RON)" fill="#f59e0b" radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="renterRevenue" name={t("admin.graph2.legendRenter")} fill="#3b82f6" radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="ownerRevenue" name={t("admin.graph2.legendOwner")} fill="#8b5cf6" radius={[6, 6, 0, 0]} />
+                            <Bar dataKey="adminRevenue" name={t("admin.graph2.legendAdmin")} fill="#f59e0b" radius={[6, 6, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -636,7 +638,7 @@ export default function AdminDashboard() {
             {/* GRAPHS 3, 4, 5: Individual Role Analytics */}
             <div className="space-y-6">
                 <h2 className="text-3xl font-black italic border-l-8 border-[#008080] pl-4 uppercase tracking-tighter">
-                    3. Role-Specific Financial Graphs (Renter • Owner • Admin)
+                    {t("admin.graph3.sectionTitle")}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Renter Insights */}
@@ -644,20 +646,20 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-3 bg-blue-100 rounded-2xl"><DollarSign className="w-6 h-6 text-blue-600" /></div>
                             <div>
-                                <h3 className="font-bold">Renter Flow Graph</h3>
-                                <p className="text-[10px] text-gray-500">Monthly Spending Activity (Past + Future)</p>
+                                <h3 className="font-bold">{t("admin.graph3.renterFlow")}</h3>
+                                <p className="text-[10px] text-gray-500">{t("admin.graph3.renterFlowSub")}</p>
                             </div>
                         </div>
                         <div className="h-[170px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={data.activityTrend}>
                                     <Tooltip />
-                                    <Line type="monotone" dataKey="renterRevenue" name="Renter Spend" stroke="#3b82f6" strokeWidth={3} dot={false} />
+                                    <Line type="monotone" dataKey="renterRevenue" name={t("admin.graph2.legendRenter")} stroke="#3b82f6" strokeWidth={3} dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
                         <div className="mt-4 pt-4 border-t flex justify-between items-end">
-                            <span className="text-xs font-bold text-gray-400 uppercase">Total Spend</span>
+                            <span className="text-xs font-bold text-gray-400 uppercase">{t("admin.field.totalSpend")}</span>
                             <span className="text-2xl font-black text-blue-600">{data.globalFinancials.totalRenterSpend.toLocaleString()} <span className="text-xs text-gray-400">RON</span></span>
                         </div>
                     </Card>
@@ -667,20 +669,20 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-3 bg-violet-100 rounded-2xl"><TrendingUp className="w-6 h-6 text-violet-600" /></div>
                             <div>
-                                <h3 className="font-bold">Owner Yield Graph</h3>
-                                <p className="text-[10px] text-gray-500">60–70% Revenue Share Generation</p>
+                                <h3 className="font-bold">{t("admin.graph3.ownerYield")}</h3>
+                                <p className="text-[10px] text-gray-500">{t("admin.graph3.ownerYieldSub")}</p>
                             </div>
                         </div>
                         <div className="h-[170px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={data.activityTrend}>
                                     <Tooltip />
-                                    <Line type="monotone" dataKey="ownerRevenue" name="Owner Yield" stroke="#8b5cf6" strokeWidth={3} dot={false} />
+                                    <Line type="monotone" dataKey="ownerRevenue" name={t("admin.graph2.legendOwner")} stroke="#8b5cf6" strokeWidth={3} dot={false} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
                         <div className="mt-4 pt-4 border-t flex justify-between items-end">
-                            <span className="text-xs font-bold text-gray-400 uppercase">Total Yield</span>
+                            <span className="text-xs font-bold text-gray-400 uppercase">{t("admin.graph3.totalYield")}</span>
                             <span className="text-2xl font-black text-violet-600">{data.globalFinancials.totalOwnerYield.toLocaleString()} <span className="text-xs text-gray-400">RON</span></span>
                         </div>
                     </Card>
@@ -690,20 +692,20 @@ export default function AdminDashboard() {
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-3 bg-amber-100 rounded-2xl"><ShieldCheck className="w-6 h-6 text-amber-600" /></div>
                             <div>
-                                <h3 className="font-bold">Admin Commission Graph</h3>
-                                <p className="text-[10px] text-gray-500">25–30% Platform Share Revenue</p>
+                                <h3 className="font-bold">{t("admin.graph3.adminCommission")}</h3>
+                                <p className="text-[10px] text-gray-500">{t("admin.graph3.adminCommissionSub")}</p>
                             </div>
                         </div>
                         <div className="h-[170px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={data.activityTrend}>
                                     <Tooltip />
-                                    <Area type="monotone" dataKey="adminRevenue" name="Admin Share" stroke="#f59e0b" fill="#fef3c7" strokeWidth={3} />
+                                    <Area type="monotone" dataKey="adminRevenue" name={t("admin.graph2.legendAdmin")} stroke="#f59e0b" fill="#fef3c7" strokeWidth={3} />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </div>
                         <div className="mt-4 pt-4 border-t flex justify-between items-end">
-                            <span className="text-xs font-bold text-gray-400 uppercase">Total Admin Share</span>
+                            <span className="text-xs font-bold text-gray-400 uppercase">{t("admin.graph3.totalAdminShare")}</span>
                             <span className="text-2xl font-black text-amber-600">{data.globalFinancials.totalAdminShare.toLocaleString()} <span className="text-xs text-gray-400">RON</span></span>
                         </div>
                     </Card>

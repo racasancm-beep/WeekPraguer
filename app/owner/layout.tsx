@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { LayoutDashboard, Building2, Calendar, LogOut, DollarSign, Activity, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function OwnerLayout({
     children,
@@ -15,6 +16,7 @@ export default function OwnerLayout({
     const { data: session, status } = useSession();
     const router = useRouter();
     const pathname = usePathname();
+    const { t } = useLanguage();
     const role = (session?.user as any)?.role;
     const isAdmin = role === "ADMIN";
 
@@ -27,7 +29,7 @@ export default function OwnerLayout({
     }, [status, role, router]);
 
     if (status === "loading") {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+        return <div className="min-h-screen flex items-center justify-center">{t("common.loading")}</div>;
     }
 
     if (!session || (role !== "OWNER" && role !== "ADMIN")) {
@@ -35,10 +37,10 @@ export default function OwnerLayout({
     }
 
     const navigation = [
-        { name: "Earnings & Graphs", href: "/owner/dashboard/earnings", icon: DollarSign },
-        { name: "AI Intelligence Graphs", href: "/owner/intelligence", icon: Activity },
-        { name: "My Listings", href: "/owner/dashboard/listings", icon: Building2 },
-        { name: "Bookings", href: "/owner/dashboard/bookings", icon: Calendar },
+        { name: t("owner.nav.earningsGraphs"), href: "/owner/dashboard/earnings", icon: DollarSign },
+        { name: t("owner.nav.aiIntelligence"), href: "/owner/intelligence", icon: Activity },
+        { name: t("owner.nav.myListings"), href: "/owner/dashboard/listings", icon: Building2 },
+        { name: t("owner.nav.bookings"), href: "/owner/dashboard/bookings", icon: Calendar },
     ];
 
     return (
@@ -51,7 +53,7 @@ export default function OwnerLayout({
                             MyGenie
                         </span>
                         <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            {isAdmin ? "Admin → Owner" : "Owner"}
+                            {isAdmin ? "Admin → Owner" : t("owner.roleBadge")}
                         </span>
                     </div>
 
@@ -60,7 +62,7 @@ export default function OwnerLayout({
                             <Link href="/admin/dashboard">
                                 <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs">
                                     <ShieldCheck className="w-4 h-4 mr-1.5" />
-                                    Back to ADMIN Hub
+                                    {t("owner.backToAdminHub")}
                                 </Button>
                             </Link>
                         </div>
@@ -71,7 +73,7 @@ export default function OwnerLayout({
                             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                             return (
                                 <Link
-                                    key={item.name}
+                                    key={item.href}
                                     href={item.href}
                                     className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
                                         isActive
@@ -106,7 +108,7 @@ export default function OwnerLayout({
                             onClick={() => signOut({ callbackUrl: "/" })}
                         >
                             <LogOut className="mr-3 h-4 w-4" />
-                            Sign Out
+                            {t("nav.signOut")}
                         </Button>
                     </div>
                 </div>
@@ -115,11 +117,11 @@ export default function OwnerLayout({
             {/* Main Content */}
             <div className="md:ml-64 min-h-screen flex flex-col">
                 <header className="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 md:hidden">
-                    <span className="text-lg font-bold">Owner Dashboard</span>
+                    <span className="text-lg font-bold">{t("owner.dashboardTitle")}</span>
                     {isAdmin && (
                         <Link href="/admin/dashboard">
                             <Button size="sm" variant="outline" className="text-xs font-bold">
-                                Back to Admin
+                                {t("owner.backToAdminHub")}
                             </Button>
                         </Link>
                     )}

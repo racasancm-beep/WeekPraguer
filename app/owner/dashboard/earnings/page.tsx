@@ -6,6 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 interface StatItem {
     name: string;
@@ -15,8 +16,9 @@ interface StatItem {
 }
 
 export default function EarningsPage() {
+    const { t } = useLanguage();
     return (
-        <Suspense fallback={<div className="p-8">Loading earnings...</div>}>
+        <Suspense fallback={<div className="p-8">{t("owner.earnings.loading")}</div>}>
             <EarningsPageContent />
         </Suspense>
     );
@@ -25,6 +27,7 @@ export default function EarningsPage() {
 function EarningsPageContent() {
     const searchParams = useSearchParams();
     const userId = searchParams?.get("userId");
+    const { t } = useLanguage();
 
     const [stats, setStats] = useState({
         revenue: 0,
@@ -66,7 +69,7 @@ function EarningsPageContent() {
         }
     };
 
-    if (loading) return <div className="p-8">Loading earnings...</div>;
+    if (loading) return <div className="p-8">{t("owner.earnings.loading")}</div>;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -74,28 +77,28 @@ function EarningsPageContent() {
                 <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                         <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-gray-950 px-2 py-0.5 rounded-full">
-                            ADMIN Profile Access
+                            {t("owner.earnings.adminAccess")}
                         </span>
                         <h2 className="text-lg font-bold text-gray-900 mt-1">
-                            Viewing Owner Profile: {inspectedUser.name || inspectedUser.email} ({inspectedUser.email})
+                            {t("owner.earnings.viewingProfile")}: {inspectedUser.name || inspectedUser.email} ({inspectedUser.email})
                         </h2>
                     </div>
                     <div className="flex gap-2">
                         <Link href="/owner/dashboard/earnings">
-                            <Button size="sm" variant="outline">View All Owners Combined</Button>
+                            <Button size="sm" variant="outline">{t("owner.earnings.viewAllCombined")}</Button>
                         </Link>
                         <Link href="/admin/dashboard">
-                            <Button size="sm" className="bg-gray-900 text-white">Back to Admin Hub</Button>
+                            <Button size="sm" className="bg-gray-900 text-white">{t("owner.backToAdminHub")}</Button>
                         </Link>
                     </div>
                 </div>
             )}
 
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Earnings Dashboard</h1>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{t("owner.earnings.title")}</h1>
                 <Link href="/owner/dashboard/listings/create">
                     <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-600/20 font-bold">
-                        + List New Space
+                        {t("owner.earnings.listNewSpace")}
                     </Button>
                 </Link>
             </div>
@@ -107,7 +110,7 @@ function EarningsPageContent() {
                     </div>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-bold text-violet-600 uppercase tracking-wider">
-                            Total Revenue
+                            {t("owner.earnings.totalRevenue")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -115,7 +118,7 @@ function EarningsPageContent() {
                             RON{stats.revenue.toFixed(2)}
                         </div>
                         <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center">
-                            +RON{stats.revenueThisMonth.toFixed(2)} this month
+                            +RON{stats.revenueThisMonth.toFixed(2)} {t("owner.earnings.thisMonth")}
                         </p>
                     </CardContent>
                 </Card>
@@ -123,7 +126,7 @@ function EarningsPageContent() {
                 <Card className="rounded-3xl border-0 shadow-lg bg-white dark:bg-gray-800">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-bold text-gray-500 uppercase tracking-wider">
-                            Total Bookings
+                            {t("owner.earnings.totalBookings")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -131,7 +134,7 @@ function EarningsPageContent() {
                             {stats.bookings}
                         </div>
                         <p className="text-xs font-semibold text-violet-600 mt-2">
-                            +{stats.newBookingsTrend} from last month
+                            +{stats.newBookingsTrend} {t("owner.earnings.fromLastMonth")}
                         </p>
                     </CardContent>
                 </Card>
@@ -139,7 +142,7 @@ function EarningsPageContent() {
                 <Card className="rounded-3xl border-0 shadow-lg bg-white dark:bg-gray-800">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-bold text-gray-500 uppercase tracking-wider">
-                            Growth
+                            {t("owner.earnings.growth")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -147,7 +150,7 @@ function EarningsPageContent() {
                             +{stats.growth}%
                         </div>
                         <p className="text-xs font-semibold text-gray-400 mt-2">
-                            Year over year
+                            {t("owner.earnings.yearOverYear")}
                         </p>
                     </CardContent>
                 </Card>
@@ -157,7 +160,7 @@ function EarningsPageContent() {
                 <Card className="lg:col-span-2 rounded-3xl border-0 shadow-lg bg-white dark:bg-gray-800">
                     <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 pb-4">
                         <CardTitle className="text-base font-bold flex items-center">
-                            📈 Revenue Overview
+                            📈 {t("owner.earnings.revenueOverview")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6 pl-2">
@@ -204,13 +207,13 @@ function EarningsPageContent() {
                 <Card className="rounded-3xl border-0 shadow-lg bg-white dark:bg-gray-800">
                     <CardHeader className="border-b border-gray-100 dark:border-gray-700/50 pb-4">
                         <CardTitle className="text-base font-bold flex items-center">
-                            🗓️ Recent Confirmed Bookings
+                            🗓️ {t("owner.earnings.recentConfirmed")}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
                         <div className="space-y-6">
                             {recentBookings.length === 0 ? (
-                                <p className="text-sm text-gray-500 text-center py-8">No recent bookings.</p>
+                                <p className="text-sm text-gray-500 text-center py-8">{t("owner.earnings.noRecentBookings")}</p>
                             ) : (
                                 recentBookings.map((booking: any) => (
                                     <div key={booking.id} className="flex items-center">
@@ -219,7 +222,7 @@ function EarningsPageContent() {
                                         </div>
                                         <div className="ml-4 space-y-1">
                                             <p className="text-sm font-medium leading-none text-gray-900 dark:text-gray-100">
-                                                {booking.renter?.name || "Unknown User"}
+                                                {booking.renter?.name || t("owner.earnings.unknownUser")}
                                             </p>
                                             <p className="text-xs text-gray-500">
                                                 {booking.space?.name}

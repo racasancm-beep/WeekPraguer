@@ -8,6 +8,7 @@ import { Search, Calendar, LogOut, Menu, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function RenterLayout({
     children,
@@ -18,6 +19,7 @@ export default function RenterLayout({
     const router = useRouter();
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const { t } = useLanguage();
     const isAdmin = (session?.user as any)?.role === "ADMIN";
 
     useEffect(() => {
@@ -27,7 +29,7 @@ export default function RenterLayout({
     }, [status, router]);
 
     if (status === "loading") {
-        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+        return <div className="min-h-screen flex items-center justify-center">{t("common.loading")}</div>;
     }
 
     if (!session) {
@@ -35,8 +37,8 @@ export default function RenterLayout({
     }
 
     const navigation = [
-        { name: "My Bookings", href: "/dashboard", icon: Calendar },
-        { name: "Explore Spaces", href: "/explore", icon: Search },
+        { name: t("renter.nav.myBookings"), href: "/dashboard", icon: Calendar },
+        { name: t("renter.nav.exploreSpaces"), href: "/explore", icon: Search },
     ];
 
     const Sidebar = () => (
@@ -46,7 +48,7 @@ export default function RenterLayout({
                     MyGenie
                 </span>
                 <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 uppercase tracking-tighter">
-                    {isAdmin ? "Admin → Renter" : "Renter"}
+                    {isAdmin ? "Admin → Renter" : t("renter.roleBadge")}
                 </span>
             </div>
 
@@ -55,7 +57,7 @@ export default function RenterLayout({
                     <Link href="/admin/dashboard">
                         <Button size="sm" className="w-full bg-amber-500 hover:bg-amber-600 text-gray-950 font-black text-xs">
                             <ShieldCheck className="w-4 h-4 mr-1.5" />
-                            Back to ADMIN Hub
+                            {t("owner.backToAdminHub")}
                         </Button>
                     </Link>
                 </div>
@@ -67,7 +69,7 @@ export default function RenterLayout({
                         const isActive = pathname === item.href;
                         return (
                             <Link
-                                key={item.name}
+                                key={item.href}
                                 href={item.href}
                                 onClick={() => setIsMobileOpen(false)}
                                 className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all ${
@@ -102,7 +104,7 @@ export default function RenterLayout({
                     onClick={() => signOut({ callbackUrl: "/" })}
                 >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
+                    {t("nav.signOut")}
                 </Button>
             </div>
         </div>
