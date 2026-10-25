@@ -102,8 +102,9 @@ async function geocodeQuery(query: string): Promise<{ lat: number; lng: number; 
 
 const formSchema = z.object({
     name: z.string().min(2, "Required"),
-    description: z.string().min(5, "Required"),
-    address: z.string().min(3, "Required"),
+    description: z.string().min(3, "Required"),
+    category: z.string().optional().default("coworking"),
+    address: z.string().min(2, "Required"),
     city: z.string().default("București"),
     district: z.string().optional(),
     latitude: z.coerce.number().optional(),
@@ -120,49 +121,84 @@ const formSchema = z.object({
     hasParking: z.boolean().default(false),
     hasAC: z.boolean().default(false),
     selfCleaning: z.boolean().default(false),
+    active: z.boolean().default(true),
     amenitiesList: z.array(z.string()).default([]),
 });
 
 interface SpaceFormProps {
     initialData?: any;
+    spaceId?: string;
+    onSuccess?: (updatedSpace: any) => void;
+    onCancel?: () => void;
 }
 
-export function SpaceForm({ initialData }: SpaceFormProps) {
+function parseInitialAmenities(raw: any): string[] {
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === "string" && raw.trim()) {
+        try {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+        } catch {
+            return raw.split(",").map((s) => s.trim()).filter(Boolean);
+        }
+    }
+    return [];
+}
+
+export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFormProps) {
     const router = useRouter();
     const { t, translateAmenity } = useLanguage();
+    const targetSpaceId = spaceId || initialData?.id;
+    const isEditMode = Boolean(targetSpaceId);
+
     const [loading, setLoading] = useState(false);
     const [geocoding, setGeocoding] = useState(false);
-    const [mapZoom, setMapZoom] = useState<number>(13);
-    const [mapFocusLabel, setMapFocusLabel] = useState<string>("București");
-    const [photos, setPhotos] = useState<string[]>(initialData?.photos?.map((p: any) => p.url || p) || []);
+    const [mapZoom, setMapZoom] = useState<number>(isEditMode ? 14 : 13);
+    const [mapFocusLabel, setMapFocusLabel] = useState<string>(
+        initialData?.city
+            ? initialData?.district
+                ? `${initialData.city} → ${initialData.district}`
+                : initialData.city
+            : "București"
+    );
+    const [photos, setPhotos] = useState<string[]>(
+        initialData?.photos?.map((p: any) => (typeof p === "string" ? p : p.url)).filter(Boolean) || []
+    );
     const [photoUrl, setPhotoUrl] = useState("");
     const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const stepTwoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const lastResolvedCityRef = useRef<string>("bucurești");
+    const lastResolvedCityRef = useRef<string>((initialData?.city || "bucurești").trim().toLowerCase());
+    const initialLocationRef = useRef({
+        city: (initialData?.city || "București").trim(),
+        district: (initialData?.district || "").trim(),
+        address: (initialData?.address || "").trim(),
+    });
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: initialData || {
-            name: "",
-            description: "",
-            address: "",
-            city: "București",
-            district: "",
-            latitude: 44.4268,
-            longitude: 26.1025,
-            size: 50,
-            capacity: 10,
-            officeCount: 1,
-            hourlyRate: 100,
-            dailyRate: 600,
-            weekendRate: 1100,
-            hasWifi: true,
-            hasProjector: false,
-            hasKitchen: false,
-            hasParking: false,
-            hasAC: false,
-            selfCleaning: false,
-            amenitiesList: [],
+        defaultValues: {
+            name: initialData?.name || "",
+            description: initialData?.description || "",
+            category: initialData?.category || "coworking",
+            address: initialData?.address || "",
+            city: initialData?.city || "București",
+            district: initialData?.district || "",
+            latitude: typeof initialData?.latitude === "number" ? initialData.latitude : 44.4268,
+            longitude: typeof initialData?.longitude === "number" ? initialData.longitude : 26.1025,
+            size: initialData?.size ?? 50,
+            capacity: initialData?.capacity ?? 10,
+            officeCount: initialData?.officeCount ?? 1,
+            hourlyRate: initialData?.hourlyRate ?? 100,
+            dailyRate: initialData?.dailyRate ?? 600,
+            weekendRate: initialData?.weekendRate ?? 1100,
+            hasWifi: initialData?.hasWifi ?? true,
+            hasProjector: initialData?.hasProjector ?? false,
+            hasKitchen: initialData?.hasKitchen ?? false,
+            hasParking: initialData?.hasParking ?? false,
+            hasAC: initialData?.hasAC ?? false,
+            selfCleaning: initialData?.selfCleaning ?? false,
+            active: initialData?.active ?? true,
+            amenitiesList: parseInitialAmenities(initialData?.amenitiesList),
         },
     });
 
@@ -199,10 +235,20 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
 
         if (!cityClean && !districtClean && !addressClean) return;
 
+        // In edit mode, do not overwrite saved coordinates until the user modifies city, district, or address
+        if (
+            isEditMode &&
+            cityClean === initialLocationRef.current.city &&
+            districtClean === initialLocationRef.current.district &&
+            addressClean === initialLocationRef.current.address
+        ) {
+            return;
+        }
+
         // Instant lookup for known City so map jumps immediately while typing
         const cityNorm = cityClean.toLowerCase();
         const localCity = CITY_COORDS[cityNorm];
-        const cityChanged = cityNorm && cityNorm !== lastResolvedCityRef.current;
+        const cityChanged = Boolean(cityNorm && cityNorm !== lastResolvedCityRef.current);
 
         if (cityChanged && localCity) {
             lastResolvedCityRef.current = cityNorm;
@@ -262,7 +308,6 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     };
 
                     if (cityChanged) {
-                        // Brief pause after opening at the City so the user sees the map open at City and move to District
                         stepTwoTimerRef.current = setTimeout(runDistrictMove, 650);
                         return;
                     } else {
@@ -279,7 +324,7 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             if (geocodeTimerRef.current) clearTimeout(geocodeTimerRef.current);
             if (stepTwoTimerRef.current) clearTimeout(stepTwoTimerRef.current);
         };
-    }, [watchedCity, watchedDistrict, watchedAddress, updateCoordinates]);
+    }, [watchedCity, watchedDistrict, watchedAddress, isEditMode, updateCoordinates]);
 
     const addPhoto = () => {
         if (!photoUrl.trim()) return;
@@ -297,13 +342,18 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             let finalLat = Number(values.latitude);
             let finalLng = Number(values.longitude);
 
-            // Ensure coordinates match the entered City & District on submit
+            const locationChanged =
+                !isEditMode ||
+                values.city?.trim() !== initialLocationRef.current.city ||
+                (values.district || "").trim() !== initialLocationRef.current.district ||
+                values.address?.trim() !== initialLocationRef.current.address;
+
             const locationQuery = [values.address, values.district, values.city]
                 .map((s) => s?.trim())
                 .filter(Boolean)
                 .join(", ");
 
-            if (locationQuery) {
+            if (locationQuery && locationChanged) {
                 const resolved = await geocodeQuery(locationQuery);
                 if (resolved) {
                     finalLat = resolved.lat;
@@ -319,8 +369,11 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     ? [photoUrl.trim()]
                     : ["https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80"];
 
-            const response = await fetch("/api/owner/spaces", {
-                method: "POST",
+            const endpoint = isEditMode ? `/api/spaces/${targetSpaceId}` : "/api/owner/spaces";
+            const method = isEditMode ? "PUT" : "POST";
+
+            const response = await fetch(endpoint, {
+                method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...values,
@@ -333,9 +386,17 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
             });
 
             if (response.ok) {
-                toast.success(t("owner.form.createBtn"));
-                router.push("/owner/dashboard/listings");
-                router.refresh();
+                const data = await response.json();
+                toast.success(isEditMode ? t("owner.form.updatedToast") : t("owner.form.createBtn"));
+                if (onSuccess) {
+                    onSuccess(data.space);
+                } else if (isEditMode) {
+                    router.push(`/spaces/${targetSpaceId}`);
+                    router.refresh();
+                } else {
+                    router.push("/owner/dashboard/listings");
+                    router.refresh();
+                }
             } else {
                 const data = await response.json();
                 toast.error(data.message || "Error");
@@ -365,8 +426,27 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     </div>
 
                     <div>
+                        <label className="text-sm font-medium mb-1 block">{t("owner.form.category")}</label>
+                        <select
+                            {...form.register("category")}
+                            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                        >
+                            <option value="coworking">{t("catOpt.coworking")}</option>
+                            <option value="cocina">{t("catOpt.cocina")}</option>
+                            <option value="estudio">{t("catOpt.estudio")}</option>
+                            <option value="sala">{t("catOpt.sala")}</option>
+                            <option value="gimnasio">{t("catOpt.gimnasio")}</option>
+                            <option value="terraza">{t("catOpt.terraza")}</option>
+                            <option value="eventos">{t("catOpt.eventos")}</option>
+                            <option value="yoga">{t("catOpt.yoga")}</option>
+                            <option value="fotografia">{t("catOpt.fotografia")}</option>
+                            <option value="taller">{t("catOpt.taller")}</option>
+                        </select>
+                    </div>
+
+                    <div>
                         <label className="text-sm font-medium mb-1 block">{t("owner.form.description")}</label>
-                        <Textarea {...form.register("description")} />
+                        <Textarea {...form.register("description")} rows={4} />
                         {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
                     </div>
                 </div>
@@ -459,20 +539,54 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
 
                 <div className="grid grid-cols-2 gap-4 pt-2">
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="wifi" onCheckedChange={c => form.setValue("hasWifi", c as boolean)} defaultChecked={true} />
+                        <Checkbox
+                            id="wifi"
+                            checked={Boolean(form.watch("hasWifi"))}
+                            onCheckedChange={(c) => form.setValue("hasWifi", Boolean(c))}
+                        />
                         <label htmlFor="wifi" className="text-sm font-medium">{translateAmenity("High-Speed Wi-Fi")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="proj" onCheckedChange={c => form.setValue("hasProjector", c as boolean)} />
+                        <Checkbox
+                            id="proj"
+                            checked={Boolean(form.watch("hasProjector"))}
+                            onCheckedChange={(c) => form.setValue("hasProjector", Boolean(c))}
+                        />
                         <label htmlFor="proj" className="text-sm font-medium">{translateAmenity("Projector / Screen")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="kit" onCheckedChange={c => form.setValue("hasKitchen", c as boolean)} />
+                        <Checkbox
+                            id="kit"
+                            checked={Boolean(form.watch("hasKitchen"))}
+                            onCheckedChange={(c) => form.setValue("hasKitchen", Boolean(c))}
+                        />
                         <label htmlFor="kit" className="text-sm font-medium">{translateAmenity("Kitchen Access")}</label>
                     </div>
                     <div className="flex items-center space-x-2">
-                        <Checkbox id="ac" onCheckedChange={c => form.setValue("hasAC", c as boolean)} />
+                        <Checkbox
+                            id="ac"
+                            checked={Boolean(form.watch("hasAC"))}
+                            onCheckedChange={(c) => form.setValue("hasAC", Boolean(c))}
+                        />
                         <label htmlFor="ac" className="text-sm font-medium">{translateAmenity("Air Conditioning")}</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="parking"
+                            checked={Boolean(form.watch("hasParking"))}
+                            onCheckedChange={(c) => form.setValue("hasParking", Boolean(c))}
+                        />
+                        <label htmlFor="parking" className="text-sm font-medium">{translateAmenity("On-site Parking")}</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="activeStatus"
+                            checked={Boolean(form.watch("active"))}
+                            onCheckedChange={(c) => form.setValue("active", Boolean(c))}
+                        />
+                        <label htmlFor="activeStatus" className="text-sm font-semibold text-emerald-700">
+                            {t("owner.form.statusActive")}
+                        </label>
                     </div>
                 </div>
 
@@ -523,8 +637,8 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                     <div className="flex items-start space-x-3 p-4 bg-violet-50 dark:bg-violet-900/10 rounded-2xl border border-violet-100 dark:border-violet-800">
                         <Checkbox
                             id="selfCleaning"
-                            checked={form.watch("selfCleaning")}
-                            onCheckedChange={c => form.setValue("selfCleaning", c as boolean)}
+                            checked={Boolean(form.watch("selfCleaning"))}
+                            onCheckedChange={c => form.setValue("selfCleaning", Boolean(c))}
                         />
                         <div className="grid gap-1.5 leading-none">
                             <label
@@ -626,10 +740,27 @@ export function SpaceForm({ initialData }: SpaceFormProps) {
                 )}
             </div>
 
-            <div className="pt-4 border-t">
-                <Button type="submit" className="w-full h-12 text-lg bg-[#008080] hover:bg-[#006F6F] text-white font-bold" disabled={loading}>
+            <div className="pt-4 border-t flex gap-3">
+                {onCancel && (
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onCancel}
+                        className="h-12 px-6 font-bold"
+                        disabled={loading}
+                    >
+                        {t("common.cancel")}
+                    </Button>
+                )}
+                <Button type="submit" className="flex-1 h-12 text-lg bg-[#008080] hover:bg-[#006F6F] text-white font-bold" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loading ? t("owner.form.creatingBtn") : t("owner.form.createBtn")}
+                    {loading
+                        ? isEditMode
+                            ? t("owner.form.savingChangesBtn")
+                            : t("owner.form.creatingBtn")
+                        : isEditMode
+                        ? t("owner.form.saveChangesBtn")
+                        : t("owner.form.createBtn")}
                 </Button>
             </div>
         </form>

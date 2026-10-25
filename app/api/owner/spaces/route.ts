@@ -12,6 +12,7 @@ const spaceSchema = z.object({
     address: z.string().min(3),
     city: z.string().default("București"),
     district: z.string().optional(),
+    category: z.string().optional().default("coworking"),
     latitude: z.coerce.number().optional().default(44.4268),
     longitude: z.coerce.number().optional().default(26.1025),
     size: z.coerce.number().positive(),
@@ -28,6 +29,7 @@ const spaceSchema = z.object({
     hasParking: z.boolean().optional().default(false),
     hasAC: z.boolean().optional().default(false),
     selfCleaning: z.boolean().optional().default(false),
+    active: z.boolean().optional().default(true),
     amenitiesList: z.array(z.string()).optional().default([]),
     // Photos
     photos: z.array(z.string()).optional().default([]),
@@ -92,6 +94,7 @@ export async function POST(req: Request) {
                 address: data.address,
                 city: data.city || "București",
                 district: data.district || "",
+                category: data.category || "coworking",
                 latitude: data.latitude ?? 44.4268,
                 longitude: data.longitude ?? 26.1025,
                 size: Math.round(data.size),
@@ -106,6 +109,7 @@ export async function POST(req: Request) {
                 hasParking: Boolean(data.hasParking),
                 hasAC: Boolean(data.hasAC),
                 selfCleaning: Boolean(data.selfCleaning),
+                active: data.active ?? true,
                 amenitiesList: data.amenitiesList ? JSON.stringify(data.amenitiesList) : null,
                 photos: {
                     create: photoUrls.map(url => ({ url }))

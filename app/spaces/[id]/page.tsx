@@ -23,15 +23,23 @@ import {
     Monitor,
     Calendar as CalendarIcon,
     ArrowLeft,
-    ExternalLink
+    ExternalLink,
+    Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
 import MapComponent from "@/components/ui/map-component";
+import { SpaceForm } from "@/components/owner/space-form";
 import { useLanguage } from "@/lib/i18n/language-context";
 
 interface SpaceDetailed {
     id: string;
+    ownerId?: string;
+    owner?: {
+        id: string;
+        name?: string;
+        email?: string;
+    };
     name: string;
     description: string;
     city: string;
@@ -42,6 +50,7 @@ interface SpaceDetailed {
     longitude?: number;
     size: number;
     capacity: number;
+    officeCount?: number;
     hourlyRate: number;
     dailyRate: number;
     weekendRate: number;
@@ -50,6 +59,8 @@ interface SpaceDetailed {
     hasKitchen: boolean;
     hasParking: boolean;
     hasProjector: boolean;
+    selfCleaning?: boolean;
+    active?: boolean;
     amenitiesList: string;
     photos: { id?: string; url: string }[];
 }
@@ -65,8 +76,9 @@ export default function SpaceDetailsPage() {
     const { t, translateAmenity, translateCategory } = useLanguage();
     const { id } = useParams();
     const router = useRouter();
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const [space, setSpace] = useState<SpaceDetailed | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
     const [bookedDates, setBookedDates] = useState<Date[]>([]);
     const [existingBookings, setExistingBookings] = useState<any[]>([]);
@@ -242,6 +254,19 @@ export default function SpaceDetailsPage() {
     const photos = space.photos || [];
     const activePhoto = photos[selectedPhotoIndex]?.url || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
 
+    const sessionUserId = (session?.user as any)?.id;
+    const sessionEmail = session?.user?.email?.trim().toLowerCase();
+    const sessionRole = (session?.user as any)?.role;
+    const canEditSpace =
+        status === "authenticated" &&
+        Boolean(session?.user) &&
+        Boolean(
+            (sessionUserId && space.ownerId === sessionUserId) ||
+            (sessionEmail && space.owner?.email?.trim().toLowerCase() === sessionEmail) ||
+            sessionRole === "OWNER" ||
+            sessionRole === "ADMIN"
+        );
+
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">
             {/* Header breadcrumb */}
@@ -251,40 +276,93 @@ export default function SpaceDetailsPage() {
                         <ArrowLeft className="w-4 h-4" />
                         {t("space.backToSpaces")}
                     </Link>
-                    {space.category && (
-                        <span className="text-xs font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-3 py-1 rounded-full">
-                            {translateCategory(space.category)}
-                        </span>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {space.category && (
+                            <span className="text-xs font-bold uppercase tracking-wider text-violet-600 bg-violet-50 px-3 py-1 rounded-full">
+                                {translateCategory(space.category)}
+                            </span>
+                        )}
+                        {canEditSpace && (
+                            <Button
+                                size="sm"
+                                onClick={() => setIsEditing((prev) => !prev)}
+                                className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl shadow-sm"
+                            >
+                                <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                                {t("owner.listings.editSpace")}
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
                 {/* Space Title & Location */}
-                <div className="mb-6">
-                    <div className="flex flex-wrap items-center gap-3 mb-2">
-                        {space.category && (
-                            <span className="text-xs font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-3 py-1 rounded-full">
-                                {translateCategory(space.category)}
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                    <div>
+                        <div className="flex flex-wrap items-center gap-3 mb-2">
+                            {space.category && (
+                                <span className="text-xs font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-3 py-1 rounded-full">
+                                    {translateCategory(space.category)}
+                                </span>
+                            )}
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                                <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                                {t("space.verifiedHost")}
                             </span>
-                        )}
-                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                            <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                            {t("space.verifiedHost")}
-                        </span>
+                        </div>
+
+                        <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2">
+                            {space.name}
+                        </h1>
+
+                        <div className="flex items-center text-sm text-gray-500 gap-1.5">
+                            <MapPin className="w-4 h-4 text-violet-600 flex-shrink-0" />
+                            <span>{space.address}</span>
+                            <span>•</span>
+                            <span className="font-semibold text-gray-700">{space.city}</span>
+                        </div>
                     </div>
 
-                    <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2">
-                        {space.name}
-                    </h1>
-
-                    <div className="flex items-center text-sm text-gray-500 gap-1.5">
-                        <MapPin className="w-4 h-4 text-violet-600 flex-shrink-0" />
-                        <span>{space.address}</span>
-                        <span>•</span>
-                        <span className="font-semibold text-gray-700">{space.city}</span>
-                    </div>
+                    {canEditSpace && (
+                        <Button
+                            onClick={() => setIsEditing((prev) => !prev)}
+                            className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-2xl px-6 h-11 shadow-md"
+                        >
+                            <Pencil className="w-4 h-4 mr-2" />
+                            {t("owner.listings.editSpace")}
+                        </Button>
+                    )}
                 </div>
+
+                {/* Inline Full Space Editor when Owner clicks "Make Changes / Edit Space" */}
+                {canEditSpace && isEditing && (
+                    <div className="mb-10 p-6 sm:p-8 bg-white rounded-3xl border-2 border-[#008080] shadow-2xl animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between mb-6 pb-4 border-b">
+                            <div>
+                                <h2 className="text-2xl font-black text-gray-900">{t("owner.form.editTitle")}</h2>
+                                <p className="text-sm text-gray-500 mt-1">{t("owner.form.editSubtitle")}</p>
+                            </div>
+                            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+                                {t("common.cancel")}
+                            </Button>
+                        </div>
+                        <SpaceForm
+                            initialData={space}
+                            spaceId={space.id}
+                            onSuccess={(updatedSpace) => {
+                                if (updatedSpace) {
+                                    setSpace(updatedSpace);
+                                    setSelectedPhotoIndex(0);
+                                } else {
+                                    fetchSpace();
+                                }
+                                setIsEditing(false);
+                            }}
+                            onCancel={() => setIsEditing(false)}
+                        />
+                    </div>
+                )}
 
                 {/* Photo Gallery */}
                 <div className="space-y-3 mb-10">

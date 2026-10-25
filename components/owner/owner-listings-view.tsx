@@ -2,8 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { useSession } from "next-auth/react";
 
 interface OwnerListingsViewProps {
     spaces: any[];
@@ -12,6 +13,8 @@ interface OwnerListingsViewProps {
 
 export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewProps) {
     const { t } = useLanguage();
+    const { data: session, status } = useSession();
+    const isOwnerLoggedIn = status === "authenticated" && Boolean(session?.user);
 
     return (
         <div className="space-y-8">
@@ -96,14 +99,24 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between pt-4 border-t">
+                                <div className="flex items-center justify-between pt-4 border-t gap-2">
                                     <span className="font-bold text-lg">
                                         {space.hourlyRate} RON
                                         <span className="text-sm font-normal text-gray-500">/{t("explore.perHour")}</span>
                                     </span>
-                                    <Link href={`/spaces/${space.id}`}>
-                                        <Button variant="outline" size="sm">{t("owner.listings.viewSpace")}</Button>
-                                    </Link>
+                                    <div className="flex items-center gap-2">
+                                        {isOwnerLoggedIn && (
+                                            <Link href={`/owner/dashboard/listings/${space.id}/edit`}>
+                                                <Button size="sm" className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold">
+                                                    <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                                                    {t("owner.listings.editSpace")}
+                                                </Button>
+                                            </Link>
+                                        )}
+                                        <Link href={`/spaces/${space.id}`}>
+                                            <Button variant="outline" size="sm">{t("owner.listings.viewSpace")}</Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         </div>
