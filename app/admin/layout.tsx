@@ -47,13 +47,31 @@ export default function AdminLayout({
 
     const Sidebar = () => (
         <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800">
-            <div className="flex h-16 items-center justify-between px-6 border-b dark:border-gray-800">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-6 h-6 text-[#008080]" />
-                    <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-[#008080] to-violet-600">
-                        MyGenie Admin
-                    </span>
+            <div className="border-b dark:border-gray-800 p-4 bg-gray-50/60">
+                <div className="flex items-center mb-3 px-1">
+                    <Avatar className="h-9 w-9 mr-3">
+                        <AvatarFallback className="bg-[#008080] text-white font-bold">
+                            {session?.user?.name?.[0] || "A"}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div className="overflow-hidden">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-bold truncate">{session?.user?.name || "MyGenie Super Admin"}</p>
+                            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300">
+                                ADMIN
+                            </span>
+                        </div>
+                        <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
+                    </div>
                 </div>
+                <Button
+                    variant="outline"
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 bg-white rounded-xl font-semibold text-xs"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                >
+                    <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                    {t("nav.signOut")}
+                </Button>
             </div>
             <div className="px-4 pt-3">
                 <div className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] font-bold text-amber-900">
@@ -86,39 +104,18 @@ export default function AdminLayout({
                     })}
                 </nav>
             </div>
-            <div className="border-t dark:border-gray-800 p-4">
-                <div className="flex items-center mb-4 px-2">
-                    <Avatar className="h-8 w-8 mr-3">
-                        <AvatarFallback className="bg-[#008080] text-white font-bold">
-                            {session?.user?.name?.[0] || "A"}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="overflow-hidden">
-                        <p className="text-sm font-bold truncate">{session?.user?.name || "MyGenie Super Admin"}</p>
-                        <p className="text-xs text-gray-500 truncate">{session?.user?.email}</p>
-                    </div>
-                </div>
-                <Button
-                    variant="outline"
-                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200"
-                    onClick={() => signOut({ callbackUrl: "/" })}
-                >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    {t("nav.signOut")}
-                </Button>
-            </div>
         </div>
     );
 
     return (
         <div className="flex min-h-screen bg-gray-50 dark:bg-black">
-            {/* Desktop Sidebar */}
-            <div className="hidden md:flex w-64 flex-col fixed inset-y-0 left-0 z-40">
+            {/* Desktop Sidebar positioned below MainNav */}
+            <div className="hidden md:flex w-64 flex-col fixed top-[116px] bottom-0 left-0 z-30">
                 <Sidebar />
             </div>
 
             {/* Mobile Sidebar */}
-            <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b px-4 h-16 flex items-center justify-between">
+            <div className="md:hidden bg-white border-b px-4 h-14 flex items-center justify-between">
                 <span className="font-bold text-[#008080]">MyGenie Admin</span>
                 <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
                     <SheetTrigger asChild>
@@ -132,7 +129,7 @@ export default function AdminLayout({
                 </Sheet>
             </div>
 
-            <main className="flex-1 md:ml-64 flex flex-col pt-16 md:pt-0 min-w-0">
+            <main className="flex-1 md:ml-64 flex flex-col min-w-0">
                 <div className="flex-1 p-4 md:p-8">
                     {children}
                 </div>

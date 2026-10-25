@@ -45,16 +45,37 @@ export default function OwnerLayout({
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Sidebar */}
-            <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-10 hidden md:block">
+            {/* Sidebar positioned cleanly below MainNav */}
+            <div className="fixed top-[116px] bottom-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-30 hidden md:block">
                 <div className="flex flex-col h-full">
-                    <div className="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700">
-                        <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                            MyGenie
-                        </span>
-                        <span className="ml-2 text-xs font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary">
-                            {isAdmin ? "Admin → Owner" : t("owner.roleBadge")}
-                        </span>
+                    {/* Top-Left User Profile + Type + Log Out */}
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40">
+                        <div className="flex items-center mb-3 px-1">
+                            <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold shrink-0">
+                                {(session.user?.name?.[0] || session.user?.email?.[0] || "O").toUpperCase()}
+                            </div>
+                            <div className="ml-3 min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate max-w-[110px]">
+                                        {session.user?.name || session.user?.email?.split("@")[0]}
+                                    </p>
+                                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
+                                        {isAdmin ? "Admin → Owner" : t("owner.roleBadge")}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 truncate max-w-[160px]">
+                                    {session.user?.email}
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="outline"
+                            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 bg-white rounded-xl font-semibold text-xs"
+                            onClick={() => signOut({ callbackUrl: "/" })}
+                        >
+                            <LogOut className="mr-2.5 h-4 w-4 text-red-600" />
+                            {t("nav.signOut")}
+                        </Button>
                     </div>
 
                     {isAdmin && (
@@ -68,7 +89,7 @@ export default function OwnerLayout({
                         </div>
                     )}
 
-                    <div className="flex-1 py-6 px-4 space-y-1">
+                    <div className="flex-1 py-4 px-4 space-y-1 overflow-y-auto">
                         {navigation.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                             return (
@@ -86,30 +107,6 @@ export default function OwnerLayout({
                                 </Link>
                             );
                         })}
-                    </div>
-
-                    <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center mb-4 px-2">
-                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
-                                {session.user?.name?.[0] || "O"}
-                            </div>
-                            <div className="ml-3">
-                                <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate max-w-[120px]">
-                                    {session.user?.name}
-                                </p>
-                                <p className="text-xs text-gray-500 truncate max-w-[120px]">
-                                    {session.user?.email}
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => signOut({ callbackUrl: "/" })}
-                        >
-                            <LogOut className="mr-3 h-4 w-4" />
-                            {t("nav.signOut")}
-                        </Button>
                     </div>
                 </div>
             </div>

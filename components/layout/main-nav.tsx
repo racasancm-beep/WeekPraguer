@@ -1,20 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard } from "lucide-react";
+import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LanguageSelector } from "@/components/ui/language-selector";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 export function MainNav() {
     const { t } = useLanguage();
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const role = (session?.user as any)?.role;
     const isAdmin = role === "ADMIN";
-    const isOwnerOrAdmin = role === "OWNER" || role === "ADMIN";
+    const isOwner = role === "OWNER";
+    const isOwnerOrAdmin = isOwner || isAdmin;
     const listSpaceHref = session ? (isOwnerOrAdmin ? "/owner/dashboard/listings/create" : "/owner/dashboard/listings/create") : "/register?role=OWNER";
     const tickerText = t("nav.tickerText");
+
+    const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "";
+    const userEmail = session?.user?.email || "";
+    const userInitial = (userName?.[0] || userEmail?.[0] || "U").toUpperCase();
+    const userRoleLabel = isAdmin
+        ? "ADMIN"
+        : isOwner
+        ? t("owner.roleBadge")
+        : t("renter.roleBadge");
 
     return (
         <div className="sticky top-0 w-full z-50" suppressHydrationWarning>
@@ -26,17 +36,60 @@ export function MainNav() {
                 </div>
             </div>
 
-            {/* Second Navigation Bar (Contains Language Selection) */}
+            {/* Second Navigation Bar (Contains Top-Left Logged-in User Profile + Logout & Language Selection) */}
             <nav className="w-full bg-white/95 backdrop-blur-xl border-b border-[#E2ECEC] shadow-sm">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-                    <Link href="/" className="flex items-center gap-2.5 group">
-                        <div className="w-10 h-10 bg-[#008080] rounded-2xl flex items-center justify-center shadow-md shadow-[#008080]/20 group-hover:scale-105 transition-transform duration-300">
-                            <Clock className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-2xl font-black tracking-tight text-gray-900 group-hover:text-[#008080] transition-colors">
-                            My<span className="text-[#008080]">Genie</span>
-                        </span>
-                    </Link>
+                <div className="w-full max-w-[1680px] mx-auto px-3 sm:px-6 min-h-[80px] py-2 flex justify-between items-center gap-3">
+                    {/* Top-Left Corner: Logged-in User Profile (Name, Type, Email, Log Out) + Brand Logo */}
+                    <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                        {status === "authenticated" && session?.user && (
+                            <div className="flex items-center gap-2.5 sm:gap-3 bg-gray-50/90 border border-gray-200/90 rounded-2xl px-2.5 sm:px-3.5 py-1.5 shadow-sm">
+                                <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                    {userInitial}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-sm font-bold text-gray-900 truncate max-w-[110px] sm:max-w-[150px]">
+                                            {userName}
+                                        </span>
+                                        <span
+                                            className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                                isAdmin
+                                                    ? "bg-amber-100 text-amber-800 border-amber-300"
+                                                    : isOwner
+                                                    ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                    : "bg-[#E6F4F4] text-[#008080] border-[#008080]/20"
+                                            }`}
+                                        >
+                                            {userRoleLabel}
+                                        </span>
+                                    </div>
+                                    {userEmail && (
+                                        <p className="text-[11px] text-gray-500 truncate max-w-[130px] sm:max-w-[180px]">
+                                            {userEmail}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => signOut({ callbackUrl: "/" })}
+                                    className="border-red-200 text-red-600 hover:text-red-700 hover:bg-red-50 font-semibold text-xs rounded-xl px-2.5 sm:px-3 h-9 flex items-center gap-1.5 shrink-0 bg-white"
+                                >
+                                    <LogOut className="w-4 h-4 text-red-600 shrink-0" />
+                                    <span>{t("nav.signOut")}</span>
+                                </Button>
+                            </div>
+                        )}
+
+                        <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+                            <div className="w-10 h-10 bg-[#008080] rounded-2xl flex items-center justify-center shadow-md shadow-[#008080]/20 group-hover:scale-105 transition-transform duration-300">
+                                <Clock className="w-6 h-6 text-white" />
+                            </div>
+                            <span className="text-xl sm:text-2xl font-black tracking-tight text-gray-900 group-hover:text-[#008080] transition-colors hidden sm:inline">
+                                My<span className="text-[#008080]">Genie</span>
+                            </span>
+                        </Link>
+                    </div>
 
                     <div className="hidden lg:flex items-center gap-6">
                         <Link href="/explore" className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">

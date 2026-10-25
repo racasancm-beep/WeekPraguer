@@ -98,13 +98,37 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.id = user.id;
                 token.role = (user as any).role;
+                token.name = user.name;
+                token.email = user.email;
+            } else if ((!token.role || !token.name) && token.email) {
+                try {
+                    const dbUser = await prisma.user.findFirst({
+                        where: {
+                            email: {
+                                equals: String(token.email).trim().toLowerCase(),
+                                mode: "insensitive",
+                            },
+                        },
+                        select: { id: true, name: true, role: true },
+                    });
+                    if (dbUser) {
+                        token.id = dbUser.id;
+                        token.role = dbUser.role;
+                        if (dbUser.name) token.name = dbUser.name;
+                    }
+                } catch {
+                    // Ignore transient DB lookup errors
+                }
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
                 (session.user as any).id = token.id;
-                (session.user as any).role = token.role;
+                (session.user as any).role = token.role || "RENTER";
+                if (token.name) {
+                    session.user.name = String(token.name);
+                }
             }
             return session;
         }
