@@ -17,14 +17,10 @@ import {
     ChevronLeft,
     ChevronRight,
     Wifi,
-    Wind,
-    Utensils,
-    Car,
-    Monitor,
-    Calendar as CalendarIcon,
     ArrowLeft,
-    ExternalLink,
-    Pencil
+    Pencil,
+    Ban,
+    Trash2
 } from "lucide-react";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
@@ -72,6 +68,32 @@ interface BookingSlot {
     endTime: string;   // "HH:mm"
 }
 
+function toLocalDateKey(d: Date): string {
+    return [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, "0"),
+        String(d.getDate()).padStart(2, "0"),
+    ].join("-");
+}
+
+function toUtcDateKey(isoOrDate: string | Date): string {
+    const d = new Date(isoOrDate);
+    return [
+        d.getUTCFullYear(),
+        String(d.getUTCMonth() + 1).padStart(2, "0"),
+        String(d.getUTCDate()).padStart(2, "0"),
+    ].join("-");
+}
+
+function formatUtcDateDisplay(isoOrDate: string | Date): string {
+    const d = new Date(isoOrDate);
+    return [
+        String(d.getUTCDate()).padStart(2, "0"),
+        String(d.getUTCMonth() + 1).padStart(2, "0"),
+        d.getUTCFullYear(),
+    ].join(".");
+}
+
 export default function SpaceDetailsPage() {
     const { t, translateAmenity, translateCategory } = useLanguage();
     const { id } = useParams();
@@ -80,6 +102,7 @@ export default function SpaceDetailsPage() {
     const [space, setSpace] = useState<SpaceDetailed | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
+    const [bookedDateKeys, setBookedDateKeys] = useState<string[]>([]);
     const [bookedDates, setBookedDates] = useState<Date[]>([]);
     const [existingBookings, setExistingBookings] = useState<any[]>([]);
     const [selectedDates, setSelectedDates] = useState<Date[]>([]);
@@ -87,7 +110,7 @@ export default function SpaceDetailsPage() {
 
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
-    const [agreed, setAgreed] = useState(false);
+    const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (id) fetchSpace();
@@ -100,13 +123,28 @@ export default function SpaceDetailsPage() {
             const data = await res.json();
             setSpace(data);
 
-            // Fetch existing bookings
             const bookingsRes = await fetch(`/api/spaces/${id}/bookings`);
             if (bookingsRes.ok) {
                 const bData = await bookingsRes.json();
                 setExistingBookings(bData);
-                const dates = bData.map((b: any) => new Date(b.startTime));
-                setBookedDates(dates);
+
+                const keysSet = new Set<string>();
+                const dateObjs: Date[] = [];
+
+                bData.forEach((b: any) => {
+                    // Mark full-day bookings and owner blocks as completely unavailable on the calendar
+                    if (b.accessCode === "OWNER_BLOCK" || !b.isHourly) {
+                        const key = toUtcDateKey(b.startTime);
+                        if (!keysSet.has(key)) {
+                            keysSet.add(key);
+                            const [y, m, day] = key.split("-").map(Number);
+                            dateObjs.push(new Date(y, m - 1, day));
+                        }
+                    }
+                });
+
+                setBookedDateKeys(Array.from(keysSet));
+                setBookedDates(dateObjs);
             }
         } catch (error) {
             toast.error("Error loading space details");
@@ -116,13 +154,12 @@ export default function SpaceDetailsPage() {
     };
 
     const handleDateSelect = (dates: Date[] | undefined) => {
-        const newDates = dates || [];
+        const newDates = (dates || []).filter((d) => !bookedDateKeys.includes(toLocalDateKey(d)));
         setSelectedDates(newDates);
 
-        // Update slots dictionary
         const newSlots: Record<string, BookingSlot> = {};
         newDates.forEach((d) => {
-            const key = d.toISOString().split("T")[0];
+            const key = toLocalDateKey(d);
             if (slots[key]) {
                 newSlots[key] = slots[key];
             } else {
@@ -160,6 +197,90 @@ export default function SpaceDetailsPage() {
         return total;
     };
 
+    const sessionUserId = (session?.user as any)?.id;
+    const sessionEmail = session?.user?.email?.trim().toLowerCase();
+    const sessionRole = (session?.user as any)?.role;
+    const canEditSpace =
+        status === "authenticated" &&
+        Boolean(session?.user) &&
+        Boolean(
+            (sessionUserId && space?.ownerId === sessionUserId) ||
+            (sessionEmail && space?.owner?.email?.trim().toLowerCase() === sessionEmail) ||
+            sessionRole === "OWNER" ||
+            sessionRole === "ADMIN"
+        );
+    const isOwnerProfile =
+        status === "authenticated" &&
+        Boolean(session?.user) &&
+        (sessionRole === "OWNER" ||
+            (sessionUserId && space?.ownerId === sessionUserId) ||
+            (sessionEmail && space?.owner?.email?.trim().toLowerCase() === sessionEmail));
+
+    const handleOwnerBlockDates = async () => {
+        if (!session) {
+            toast.error(t("space.errSignIn"));
+            router.push(`/login?callbackUrl=/spaces/${id}`);
+            return;
+        }
+
+        if (selectedDates.length === 0) {
+            toast.error(t("space.errSelectDate"));
+            return;
+        }
+
+        setBookingLoading(true);
+        try {
+            const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
+            const res = await fetch("/api/bookings", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    spaceId: space?.id,
+                    isOwnerBlock: true,
+                    slots: sortedDates.map((d) => ({
+                        date: toLocalDateKey(d),
+                        isFullDay: true,
+                        startTime: "00:00",
+                        endTime: "23:59",
+                    })),
+                }),
+            });
+
+            if (res.ok) {
+                toast.success(t("space.blockSuccess"));
+                setSelectedDates([]);
+                setSlots({});
+                await fetchSpace();
+            } else {
+                const err = await res.json();
+                toast.error(err.message || err.error || "Failed to block dates");
+            }
+        } catch (error) {
+            toast.error("An error occurred while blocking dates");
+        } finally {
+            setBookingLoading(false);
+        }
+    };
+
+    const handleUnblockDate = async (bookingId: string) => {
+        setUnblockingId(bookingId);
+        try {
+            const res = await fetch(`/api/bookings?id=${encodeURIComponent(bookingId)}`, {
+                method: "DELETE",
+            });
+            if (res.ok) {
+                toast.success(t("space.unblockSuccess"));
+                await fetchSpace();
+            } else {
+                toast.error("Failed to unblock date");
+            }
+        } catch {
+            toast.error("Failed to unblock date");
+        } finally {
+            setUnblockingId(null);
+        }
+    };
+
     const handleBook = async () => {
         if (!session) {
             toast.error(t("space.errSignIn"));
@@ -172,14 +293,8 @@ export default function SpaceDetailsPage() {
             return;
         }
 
-        if (!agreed) {
-            toast.error(t("space.errAgreeTerms"));
-            return;
-        }
-
         setBookingLoading(true);
         try {
-            // Sort dates
             const sortedDates = [...selectedDates].sort((a, b) => a.getTime() - b.getTime());
             const firstDate = sortedDates[0];
             const lastDate = sortedDates[sortedDates.length - 1];
@@ -189,20 +304,14 @@ export default function SpaceDetailsPage() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     spaceId: space?.id,
+                    isOwnerBlock: false,
                     startTime: firstDate,
                     endTime: lastDate,
                     totalPrice: calculateTotalPrice(),
-                    slots: Object.values(slots).map(s => {
-                        const d = new Date(s.date);
-                        return {
-                            ...s,
-                            date: [
-                                d.getFullYear(),
-                                String(d.getMonth() + 1).padStart(2, '0'),
-                                String(d.getDate()).padStart(2, '0')
-                            ].join('-')
-                        };
-                    }),
+                    slots: Object.values(slots).map((s) => ({
+                        ...s,
+                        date: toLocalDateKey(new Date(s.date)),
+                    })),
                 }),
             });
 
@@ -211,7 +320,7 @@ export default function SpaceDetailsPage() {
                 router.push("/dashboard");
             } else {
                 const err = await res.json();
-                toast.error(err.message || "Failed to create booking");
+                toast.error(err.message || err.error || "Failed to create booking");
             }
         } catch (error) {
             toast.error("An error occurred during booking");
@@ -252,27 +361,22 @@ export default function SpaceDetailsPage() {
 
     const totalPrice = calculateTotalPrice();
     const photos = space.photos || [];
-    const activePhoto = photos[selectedPhotoIndex]?.url || "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
+    const activePhoto =
+        photos[selectedPhotoIndex]?.url ||
+        "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
 
-    const sessionUserId = (session?.user as any)?.id;
-    const sessionEmail = session?.user?.email?.trim().toLowerCase();
-    const sessionRole = (session?.user as any)?.role;
-    const canEditSpace =
-        status === "authenticated" &&
-        Boolean(session?.user) &&
-        Boolean(
-            (sessionUserId && space.ownerId === sessionUserId) ||
-            (sessionEmail && space.owner?.email?.trim().toLowerCase() === sessionEmail) ||
-            sessionRole === "OWNER" ||
-            sessionRole === "ADMIN"
-        );
+    const ownerBlocks = existingBookings.filter((b: any) => b.accessCode === "OWNER_BLOCK");
+    const hasOwnerBlocks = ownerBlocks.length > 0;
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">
             {/* Header breadcrumb */}
             <div className="bg-white border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-                    <Link href="/explore" className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-violet-600 transition-colors">
+                    <Link
+                        href="/explore"
+                        className="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-violet-600 transition-colors"
+                    >
                         <ArrowLeft className="w-4 h-4" />
                         {t("space.backToSpaces")}
                     </Link>
@@ -310,6 +414,12 @@ export default function SpaceDetailsPage() {
                                 <Shield className="w-3.5 h-3.5 text-emerald-600" />
                                 {t("space.verifiedHost")}
                             </span>
+                            {hasOwnerBlocks && (
+                                <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-red-700 bg-red-100 border border-red-200 px-3 py-1 rounded-full uppercase tracking-wide">
+                                    <Ban className="w-3.5 h-3.5 text-red-600" />
+                                    {t("card.notAvailable")} • {t("card.occupied100")} ({t("card.otherSources")})
+                                </span>
+                            )}
                         </div>
 
                         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2">
@@ -334,6 +444,36 @@ export default function SpaceDetailsPage() {
                         </Button>
                     )}
                 </div>
+
+                {/* Global Blocked Period Banner visible to everyone */}
+                {hasOwnerBlocks && (
+                    <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-start sm:items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                                <Ban className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="text-sm font-extrabold text-red-800 uppercase tracking-wide">
+                                    {t("space.blockedBannerTitle")}
+                                </div>
+                                <div className="text-xs font-semibold text-red-700 mt-1 flex flex-wrap items-center gap-1.5">
+                                    <span>{t("card.blockedDatesLabel")}</span>
+                                    {ownerBlocks.map((b: any) => (
+                                        <span
+                                            key={b.id}
+                                            className="px-2 py-0.5 rounded-md bg-white border border-red-200 text-red-800 font-bold"
+                                        >
+                                            {formatUtcDateDisplay(b.startTime)}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-extrabold uppercase tracking-wider self-start sm:self-center shrink-0">
+                            {t("card.occupied100")} • {t("card.otherSources")}
+                        </div>
+                    </div>
+                )}
 
                 {/* Inline Full Space Editor when Owner clicks "Make Changes / Edit Space" */}
                 {canEditSpace && isEditing && (
@@ -368,22 +508,22 @@ export default function SpaceDetailsPage() {
                 <div className="space-y-3 mb-10">
                     <div className="relative aspect-[16/9] md:aspect-[21/9] max-h-[500px] w-full bg-gray-900 rounded-3xl overflow-hidden shadow-xl">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                            src={activePhoto}
-                            alt={space.name}
-                            className="w-full h-full object-cover"
-                        />
+                        <img src={activePhoto} alt={space.name} className="w-full h-full object-cover" />
 
                         {photos.length > 1 && (
                             <>
                                 <button
-                                    onClick={() => setSelectedPhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1))}
+                                    onClick={() =>
+                                        setSelectedPhotoIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1))
+                                    }
                                     className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-gray-900 flex items-center justify-center shadow-lg transition-transform active:scale-95"
                                 >
                                     <ChevronLeft className="w-5 h-5" />
                                 </button>
                                 <button
-                                    onClick={() => setSelectedPhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0))}
+                                    onClick={() =>
+                                        setSelectedPhotoIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0))
+                                    }
                                     className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/80 backdrop-blur-md hover:bg-white text-gray-900 flex items-center justify-center shadow-lg transition-transform active:scale-95"
                                 >
                                     <ChevronRight className="w-5 h-5" />
@@ -428,7 +568,9 @@ export default function SpaceDetailsPage() {
                                 </div>
                                 <div>
                                     <div className="text-xs text-gray-400 font-medium">{t("space.capacity")}</div>
-                                    <div className="text-sm font-bold text-gray-900">{space.capacity} {t("space.people")}</div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                        {space.capacity} {t("space.people")}
+                                    </div>
                                 </div>
                             </div>
 
@@ -448,7 +590,9 @@ export default function SpaceDetailsPage() {
                                 </div>
                                 <div>
                                     <div className="text-xs text-gray-400 font-medium">{t("space.connectivity")}</div>
-                                    <div className="text-sm font-bold text-gray-900">{space.hasWifi ? t("space.highSpeedWifi") : t("space.onRequest")}</div>
+                                    <div className="text-sm font-bold text-gray-900">
+                                        {space.hasWifi ? t("space.highSpeedWifi") : t("space.onRequest")}
+                                    </div>
                                 </div>
                             </div>
 
@@ -500,7 +644,8 @@ export default function SpaceDetailsPage() {
                                     {t("space.locationTitle")}
                                 </h3>
                                 <span className="text-xs text-gray-500 font-medium">
-                                    {space.address}{space.district ? `, ${space.district}` : ""}, {space.city}
+                                    {space.address}
+                                    {space.district ? `, ${space.district}` : ""}, {space.city}
                                 </span>
                             </div>
 
@@ -515,20 +660,51 @@ export default function SpaceDetailsPage() {
                         </div>
                     </div>
 
-                    {/* Right Column (4 cols): Dynamic Booking Card */}
+                    {/* Right Column (4 cols): Owner Calendar Block Card OR Renter Booking Card */}
                     <div className="lg:col-span-4">
-                        <div className="p-6 md:p-8 border rounded-3xl shadow-xl sticky top-24 bg-white border-gray-100 space-y-6">
+                        <div className="p-6 md:p-8 border rounded-3xl shadow-xl sticky top-28 bg-white border-gray-100 space-y-6">
                             <div>
                                 <div className="flex justify-between items-baseline mb-1">
-                                    <span className="text-3xl font-black text-gray-900">{formatPrice(space.hourlyRate)}</span>
+                                    <span className="text-3xl font-black text-gray-900">
+                                        {formatPrice(space.hourlyRate)}
+                                    </span>
                                     <span className="text-sm text-gray-500 font-medium">{t("space.perHour")}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">
-                                    {t("space.or")} <span className="font-bold text-gray-700">{formatPrice(space.dailyRate)}</span> {t("space.perFullDay")}
+                                    {t("space.or")}{" "}
+                                    <span className="font-bold text-gray-700">{formatPrice(space.dailyRate)}</span>{" "}
+                                    {t("space.perFullDay")}
                                 </p>
                             </div>
 
+                            {hasOwnerBlocks && (
+                                <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-1.5">
+                                    <div className="flex items-center justify-between text-[11px] font-extrabold text-red-700 uppercase">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                                            {t("card.occupied100")}
+                                        </span>
+                                        <span>{t("card.otherSources")}</span>
+                                    </div>
+                                    <div className="text-[11px] font-semibold text-red-600">
+                                        {t("card.notAvailable")}
+                                    </div>
+                                </div>
+                            )}
+
                             <hr className="border-gray-100" />
+
+                            {isOwnerProfile && (
+                                <div className="p-3.5 rounded-2xl bg-violet-50 border border-violet-200 space-y-1">
+                                    <div className="text-xs font-extrabold text-violet-900 uppercase tracking-wide flex items-center gap-1.5">
+                                        <Ban className="w-4 h-4 text-violet-700" />
+                                        {t("space.ownerBlockTitle")}
+                                    </div>
+                                    <p className="text-xs text-violet-700 leading-relaxed">
+                                        {t("space.ownerBlockDesc")}
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-3">
                                 <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
@@ -539,133 +715,239 @@ export default function SpaceDetailsPage() {
                                         mode="multiple"
                                         selected={selectedDates}
                                         onSelect={handleDateSelect}
+                                        modifiers={{ blocked: bookedDates }}
+                                        modifiersClassNames={{
+                                            blocked:
+                                                "bg-red-100 text-red-700 font-extrabold line-through decoration-red-600 opacity-90",
+                                        }}
                                         disabled={(d) => {
-                                            return (
-                                                d < new Date(new Date().setHours(0, 0, 0, 0)) ||
-                                                bookedDates.some(
-                                                    (booked) =>
-                                                        booked.getDate() === d.getDate() &&
-                                                        booked.getMonth() === d.getMonth() &&
-                                                        booked.getFullYear() === d.getFullYear()
-                                                )
-                                            );
+                                            const todayMidnight = new Date();
+                                            todayMidnight.setHours(0, 0, 0, 0);
+                                            return d < todayMidnight || bookedDateKeys.includes(toLocalDateKey(d));
                                         }}
                                         className="scale-95"
                                     />
                                 </div>
                             </div>
 
-                            {/* Slot Configurations */}
-                            {Object.keys(slots).length > 0 && (
-                                <div className="space-y-3">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
-                                        {t("space.configureHours")}
-                                    </label>
-                                    <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
-                                        {Object.entries(slots).map(([key, slot]) => (
-                                            <div key={key} className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 space-y-2">
-                                                <div className="flex justify-between items-center text-xs font-bold text-gray-800">
-                                                    <span>{format(slot.date, "EEEE, MMMM d")}</span>
-                                                    <label className="flex items-center gap-1.5 cursor-pointer font-normal text-gray-600">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={slot.isFullDay}
-                                                            onChange={(e) => updateSlot(key, { isFullDay: e.target.checked })}
-                                                            className="rounded text-violet-600"
-                                                        />
-                                                        {t("space.fullDay")}
-                                                    </label>
-                                                </div>
-
-                                                {!slot.isFullDay && (
-                                                    <div className="flex items-center gap-2 pt-1 border-t border-gray-200">
-                                                        <div className="flex-1">
-                                                            <span className="text-[10px] text-gray-400 block font-semibold">{t("space.start")}</span>
-                                                            <select
-                                                                value={slot.startTime}
-                                                                onChange={(e) => updateSlot(key, { startTime: e.target.value })}
-                                                                className="w-full text-xs font-semibold bg-white p-1 rounded border border-gray-200"
-                                                            >
-                                                                {Array.from({ length: 14 }).map((_, i) => {
-    const hourNum = 8 + i;
-    const h = hourNum.toString().padStart(2, "0") + ":00";
-    const isBooked = existingBookings.some(b => {
-        const bStart = new Date(b.startTime);
-        const bEnd = new Date(b.endTime);
-        if (bStart.toISOString().split('T')[0] === key) {
-            const bStartHour = bStart.getUTCHours();
-            const bEndHour = bEnd.getUTCHours();
-            return hourNum >= bStartHour && hourNum < bEndHour;
-        }
-        return false;
-    });
-    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? t("space.booked") : ''}</option>;
-})}
-                                                            </select>
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <span className="text-[10px] text-gray-400 block font-semibold">{t("space.end")}</span>
-                                                            <select
-                                                                value={slot.endTime}
-                                                                onChange={(e) => updateSlot(key, { endTime: e.target.value })}
-                                                                className="w-full text-xs font-semibold bg-white p-1 rounded border border-gray-200"
-                                                            >
-                                                                {Array.from({ length: 14 }).map((_, i) => {
-    const hourNum = 9 + i;
-    const h = hourNum.toString().padStart(2, "0") + ":00";
-    const isBooked = existingBookings.some(b => {
-        const bStart = new Date(b.startTime);
-        const bEnd = new Date(b.endTime);
-        if (bStart.toISOString().split('T')[0] === key) {
-            const bStartHour = bStart.getUTCHours();
-            const bEndHour = bEnd.getUTCHours();
-            return (hourNum - 1) >= bStartHour && (hourNum - 1) < bEndHour;
-        }
-        return false;
-    });
-    return <option key={h} value={h} disabled={isBooked}>{h} {isBooked ? t("space.booked") : ''}</option>;
-})}
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                )}
+                            {isOwnerProfile ? (
+                                /* OWNER CALENDAR BLOCK MODE (No Booking, No Terms Checkbox, No Approval Needed) */
+                                <div className="space-y-4">
+                                    {selectedDates.length > 0 && (
+                                        <div className="p-3 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
+                                            <div className="text-[11px] font-bold text-gray-600 uppercase">
+                                                {t("space.selectDates")} ({selectedDates.length}):
                                             </div>
-                                        ))}
-                                    </div>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {selectedDates.map((d) => (
+                                                    <span
+                                                        key={toLocalDateKey(d)}
+                                                        className="px-2.5 py-1 rounded-lg bg-violet-100 text-violet-800 text-xs font-bold"
+                                                    >
+                                                        {format(d, "dd.MM.yyyy")}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <Button
+                                        onClick={handleOwnerBlockDates}
+                                        disabled={bookingLoading}
+                                        className="w-full h-12 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-bold shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                                    >
+                                        <Ban className="w-4 h-4" />
+                                        {bookingLoading ? t("space.blockingDates") : t("space.blockDatesBtn")}
+                                    </Button>
+
+                                    {ownerBlocks.length > 0 && (
+                                        <div className="pt-3 border-t border-gray-100 space-y-2">
+                                            <div className="text-xs font-extrabold uppercase tracking-wider text-gray-600">
+                                                {t("card.blockedDatesLabel")} ({ownerBlocks.length})
+                                            </div>
+                                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                                {ownerBlocks.map((b: any) => (
+                                                    <div
+                                                        key={b.id}
+                                                        className="flex items-center justify-between px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-xs"
+                                                    >
+                                                        <div>
+                                                            <span className="font-extrabold text-red-800">
+                                                                {formatUtcDateDisplay(b.startTime)}
+                                                            </span>
+                                                            <span className="block text-[10px] font-bold text-red-600">
+                                                                {t("card.occupied100")} • {t("card.otherSources")}
+                                                            </span>
+                                                        </div>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            disabled={unblockingId === b.id}
+                                                            onClick={() => handleUnblockDate(b.id)}
+                                                            className="h-7 px-2.5 text-[11px] font-bold border-red-200 text-red-700 hover:bg-red-100 bg-white rounded-lg"
+                                                        >
+                                                            <Trash2 className="w-3.5 h-3.5 mr-1" />
+                                                            {t("space.unblockBtn")}
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
+                            ) : (
+                                /* RENTER BOOKING MODE (Mandatory Terms & Conditions checkbox removed) */
+                                <>
+                                    {Object.keys(slots).length > 0 && (
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-bold uppercase tracking-wider text-gray-500 block">
+                                                {t("space.configureHours")}
+                                            </label>
+                                            <div className="space-y-3 max-h-56 overflow-y-auto pr-1">
+                                                {Object.entries(slots).map(([key, slot]) => (
+                                                    <div
+                                                        key={key}
+                                                        className="p-3.5 rounded-2xl bg-gray-50 border border-gray-100 space-y-2"
+                                                    >
+                                                        <div className="flex justify-between items-center text-xs font-bold text-gray-800">
+                                                            <span>{format(slot.date, "EEEE, MMMM d")}</span>
+                                                            <label className="flex items-center gap-1.5 cursor-pointer font-normal text-gray-600">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={slot.isFullDay}
+                                                                    onChange={(e) =>
+                                                                        updateSlot(key, { isFullDay: e.target.checked })
+                                                                    }
+                                                                    className="rounded text-violet-600"
+                                                                />
+                                                                {t("space.fullDay")}
+                                                            </label>
+                                                        </div>
+
+                                                        {!slot.isFullDay && (
+                                                            <div className="flex items-center gap-2 pt-1 border-t border-gray-200">
+                                                                <div className="flex-1">
+                                                                    <span className="text-[10px] text-gray-400 block font-semibold">
+                                                                        {t("space.start")}
+                                                                    </span>
+                                                                    <select
+                                                                        value={slot.startTime}
+                                                                        onChange={(e) =>
+                                                                            updateSlot(key, {
+                                                                                startTime: e.target.value,
+                                                                            })
+                                                                        }
+                                                                        className="w-full text-xs font-semibold bg-white p-1 rounded border border-gray-200"
+                                                                    >
+                                                                        {Array.from({ length: 14 }).map((_, i) => {
+                                                                            const hourNum = 8 + i;
+                                                                            const h =
+                                                                                hourNum.toString().padStart(2, "0") +
+                                                                                ":00";
+                                                                            const isBooked = existingBookings.some(
+                                                                                (b) => {
+                                                                                    if (toUtcDateKey(b.startTime) === key) {
+                                                                                        if (b.accessCode === "OWNER_BLOCK") {
+                                                                                            return true;
+                                                                                        }
+                                                                                        const bStart = new Date(b.startTime);
+                                                                                        const bEnd = new Date(b.endTime);
+                                                                                        const bStartHour =
+                                                                                            bStart.getUTCHours();
+                                                                                        const bEndHour = bEnd.getUTCHours();
+                                                                                        return (
+                                                                                            hourNum >= bStartHour &&
+                                                                                            hourNum < bEndHour
+                                                                                        );
+                                                                                    }
+                                                                                    return false;
+                                                                                }
+                                                                            );
+                                                                            return (
+                                                                                <option
+                                                                                    key={h}
+                                                                                    value={h}
+                                                                                    disabled={isBooked}
+                                                                                >
+                                                                                    {h} {isBooked ? t("space.booked") : ""}
+                                                                                </option>
+                                                                            );
+                                                                        })}
+                                                                    </select>
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <span className="text-[10px] text-gray-400 block font-semibold">
+                                                                        {t("space.end")}
+                                                                    </span>
+                                                                    <select
+                                                                        value={slot.endTime}
+                                                                        onChange={(e) =>
+                                                                            updateSlot(key, { endTime: e.target.value })
+                                                                        }
+                                                                        className="w-full text-xs font-semibold bg-white p-1 rounded border border-gray-200"
+                                                                    >
+                                                                        {Array.from({ length: 14 }).map((_, i) => {
+                                                                            const hourNum = 9 + i;
+                                                                            const h =
+                                                                                hourNum.toString().padStart(2, "0") +
+                                                                                ":00";
+                                                                            const isBooked = existingBookings.some(
+                                                                                (b) => {
+                                                                                    if (toUtcDateKey(b.startTime) === key) {
+                                                                                        if (b.accessCode === "OWNER_BLOCK") {
+                                                                                            return true;
+                                                                                        }
+                                                                                        const bStart = new Date(b.startTime);
+                                                                                        const bEnd = new Date(b.endTime);
+                                                                                        const bStartHour =
+                                                                                            bStart.getUTCHours();
+                                                                                        const bEndHour = bEnd.getUTCHours();
+                                                                                        return (
+                                                                                            hourNum - 1 >= bStartHour &&
+                                                                                            hourNum - 1 < bEndHour
+                                                                                        );
+                                                                                    }
+                                                                                    return false;
+                                                                                }
+                                                                            );
+                                                                            return (
+                                                                                <option
+                                                                                    key={h}
+                                                                                    value={h}
+                                                                                    disabled={isBooked}
+                                                                                >
+                                                                                    {h} {isBooked ? t("space.booked") : ""}
+                                                                                </option>
+                                                                            );
+                                                                        })}
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {Object.keys(slots).length > 0 && (
+                                        <div className="pt-2 border-t border-gray-100 space-y-2">
+                                            <div className="flex justify-between items-center text-lg font-black text-gray-900">
+                                                <span>{t("space.estimatedTotal")}</span>
+                                                <span className="text-violet-600">{formatPrice(totalPrice)}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <Button
+                                        onClick={handleBook}
+                                        disabled={bookingLoading}
+                                        className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-bold shadow-lg shadow-violet-200"
+                                    >
+                                        {bookingLoading ? t("space.processing") : t("space.requestBooking")}
+                                    </Button>
+                                </>
                             )}
-
-                            {Object.keys(slots).length > 0 && (
-                                <div className="pt-2 border-t border-gray-100 space-y-2">
-                                    <div className="flex justify-between items-center text-lg font-black text-gray-900">
-                                        <span>{t("space.estimatedTotal")}</span>
-                                        <span className="text-violet-600">{formatPrice(totalPrice)}</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Terms checkbox */}
-                            <div className="flex items-start gap-2 pt-1">
-                                <input
-                                    type="checkbox"
-                                    id="agree-terms"
-                                    checked={agreed}
-                                    onChange={(e) => setAgreed(e.target.checked)}
-                                    className="mt-1 rounded text-violet-600 focus:ring-violet-500"
-                                />
-                                <label htmlFor="agree-terms" className="text-xs text-gray-500 leading-tight">
-                                    {t("space.agreePrefix")}{" "}
-                                    <Link href="/terms" className="text-violet-600 hover:underline">{t("space.termsLink")}</Link>.
-                                </label>
-                            </div>
-
-                            <Button
-                                onClick={handleBook}
-                                disabled={bookingLoading}
-                                className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-bold shadow-lg shadow-violet-200"
-                            >
-                                {bookingLoading ? t("space.processing") : t("space.requestBooking")}
-                            </Button>
                         </div>
                     </div>
                 </div>

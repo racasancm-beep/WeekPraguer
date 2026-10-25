@@ -96,11 +96,19 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
             photos: true,
             bookings: {
                 where: {
-                    status: { in: ["CONFIRMED", "COMPLETED"] }
+                    status: { in: ["CONFIRMED", "PENDING", "COMPLETED"] }
+                },
+                orderBy: {
+                    startTime: "asc"
                 },
                 select: {
+                    id: true,
                     startTime: true,
-                    endTime: true
+                    endTime: true,
+                    isHourly: true,
+                    accessCode: true,
+                    status: true,
+                    totalPrice: true
                 }
             }
         },

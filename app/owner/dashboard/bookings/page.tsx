@@ -113,24 +113,39 @@ export default function BookingsPage() {
             <div className="mt-8">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.historyTitle")}</h2>
                 <div className="grid gap-4">
-                    {recentBookings.map((booking) => (
-                        <Card key={booking.id} className="bg-white border-gray-200">
-                            <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div>
-                                    <p className="font-semibold text-gray-900">{booking.space?.name}</p>
-                                    <p className="text-sm text-gray-600">
-                                        {new Date(booking.startTime).toLocaleString()} - {new Date(booking.endTime).toLocaleString()}
-                                    </p>
-                                    <p className="text-xs text-gray-500 mt-1">{t("owner.bookings.bookedBy")}: {booking.renter?.name || "Client"}</p>
-                                </div>
-                                <div>
-                                    <span className="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
-                                        {booking.status === "CONFIRMED" ? t("renter.status.approved") : booking.status}
-                                    </span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                    {recentBookings.map((booking) => {
+                        const isOwnerBlock = booking.accessCode === "OWNER_BLOCK";
+                        return (
+                            <Card key={booking.id} className={isOwnerBlock ? "bg-red-50/40 border-red-200" : "bg-white border-gray-200"}>
+                                <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <p className="font-semibold text-gray-900">{booking.space?.name}</p>
+                                        <p className="text-sm text-gray-600">
+                                            {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                            {isOwnerBlock
+                                                ? `${t("card.occupied100")} • ${t("card.otherSources")} (${t("card.notAvailable")})`
+                                                : `${t("owner.bookings.bookedBy")}: ${booking.renter?.name || "Client"}`}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-3 py-1 text-xs font-bold rounded-full ${
+                                            isOwnerBlock
+                                                ? "bg-red-100 text-red-800 border border-red-200"
+                                                : "bg-green-100 text-green-800"
+                                        }`}>
+                                            {isOwnerBlock
+                                                ? `${t("card.occupied100")} • ${t("card.otherSources")}`
+                                                : booking.status === "CONFIRMED"
+                                                ? t("renter.status.approved")
+                                                : booking.status}
+                                        </span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
             </div>
         </div>

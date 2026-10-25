@@ -75,6 +75,23 @@ export async function GET(req: Request) {
             orderBy: { createdAt: "desc" },
             include: {
                 photos: true,
+                bookings: {
+                    where: {
+                        status: { in: ["CONFIRMED", "PENDING", "COMPLETED"] },
+                    },
+                    orderBy: {
+                        startTime: "asc",
+                    },
+                    select: {
+                        id: true,
+                        startTime: true,
+                        endTime: true,
+                        isHourly: true,
+                        accessCode: true,
+                        status: true,
+                        totalPrice: true,
+                    },
+                },
             }
         });
         return NextResponse.json(spaces);

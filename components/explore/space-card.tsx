@@ -3,7 +3,7 @@
 import { Space, SpacePhoto } from "@prisma/client";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Users, Ruler } from "lucide-react";
+import { MapPin, Users, Ruler, Ban } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 
@@ -14,11 +14,29 @@ interface SpaceCardProps {
 export function SpaceCard({ space }: SpaceCardProps) {
     const { t, translateCategory } = useLanguage();
 
-    // Occupancy logic
+    // Occupancy & Owner Block logic
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayUtcStart = new Date();
+    todayUtcStart.setUTCHours(0, 0, 0, 0);
+
+    const activeOwnerBlocks = (space.bookings || []).filter(
+        (bk: any) => bk.accessCode === "OWNER_BLOCK" && new Date(bk.endTime) >= todayUtcStart
+    );
+    const hasOwnerBlock = activeOwnerBlocks.length > 0;
+
+    const blockedDatesFormatted = activeOwnerBlocks
+        .map((bk: any) => {
+            const d = new Date(bk.startTime);
+            const day = String(d.getUTCDate()).padStart(2, "0");
+            const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+            const year = d.getUTCFullYear();
+            return `${day}.${month}.${year}`;
+        })
+        .slice(0, 4);
 
     let bookedHoursToday = 0;
     if (space.bookings) {
@@ -26,17 +44,21 @@ export function SpaceCard({ space }: SpaceCardProps) {
             const start = new Date(bk.startTime);
             const end = new Date(bk.endTime);
 
-            // Check if booking overlaps with today
             if (start < tomorrow && end > today) {
-                const overlapStart = start > today ? start : today;
-                const overlapEnd = end < tomorrow ? end : tomorrow;
-                bookedHoursToday += (overlapEnd.getTime() - overlapStart.getTime()) / 3600000;
+                if (bk.accessCode === "OWNER_BLOCK") {
+                    bookedHoursToday = 12;
+                } else {
+                    const overlapStart = start > today ? start : today;
+                    const overlapEnd = end < tomorrow ? end : tomorrow;
+                    bookedHoursToday += (overlapEnd.getTime() - overlapStart.getTime()) / 3600000;
+                }
             }
         });
     }
 
-    // Assume 12 bookable hours standard (e.g. 08:00 to 20:00) for percentage
-    const occupancyPercent = Math.min(Math.round((bookedHoursToday / 12) * 100), 100);
+    const occupancyPercent = hasOwnerBlock
+        ? 100
+        : Math.min(Math.round((bookedHoursToday / 12) * 100), 100);
 
     return (
         <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 border border-[#E2ECEC] hover:border-[#008080]/40 rounded-2xl group bg-white">
@@ -57,6 +79,12 @@ export function SpaceCard({ space }: SpaceCardProps) {
                 {space.category && (
                     <div className="absolute top-2.5 left-2.5 bg-[#008080]/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm">
                         {translateCategory(space.category)}
+                    </div>
+                )}
+                {hasOwnerBlock && (
+                    <div className="absolute top-2.5 right-2.5 bg-red-600/95 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-md flex items-center gap-1">
+                        <Ban className="w-3 h-3" />
+                        {t("card.notAvailable")}
                     </div>
                 )}
                 {space.photos.length > 1 && (
@@ -90,13 +118,31 @@ export function SpaceCard({ space }: SpaceCardProps) {
                     {space.description}
                 </p>
 
-                <div className="mt-3 flex items-center justify-between text-[10px] bg-[#E2ECEC]/50 px-2 py-1.5 rounded-lg border border-[#008080]/10">
-                    <div className="flex items-center gap-1.5 font-semibold text-[#008080]">
-                        <span className="w-2 h-2 rounded-full bg-[#008080] animate-pulse"></span>
-                        {occupancyPercent}% {t("card.occupiedToday")}
+                {hasOwnerBlock ? (
+                    <div className="mt-3 px-2.5 py-2 rounded-lg bg-red-50 border border-red-200 space-y-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                            <div className="flex items-center gap-1.5 font-extrabold text-red-700">
+                                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                                {t("card.occupied100")}
+                            </div>
+                            <span className="text-red-700 font-extrabold tracking-wider uppercase">
+                                {t("card.otherSources")}
+                            </span>
+                        </div>
+                        <div className="text-[10px] font-semibold text-red-600 truncate">
+                            {t("card.notAvailable")} • {t("card.blockedDatesLabel")} {blockedDatesFormatted.join(", ")}
+                            {activeOwnerBlocks.length > 4 ? ` +${activeOwnerBlocks.length - 4}` : ""}
+                        </div>
                     </div>
-                    <span className="text-gray-400 font-bold tracking-wider">{t("card.viaSite")}</span>
-                </div>
+                ) : (
+                    <div className="mt-3 flex items-center justify-between text-[10px] bg-[#E2ECEC]/50 px-2 py-1.5 rounded-lg border border-[#008080]/10">
+                        <div className="flex items-center gap-1.5 font-semibold text-[#008080]">
+                            <span className="w-2 h-2 rounded-full bg-[#008080] animate-pulse"></span>
+                            {occupancyPercent}% {t("card.occupiedToday")}
+                        </div>
+                        <span className="text-gray-400 font-bold tracking-wider">{t("card.viaSite")}</span>
+                    </div>
+                )}
             </CardContent>
 
             <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-gray-100 mt-1">

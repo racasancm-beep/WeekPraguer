@@ -150,6 +150,23 @@ export async function GET(req: Request) {
             include: {
                 photos: true,
                 owner: { select: { name: true, email: true } },
+                bookings: {
+                    where: {
+                        status: { in: ["CONFIRMED", "PENDING", "COMPLETED"] },
+                    },
+                    orderBy: {
+                        startTime: "asc",
+                    },
+                    select: {
+                        id: true,
+                        startTime: true,
+                        endTime: true,
+                        isHourly: true,
+                        accessCode: true,
+                        status: true,
+                        totalPrice: true,
+                    },
+                },
             },
             orderBy: {
                 createdAt: "desc",
