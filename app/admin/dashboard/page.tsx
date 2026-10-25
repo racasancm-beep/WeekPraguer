@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,9 @@ import {
     Calendar,
     BarChart3,
     CheckCircle2,
-    X
+    X,
+    Clock,
+    AlertTriangle
 } from "lucide-react";
 import {
     BarChart,
@@ -77,6 +80,26 @@ interface UserProfile {
     recentBookings: ProfileBooking[];
 }
 
+interface PendingOver24hItem {
+    bookingId: string;
+    spaceId: string;
+    spaceName: string;
+    city: string;
+    address: string;
+    ownerId: string;
+    ownerName: string;
+    ownerEmail: string;
+    ownerPhone: string;
+    renterName: string;
+    renterEmail: string;
+    startTime: string;
+    endTime: string;
+    createdAt: string;
+    requestedPeriod: string;
+    hoursPending: number;
+    chartLabel: string;
+}
+
 interface AdminData {
     users: {
         renters: UserProfile[];
@@ -92,6 +115,7 @@ interface AdminData {
         totalOwnerYield: number;
         totalAdminShare: number;
     };
+    pendingOver24h?: PendingOver24hItem[];
     activityTrend: {
         month: string;
         booked: number;
@@ -103,6 +127,8 @@ interface AdminData {
 }
 
 export default function AdminDashboard() {
+    const { data: session } = useSession();
+    const isAdmin = (session?.user as any)?.role === "ADMIN";
     const [data, setData] = useState<AdminData | null>(null);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -263,6 +289,152 @@ export default function AdminDashboard() {
                     </Link>
                 </div>
             </section>
+
+            {/* ADMIN-ONLY: Spaces Pending Approval for More Than 24 Hours Graph & Details */}
+            {isAdmin && (
+                <Card className="border-2 border-red-200 shadow-2xl p-6 bg-white dark:bg-gray-950">
+                    <div className="mb-6 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-800 text-[11px] font-black uppercase tracking-wider mb-2 border border-red-200">
+                                <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                                {t("admin.pending24.badge")}
+                            </div>
+                            <CardTitle className="text-2xl lg:text-3xl font-black text-gray-900">
+                                {t("admin.pending24.title")} ({(data.pendingOver24h || []).length})
+                            </CardTitle>
+                            <CardDescription className="text-sm mt-1">
+                                {t("admin.pending24.desc")}
+                            </CardDescription>
+                        </div>
+                        <div className="px-4 py-2 rounded-2xl bg-red-50 border border-red-200 text-right">
+                            <p className="text-[10px] uppercase font-bold text-red-600">{t("admin.pending24.countLabel")}</p>
+                            <p className="text-2xl font-black text-red-700">
+                                {(data.pendingOver24h || []).length} <span className="text-xs font-bold">{t("admin.bookingsLower")}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    {(data.pendingOver24h || []).length > 0 ? (
+                        <div className="space-y-8">
+                            {/* Bar Graph of Spaces Pending Approval > 24h */}
+                            <div className="h-[340px] w-full bg-red-50/20 rounded-2xl p-4 border border-red-100">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={data.pendingOver24h}
+                                        margin={{ top: 20, right: 30, left: 0, bottom: 10 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#fee2e2" />
+                                        <XAxis
+                                            dataKey="chartLabel"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 12, fontWeight: 700, fill: "#7f1d1d" }}
+                                        />
+                                        <YAxis
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fontSize: 12, fontWeight: 600 }}
+                                            tickFormatter={(v) => `${v}h`}
+                                        />
+                                        <Tooltip
+                                            content={({ active, payload }) => {
+                                                if (!active || !payload || !payload.length) return null;
+                                                const item = payload[0].payload as PendingOver24hItem;
+                                                return (
+                                                    <div className="bg-white p-4 rounded-2xl shadow-2xl border border-red-200 space-y-2 text-xs max-w-xs">
+                                                        <div className="font-black text-sm text-gray-900 flex items-center justify-between gap-2">
+                                                            <span>{item.spaceName}</span>
+                                                            <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-[10px] font-black">
+                                                                {item.hoursPending}h (&gt; 24h)
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-gray-600">
+                                                            <span className="font-bold text-gray-800">{t("admin.pending24.ownerDetails")}:</span>{" "}
+                                                            {item.ownerName} ({item.ownerEmail}
+                                                            {item.ownerPhone && item.ownerPhone !== "—" ? ` • ${item.ownerPhone}` : ""})
+                                                        </div>
+                                                        <div className="text-red-700 font-semibold">
+                                                            <span className="font-bold text-gray-800">{t("admin.pending24.periodPending")}:</span>{" "}
+                                                            {item.requestedPeriod}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            }}
+                                        />
+                                        <Legend verticalAlign="top" align="center" iconType="circle" wrapperStyle={{ paddingBottom: "16px" }} />
+                                        <Bar
+                                            dataKey="hoursPending"
+                                            name={t("admin.pending24.legendHours")}
+                                            fill="#dc2626"
+                                            radius={[8, 8, 0, 0]}
+                                            barSize={42}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </div>
+
+                            {/* Detailed Table/Cards displaying Space Name, Owner Details, and Period Pending for Approval */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {(data.pendingOver24h || []).map((item) => (
+                                    <div
+                                        key={item.bookingId}
+                                        className="p-4 rounded-2xl bg-red-50/40 border border-red-200 flex flex-col justify-between gap-3"
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-wider text-red-600 block">
+                                                    {t("admin.pending24.spaceName")}
+                                                </span>
+                                                <Link
+                                                    href={`/spaces/${item.spaceId}`}
+                                                    className="text-lg font-black text-gray-900 hover:text-[#008080] transition-colors inline-flex items-center gap-1.5"
+                                                >
+                                                    {item.spaceName}
+                                                    <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
+                                                </Link>
+                                                <p className="text-xs text-gray-500">
+                                                    {item.address ? `${item.address}, ` : ""}{item.city}
+                                                </p>
+                                            </div>
+                                            <span className="px-3 py-1 rounded-full bg-red-600 text-white text-xs font-black uppercase tracking-wider flex items-center gap-1 shrink-0">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {item.hoursPending}h (&gt; 24h)
+                                            </span>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-red-200/70 text-xs">
+                                            <div className="p-2.5 rounded-xl bg-white border border-red-100">
+                                                <span className="text-[10px] font-black uppercase text-gray-400 block mb-0.5">
+                                                    {t("admin.pending24.ownerDetails")}
+                                                </span>
+                                                <p className="font-bold text-gray-900">{item.ownerName}</p>
+                                                <p className="text-gray-600 font-mono text-[11px] truncate">{item.ownerEmail}</p>
+                                                {item.ownerPhone && item.ownerPhone !== "—" && (
+                                                    <p className="text-gray-500 text-[11px]">{item.ownerPhone}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="p-2.5 rounded-xl bg-white border border-red-100">
+                                                <span className="text-[10px] font-black uppercase text-gray-400 block mb-0.5">
+                                                    {t("admin.pending24.periodPending")}
+                                                </span>
+                                                <p className="font-bold text-red-700">{item.requestedPeriod}</p>
+                                                <p className="text-[11px] text-gray-500 mt-0.5">
+                                                    {t("owner.bookings.requestedBy")}: <span className="font-semibold text-gray-800">{item.renterName}</span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="p-8 text-center rounded-2xl bg-gray-50 border border-gray-200 text-gray-500 font-semibold">
+                            {t("admin.pending24.empty")}
+                        </div>
+                    )}
+                </Card>
+            )}
 
             {/* All Profiles Directory & Inspector */}
             <section id="profiles" className="space-y-4">

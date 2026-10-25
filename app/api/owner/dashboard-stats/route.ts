@@ -17,12 +17,21 @@ export async function GET(req: Request) {
         const targetUserId = searchParams.get("userId");
 
         // If ADMIN is viewing without a specific userId, show aggregated stats across ALL owners/spaces
+        let resolvedOwnerId = (session.user as any).id;
+        if (role !== "ADMIN" && session.user?.email) {
+            const dbOwner = await prisma.user.findFirst({
+                where: { email: { equals: session.user.email.trim(), mode: "insensitive" } },
+                select: { id: true },
+            });
+            if (dbOwner) resolvedOwnerId = dbOwner.id;
+        }
+
         const spaceFilter =
             role === "ADMIN"
                 ? targetUserId
                     ? { ownerId: targetUserId }
                     : {}
-                : { ownerId: (session.user as any).id };
+                : { ownerId: resolvedOwnerId };
 
         const spaces = await (prisma as any).space.findMany({ where: spaceFilter, select: { id: true } });
         const spaceIds = spaces.map((s: any) => s.id);
@@ -36,8 +45,19 @@ export async function GET(req: Request) {
         }
 
         const pendingBookings = await (prisma as any).booking.findMany({
-            where: { spaceId: { in: spaceIds }, status: { in: ["PENDING", "OWNER_PROPOSED"] } },
-            include: { space: true, renter: true },
+            where: {
+                spaceId: { in: spaceIds },
+                status: { in: ["PENDING", "OWNER_PROPOSED"] },
+                OR: [{ accessCode: null }, { accessCode: { not: "OWNER_BLOCK" } }],
+            },
+            include: {
+                space: {
+                    include: {
+                        owner: { select: { id: true, name: true, email: true } },
+                    },
+                },
+                renter: true,
+            },
             orderBy: { createdAt: "desc" }
         });
 
