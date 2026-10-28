@@ -1,12 +1,6 @@
-export const PLATFORM_COMMISSION_RATE = parseFloat(
-    process.env.PLATFORM_COMMISSION_RATE || "0.14"
-);
-export const CLEANING_FEE_RATE = parseFloat(
-    process.env.CLEANING_FEE_RATE || "0.15" // 15% as per user rule
-);
-export const INSURANCE_RATE = parseFloat(
-    process.env.INSURANCE_RATE || "0.05"
-);
+export const PLATFORM_COMMISSION_RATE = 0;
+export const CLEANING_FEE_RATE = 0;
+export const INSURANCE_RATE = 0;
 
 export interface PricingBreakdown {
     basePrice: number;
@@ -19,27 +13,20 @@ export interface PricingBreakdown {
 }
 
 /**
- * Platform Revenue Split Rule:
- * If Cleaning Service used: 60% Owner, 25% Admin, 15% Cleaner
- * If Self-Cleaning: 70% Owner, 30% Admin, 0% Cleaner
+ * Reservation Pricing Rule (Platform Fee Removed):
+ * 100% of the reservation amount goes directly to the Space Owner (0 platform fee).
  */
-export function calculatePricing(basePrice: number, isSelfCleaning: boolean = false): PricingBreakdown {
-    const insurance = basePrice * INSURANCE_RATE;
-    const totalPrice = basePrice + insurance;
-
-    // Commission is the administrative cut
-    const commissionRate = isSelfCleaning ? 0.30 : 0.25;
-    const ownerRate = isSelfCleaning ? 0.70 : 0.60;
-    const cleanerRate = isSelfCleaning ? 0 : 0.15;
+export function calculatePricing(basePrice: number, _isSelfCleaning: boolean = false): PricingBreakdown {
+    const cleanPrice = Math.round(basePrice * 100) / 100;
 
     return {
-        basePrice,
-        cleaningFee: totalPrice * cleanerRate, // This is the 15% rule
-        insurance,
-        totalPrice,
-        commission: totalPrice * commissionRate,
-        ownerPayout: totalPrice * ownerRate,
-        cleanerPayout: totalPrice * cleanerRate,
+        basePrice: cleanPrice,
+        cleaningFee: 0,
+        insurance: 0,
+        totalPrice: cleanPrice,
+        commission: 0,
+        ownerPayout: cleanPrice,
+        cleanerPayout: 0,
     };
 }
 

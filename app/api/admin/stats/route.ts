@@ -87,14 +87,17 @@ export async function GET() {
         });
 
         const getSplit = (b: any) => {
-            const total = b.totalPrice || 0;
-            const space = spaceMap.get(b.spaceId);
-            const isSelfClean = space?.selfCleaning || false;
+            const total =
+                typeof b.basePrice === "number" && b.basePrice > 0
+                    ? b.basePrice
+                    : typeof b.totalPrice === "number" && b.totalPrice > 0
+                    ? b.totalPrice - (typeof b.insurance === "number" && b.insurance > 0 ? b.insurance : 0)
+                    : 0;
 
             return {
                 renter: total,
-                owner: b.ownerEarnings > 0 ? b.ownerEarnings : (isSelfClean ? total * 0.70 : total * 0.60),
-                admin: b.adminEarnings > 0 ? b.adminEarnings : (isSelfClean ? total * 0.30 : total * 0.25)
+                owner: total,
+                admin: 0
             };
         };
 

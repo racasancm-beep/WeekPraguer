@@ -149,7 +149,7 @@ export async function GET(req: Request) {
             where: ownerIdFilter ? { ownerId: ownerIdFilter } : {},
             include: {
                 photos: true,
-                owner: { select: { name: true, email: true } },
+                owner: { select: { id: true, name: true, email: true } },
                 bookings: {
                     where: {
                         status: { in: ["CONFIRMED", "PENDING", "COMPLETED"] },
@@ -164,7 +164,25 @@ export async function GET(req: Request) {
                         isHourly: true,
                         accessCode: true,
                         status: true,
+                        basePrice: true,
                         totalPrice: true,
+                        insurance: true,
+                        paymentId: true,
+                        renter: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                phone: true,
+                                companyName: true,
+                            },
+                        },
+                        transaction: {
+                            select: {
+                                paymentStatus: true,
+                                stripePaymentId: true,
+                            },
+                        },
                     },
                 },
             },

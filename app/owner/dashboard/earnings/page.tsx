@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { useSession } from "next-auth/react";
 
 interface StatItem {
     name: string;
@@ -28,6 +29,8 @@ function EarningsPageContent() {
     const searchParams = useSearchParams();
     const userId = searchParams?.get("userId");
     const { t } = useLanguage();
+    const { data: session } = useSession();
+    const isOwnerRole = (session?.user as any)?.role === "OWNER";
 
     const [stats, setStats] = useState({
         revenue: 0,
@@ -96,11 +99,13 @@ function EarningsPageContent() {
 
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{t("owner.earnings.title")}</h1>
-                <Link href="/owner/dashboard/listings/create">
-                    <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-600/20 font-bold">
-                        {t("owner.earnings.listNewSpace")}
-                    </Button>
-                </Link>
+                {isOwnerRole && (
+                    <Link href="/owner/dashboard/listings/create">
+                        <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-600/20 font-bold">
+                            {t("owner.earnings.listNewSpace")}
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
@@ -215,21 +220,37 @@ function EarningsPageContent() {
                             {recentBookings.length === 0 ? (
                                 <p className="text-sm text-gray-500 text-center py-8">{t("owner.earnings.noRecentBookings")}</p>
                             ) : (
-                                recentBookings.map((booking: any) => (
-                                    <div key={booking.id} className="flex items-center">
-                                        <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 font-bold">
+                                recentBookings
+                                    .filter((booking: any) => booking.accessCode !== "OWNER_BLOCK" && booking.status !== "REJECTED")
+                                    .slice(0, 10)
+                                    .map((booking: any) => (
+                                    <div key={booking.id} className="flex items-start">
+                                        <div className="h-10 w-10 shrink-0 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 font-bold">
                                             {booking.renter?.name?.[0] || "U"}
                                         </div>
-                                        <div className="ml-4 space-y-1">
+                                        <div className="ml-4 space-y-1 min-w-0">
                                             <p className="text-sm font-medium leading-none text-gray-900 dark:text-gray-100">
                                                 {booking.renter?.name || t("owner.earnings.unknownUser")}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {booking.space?.name}
+                                                {booking.space?.name} • {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
+                                            </p>
+                                            {booking.renter?.email && (
+                                                <a href={`mailto:${booking.renter.email}`} className="block text-[11px] font-mono text-blue-700 hover:underline truncate">
+                                                    {booking.renter.email}
+                                                </a>
+                                            )}
+                                            <p className="text-[11px] text-gray-600">
+                                                {booking.renter?.phone || t("owner.bookings.noPhoneProvided")}
                                             </p>
                                         </div>
-                                        <div className="ml-auto font-bold text-sm text-gray-900 dark:text-gray-100">
-                                            +RON{booking.totalPrice?.toFixed(2)}
+                                        <div className="ml-auto pl-2 text-right shrink-0">
+                                            <div className="font-bold text-sm text-gray-900 dark:text-gray-100">
+                                                +RON{Number(booking.basePrice || booking.totalPrice || 0).toFixed(2)}
+                                            </div>
+                                            <div className="text-[10px] font-semibold text-emerald-700">
+                                                {t("owner.bookings.noPlatformFee")}
+                                            </div>
                                         </div>
                                     </div>
                                 ))

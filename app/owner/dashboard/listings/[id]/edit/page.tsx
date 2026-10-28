@@ -29,6 +29,20 @@ export default function EditListingPage() {
                     return res.json();
                 })
                 .then((data) => {
+                    const sessionUserId = (session?.user as any)?.id;
+                    const sessionEmail = session?.user?.email?.trim().toLowerCase();
+                    const sessionRole = (session?.user as any)?.role;
+                    const isOwnerOfThisSpace =
+                        sessionRole === "OWNER" &&
+                        Boolean(
+                            (sessionUserId && data?.ownerId === sessionUserId) ||
+                            (sessionEmail && data?.owner?.email?.trim().toLowerCase() === sessionEmail)
+                        );
+                    if (!isOwnerOfThisSpace) {
+                        // ADMIN or non-owner: no edit permission, redirect to read-only space page
+                        router.replace(`/spaces/${id}`);
+                        return;
+                    }
                     setSpace(data);
                 })
                 .catch(() => {

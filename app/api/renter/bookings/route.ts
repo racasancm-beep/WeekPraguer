@@ -43,18 +43,40 @@ export async function GET(req: Request) {
             });
         }
 
-        const bookings = await prisma.booking.findMany({
+        const rawBookings = await prisma.booking.findMany({
             where: whereClause,
             include: {
                 space: {
                     include: {
-                        owner: { select: { id: true, name: true, email: true } },
+                        owner: { select: { id: true, name: true, email: true, phone: true } },
                     },
                 },
-                renter: { select: { id: true, name: true, email: true } },
+                renter: { select: { id: true, name: true, email: true, phone: true, companyName: true } },
                 transaction: true,
             },
             orderBy: { createdAt: "desc" },
+        });
+
+        const bookings = rawBookings.map((b: any) => {
+            const amount =
+                typeof b.basePrice === "number" && b.basePrice > 0
+                    ? Math.round(b.basePrice * 100) / 100
+                    : typeof b.totalPrice === "number" && b.totalPrice > 0
+                    ? Math.round(
+                          ((b.totalPrice - (typeof b.insurance === "number" && b.insurance > 0 ? b.insurance : 0)) ||
+                              b.totalPrice) *
+                              100
+                      ) / 100
+                    : 0;
+            return {
+                ...b,
+                basePrice: amount,
+                totalPrice: amount,
+                ownerEarnings: amount,
+                commission: 0,
+                insurance: 0,
+                cleaningFee: 0,
+            };
         });
 
         return NextResponse.json({ bookings, inspectedUser });

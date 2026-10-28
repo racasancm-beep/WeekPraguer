@@ -73,12 +73,13 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
         const sessionEmail = session.user?.email?.trim().toLowerCase();
         const sessionRole = (session.user as any)?.role;
 
-        // Verify that the logged-in user is the owner of the space or has an OWNER / ADMIN profile
+        // Strictly only the OWNER of this specific space can modify it (ADMIN and other owners are not allowed)
         const isOwnerOfSpace =
-            (sessionUserId && existingSpace.ownerId === sessionUserId) ||
-            (sessionEmail && existingSpace.owner?.email?.trim().toLowerCase() === sessionEmail) ||
-            sessionRole === "OWNER" ||
-            sessionRole === "ADMIN";
+            sessionRole === "OWNER" &&
+            Boolean(
+                (sessionUserId && existingSpace.ownerId === sessionUserId) ||
+                (sessionEmail && existingSpace.owner?.email?.trim().toLowerCase() === sessionEmail)
+            );
 
         if (!isOwnerOfSpace) {
             return NextResponse.json(

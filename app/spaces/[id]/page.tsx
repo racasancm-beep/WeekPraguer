@@ -253,21 +253,17 @@ export default function SpaceDetailsPage() {
     const sessionUserId = (session?.user as any)?.id;
     const sessionEmail = session?.user?.email?.trim().toLowerCase();
     const sessionRole = (session?.user as any)?.role;
-    const canEditSpace =
+    // Strictly only the OWNER of this specific space can make changes / block dates (never ADMIN, never other owners)
+    const isOwnerOfThisSpace =
         status === "authenticated" &&
         Boolean(session?.user) &&
+        sessionRole === "OWNER" &&
         Boolean(
             (sessionUserId && space?.ownerId === sessionUserId) ||
-            (sessionEmail && space?.owner?.email?.trim().toLowerCase() === sessionEmail) ||
-            sessionRole === "OWNER" ||
-            sessionRole === "ADMIN"
+            (sessionEmail && space?.owner?.email?.trim().toLowerCase() === sessionEmail)
         );
-    const isOwnerProfile =
-        status === "authenticated" &&
-        Boolean(session?.user) &&
-        (sessionRole === "OWNER" ||
-            (sessionUserId && space?.ownerId === sessionUserId) ||
-            (sessionEmail && space?.owner?.email?.trim().toLowerCase() === sessionEmail));
+    const canEditSpace = isOwnerOfThisSpace;
+    const isOwnerProfile = isOwnerOfThisSpace;
 
     const handleOwnerBlockDates = async () => {
         if (!session) {

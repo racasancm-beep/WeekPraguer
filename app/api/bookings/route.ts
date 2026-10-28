@@ -66,10 +66,16 @@ export async function POST(req: Request) {
         const userRole = (session.user as any)?.role;
         const sessionEmail = session.user?.email?.trim().toLowerCase();
         const isOwnerUser =
-            Boolean(isOwnerBlock) ||
-            userRole === "OWNER" ||
-            userId === space.ownerId ||
-            (Boolean(sessionEmail) && space.owner?.email?.trim().toLowerCase() === sessionEmail);
+            userRole === "OWNER" &&
+            (userId === space.ownerId ||
+                (Boolean(sessionEmail) && space.owner?.email?.trim().toLowerCase() === sessionEmail));
+
+        if (isOwnerBlock === true && !isOwnerUser) {
+            return NextResponse.json(
+                { error: "Forbidden: only the owner of this space can block dates", message: "Forbidden: only the owner of this space can block dates" },
+                { status: 403 }
+            );
+        }
 
         // OWNER CALENDAR BLOCK MODE (No approval needed, immediate CONFIRMED block, 100% occupancy from other sources)
         if (isOwnerUser && isOwnerBlock !== false) {
@@ -249,10 +255,11 @@ export async function DELETE(req: Request) {
         const role = (session.user as any)?.role;
         const sessionEmail = session.user?.email?.trim().toLowerCase();
         const isAuthorized =
-            role === "ADMIN" ||
-            role === "OWNER" ||
-            (userId && booking.space.ownerId === userId) ||
-            (sessionEmail && booking.space.owner?.email?.trim().toLowerCase() === sessionEmail);
+            role === "OWNER" &&
+            Boolean(
+                (userId && booking.space.ownerId === userId) ||
+                (sessionEmail && booking.space.owner?.email?.trim().toLowerCase() === sessionEmail)
+            );
 
         if (!isAuthorized) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });

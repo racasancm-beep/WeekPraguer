@@ -69,12 +69,48 @@ export async function GET(req: Request) {
         });
 
         const calculateOwnerEarnings = (b: any) => {
-            if (b.ownerEarnings > 0) return b.ownerEarnings;
-            return b.space?.selfCleaning ? b.totalPrice * 0.70 : b.totalPrice * 0.60;
+            if (b.accessCode === "OWNER_BLOCK") return 0;
+            if (typeof b.basePrice === "number" && b.basePrice > 0) {
+                return Math.round(b.basePrice * 100) / 100;
+            }
+            if (typeof b.totalPrice === "number" && b.totalPrice > 0) {
+                const ins = typeof b.insurance === "number" && b.insurance > 0 ? b.insurance : 0;
+                const net = b.totalPrice - ins;
+                return Math.round((net > 0 ? net : b.totalPrice) * 100) / 100;
+            }
+            if (b.space && b.startTime && b.endTime) {
+                const hours = Math.max(
+                    1,
+                    Math.round(
+                        (new Date(b.endTime).getTime() - new Date(b.startTime).getTime()) / (1000 * 60 * 60)
+                    )
+                );
+                return b.isHourly === false && b.space.dailyRate
+                    ? b.space.dailyRate
+                    : hours * (b.space.hourlyRate || 0);
+            }
+            return 0;
         };
 
-        const totalRevenue = rawBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
-        const totalCount = rawBookings.length;
+        const normalizeBookingWithoutPlatformFee = (b: any) => {
+            const amount = calculateOwnerEarnings(b);
+            return {
+                ...b,
+                basePrice: amount,
+                totalPrice: amount,
+                ownerEarnings: amount,
+                commission: 0,
+                insurance: 0,
+                cleaningFee: 0,
+                adminEarnings: 0,
+            };
+        };
+
+        const normalizedPendingBookings = pendingBookings.map(normalizeBookingWithoutPlatformFee);
+        const normalizedRawBookings = rawBookings.map(normalizeBookingWithoutPlatformFee);
+
+        const totalRevenue = normalizedRawBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
+        const totalCount = normalizedRawBookings.filter((b: any) => b.accessCode !== "OWNER_BLOCK").length;
 
         const lastWeekDate = subDays(new Date(), 7);
         const newBookingsLastWeek = await (prisma as any).booking.count({
@@ -92,7 +128,7 @@ export async function GET(req: Request) {
             const start = startOfMonth(date);
             const end = endOfMonth(date);
 
-            const monthBookings = rawBookings.filter((b: any) => {
+            const monthBookings = normalizedRawBookings.filter((b: any) => {
                 const d = new Date(b.startTime);
                 return d >= start && d <= end;
             });
@@ -134,11 +170,11 @@ export async function GET(req: Request) {
             growth: growth.toFixed(1),
             count: totalCount,
             newBookingsTrend: newBookingsLastWeek,
-            pendingBookings,
+            pendingBookings: normalizedPendingBookings,
             inspectedUser,
-            bookings: [...rawBookings].sort((a: any, b: any) =>
+            bookings: [...normalizedRawBookings].sort((a: any, b: any) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            ).slice(0, 10),
+            ),
             chartData
         });
     } catch (error) {

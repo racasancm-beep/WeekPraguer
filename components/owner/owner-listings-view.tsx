@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler, Pencil } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, Wallet } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
@@ -12,10 +12,38 @@ interface OwnerListingsViewProps {
     isAdminAllView: boolean;
 }
 
+function getCleanBookingAmount(bk: any, space: any): number {
+    if (bk?.accessCode === "OWNER_BLOCK") return 0;
+    if (typeof bk?.basePrice === "number" && bk.basePrice > 0) {
+        return Math.round(bk.basePrice * 100) / 100;
+    }
+    if (typeof bk?.totalPrice === "number" && bk.totalPrice > 0) {
+        const ins = typeof bk?.insurance === "number" && bk.insurance > 0 ? bk.insurance : 0;
+        const net = bk.totalPrice - ins;
+        return Math.round((net > 0 ? net : bk.totalPrice) * 100) / 100;
+    }
+    if (bk?.startTime && bk?.endTime && space) {
+        const hours = Math.max(
+            1,
+            Math.round(
+                (new Date(bk.endTime).getTime() - new Date(bk.startTime).getTime()) / (1000 * 60 * 60)
+            )
+        );
+        return bk.isHourly === false && space.dailyRate
+            ? space.dailyRate
+            : hours * (space.hourlyRate || 0);
+    }
+    return 0;
+}
+
 export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewProps) {
     const { t } = useLanguage();
     const { data: session, status } = useSession();
-    const isOwnerLoggedIn = status === "authenticated" && Boolean(session?.user);
+
+    const sessionUserId = (session?.user as any)?.id;
+    const sessionEmail = session?.user?.email?.trim().toLowerCase();
+    const sessionRole = (session?.user as any)?.role;
+    const isOwnerProfile = status === "authenticated" && sessionRole === "OWNER";
 
     const todayUtcStart = new Date();
     todayUtcStart.setUTCHours(0, 0, 0, 0);
@@ -31,12 +59,14 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                         {t("owner.listings.subtitle")} ({spaces.length} {t("admin.spacesLower")}).
                     </p>
                 </div>
-                <Link href="/owner/dashboard/listings/create">
-                    <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        {t("owner.listings.addNewSpace")}
-                    </Button>
-                </Link>
+                {isOwnerProfile && (
+                    <Link href="/owner/dashboard/listings/create">
+                        <Button>
+                            <Plus className="mr-2 h-4 w-4" />
+                            {t("owner.listings.addNewSpace")}
+                        </Button>
+                    </Link>
+                )}
             </div>
 
             {spaces.length === 0 ? (
@@ -48,11 +78,13 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                         {t("owner.listings.noSpacesDesc")}
                     </p>
-                    <div className="mt-6">
-                        <Link href="/owner/dashboard/listings/create">
-                            <Button>{t("owner.listings.addListing")}</Button>
-                        </Link>
-                    </div>
+                    {isOwnerProfile && (
+                        <div className="mt-6">
+                            <Link href="/owner/dashboard/listings/create">
+                                <Button>{t("owner.listings.addListing")}</Button>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -63,8 +95,22 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                         const hasOwnerBlock = activeOwnerBlocks.length > 0;
                         const blockedPeriods = formatOwnerBlockedPeriods(activeOwnerBlocks);
 
+                        const confirmedRenterBookings = (space.bookings || []).filter(
+                            (bk: any) =>
+                                bk.accessCode !== "OWNER_BLOCK" &&
+                                (bk.status === "CONFIRMED" || bk.status === "COMPLETED")
+                        );
+
+                        // Strictly only the specific owner of this space (with role === "OWNER", never ADMIN) can make changes
+                        const canMakeChangesToThisSpace =
+                            isOwnerProfile &&
+                            Boolean(
+                                (sessionUserId && space.ownerId === sessionUserId) ||
+                                (sessionEmail && space.owner?.email?.trim().toLowerCase() === sessionEmail)
+                            );
+
                         return (
-                            <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+                            <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
                                 <div className="aspect-video w-full bg-gray-200 relative">
                                     {space.photos[0] ? (
                                         <img
@@ -85,7 +131,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                     </div>
                                 </div>
 
-                                <div className="p-4">
+                                <div className="p-4 flex-1 flex flex-col">
                                     <h3 className="font-semibold text-lg truncate mb-1">{space.name}</h3>
                                     <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                                         <span className="flex items-center">
@@ -127,13 +173,63 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                         </div>
                                     )}
 
-                                    <div className="flex items-center justify-between pt-4 border-t gap-2">
+                                    {/* Confirmed / Reserved Bookings for this Space: Period + Amount (No Platform Fee) + Renter Contact Details */}
+                                    {confirmedRenterBookings.length > 0 && (
+                                        <div className="mb-3 p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-2">
+                                            <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-900">
+                                                {t("owner.listings.confirmedReservationsTitle")} ({confirmedRenterBookings.length})
+                                            </div>
+                                            <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                                                {confirmedRenterBookings.map((bk: any) => {
+                                                    const amount = getCleanBookingAmount(bk, space);
+                                                    return (
+                                                        <div
+                                                            key={bk.id}
+                                                            className="p-2 rounded-md bg-white border border-emerald-200 text-[11px] space-y-1"
+                                                        >
+                                                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                                                                <span className="font-bold text-gray-800">
+                                                                    {new Date(bk.startTime).toLocaleDateString()} -{" "}
+                                                                    {new Date(bk.endTime).toLocaleDateString()}
+                                                                </span>
+                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-extrabold text-[10px]">
+                                                                    <Wallet className="w-3 h-3 text-emerald-700" />
+                                                                    {amount} RON ({t("owner.bookings.noPlatformFee")})
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-700 pt-1 border-t border-gray-100">
+                                                                <span className="inline-flex items-center gap-1 font-bold text-gray-900">
+                                                                    <User className="w-3 h-3 text-violet-600" />
+                                                                    {bk.renter?.name || bk.renter?.email || "Client"}
+                                                                </span>
+                                                                {bk.renter?.email && (
+                                                                    <a
+                                                                        href={`mailto:${bk.renter.email}`}
+                                                                        className="inline-flex items-center gap-1 font-mono text-blue-700 hover:underline"
+                                                                    >
+                                                                        <Mail className="w-3 h-3 text-blue-600" />
+                                                                        {bk.renter.email}
+                                                                    </a>
+                                                                )}
+                                                                <span className="inline-flex items-center gap-1 font-semibold">
+                                                                    <Phone className="w-3 h-3 text-emerald-600" />
+                                                                    {bk.renter?.phone || t("owner.bookings.noPhoneProvided")}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between pt-4 border-t gap-2 mt-auto">
                                         <span className="font-bold text-lg">
                                             {space.hourlyRate} RON
                                             <span className="text-sm font-normal text-gray-500">/{t("explore.perHour")}</span>
                                         </span>
                                         <div className="flex items-center gap-2">
-                                            {isOwnerLoggedIn && (
+                                            {canMakeChangesToThisSpace && (
                                                 <Link href={`/owner/dashboard/listings/${space.id}/edit`}>
                                                     <Button size="sm" className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold">
                                                         <Pencil className="w-3.5 h-3.5 mr-1.5" />
