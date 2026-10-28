@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
+import { CalendarClock, Check, X } from "lucide-react";
 
 function hasBookingProofOfPayment(booking: any): boolean {
     return (
@@ -14,10 +15,24 @@ function hasBookingProofOfPayment(booking: any): boolean {
     );
 }
 
+function toDateTimeLocalValue(dateStrOrObj: string | Date): string {
+    const d = new Date(dateStrOrObj);
+    if (isNaN(d.getTime())) return "";
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
 export default function BookingsPage() {
     const [pendingBookings, setPendingBookings] = useState<any[]>([]);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [suggestingBookingId, setSuggestingBookingId] = useState<string | null>(null);
+    const [proposedStart, setProposedStart] = useState<string>("");
+    const [proposedEnd, setProposedEnd] = useState<string>("");
     const { t } = useLanguage();
     const { data: session, status } = useSession();
 
@@ -44,6 +59,48 @@ export default function BookingsPage() {
         }
     };
 
+    const openSuggestPanel = (booking: any) => {
+        if (suggestingBookingId === booking.id) {
+            setSuggestingBookingId(null);
+            return;
+        }
+        setSuggestingBookingId(booking.id);
+        setProposedStart(toDateTimeLocalValue(booking.proposedStartTime || booking.startTime));
+        setProposedEnd(toDateTimeLocalValue(booking.proposedEndTime || booking.endTime));
+    };
+
+    const handleSendSuggestedInterval = async (bookingId: string) => {
+        if (!proposedStart || !proposedEnd) {
+            toast.error("Please select both start and end date/time");
+            return;
+        }
+        const startObj = new Date(proposedStart);
+        const endObj = new Date(proposedEnd);
+        if (isNaN(startObj.getTime()) || isNaN(endObj.getTime()) || endObj <= startObj) {
+            toast.error("End time must be after start time");
+            return;
+        }
+
+        const res = await fetch(`/api/owner/bookings/${bookingId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: "SUGGEST",
+                proposedStartTime: startObj.toISOString(),
+                proposedEndTime: endObj.toISOString(),
+            }),
+        });
+
+        if (res.ok) {
+            toast.success(t("owner.bookings.suggestedToast"));
+            setSuggestingBookingId(null);
+            fetchData();
+        } else {
+            const err = await res.json();
+            toast.error(err.error || "Failed to send proposal");
+        }
+    };
+
     if (loading) return <div className="p-8">{t("owner.bookings.loading")}</div>;
 
     return (
@@ -60,7 +117,7 @@ export default function BookingsPage() {
                     <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.pendingTitle")}</h2>
                     <div className="grid gap-4">
                         {pendingBookings.map((booking) => {
-                            // Strictly only the OWNER profile of this specific space can approve or propose alternatives (never ADMIN)
+                            // Strictly only the OWNER profile of this specific space can approve, reject, or propose alternatives (never ADMIN)
                             const canApproveThisBooking =
                                 status === "authenticated" &&
                                 sessionRole === "OWNER" &&
@@ -70,99 +127,156 @@ export default function BookingsPage() {
                                         booking.space?.owner?.email?.trim().toLowerCase() === sessionEmail)
                                 );
 
+                            const isSuggestOpen = suggestingBookingId === booking.id;
+
                             return (
                                 <Card key={booking.id} className="border-yellow-200 bg-yellow-50/30">
-                                    <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-semibold text-gray-900">{booking.space?.name}</p>
-                                                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold">
-                                                    {t("renter.status.pending")}
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-gray-600 mt-1">
-                                                {new Date(booking.startTime).toLocaleString()} -{" "}
-                                                {new Date(booking.endTime).toLocaleString()}
-                                            </p>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                {t("owner.bookings.requestedBy")}: {booking.renter?.name || booking.renter?.email || "Client"}
-                                            </p>
-                                        </div>
-                                        {canApproveThisBooking ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                <Button
-                                                    onClick={async () => {
-                                                        const res = await fetch(`/api/owner/bookings/${booking.id}`, {
-                                                            method: "PATCH",
-                                                            headers: { "Content-Type": "application/json" },
-                                                            body: JSON.stringify({ action: "APPROVE" }),
-                                                        });
-                                                        if (res.ok) {
-                                                            toast.success(t("owner.bookings.approvedToast"));
-                                                            fetchData();
-                                                        } else {
-                                                            const err = await res.json();
-                                                            toast.error(err.error || "Unauthorized");
-                                                        }
-                                                    }}
-                                                    className="bg-green-600 hover:bg-green-700 text-white text-xs h-8"
-                                                >
-                                                    {t("admin.verification.approve")}
-                                                </Button>
-
-                                                <Button
-                                                    variant="destructive"
-                                                    onClick={async () => {
-                                                        const res = await fetch(`/api/owner/bookings/${booking.id}`, {
-                                                            method: "PATCH",
-                                                            headers: { "Content-Type": "application/json" },
-                                                            body: JSON.stringify({ action: "REJECT" }),
-                                                        });
-                                                        if (res.ok) {
-                                                            toast.success(t("renter.status.rejected"));
-                                                            fetchData();
-                                                        } else {
-                                                            const err = await res.json();
-                                                            toast.error(err.error || "Unauthorized");
-                                                        }
-                                                    }}
-                                                    className="text-xs h-8"
-                                                >
-                                                    {t("common.reject")}
-                                                </Button>
-
-                                                <Button
-                                                    variant="outline"
-                                                    onClick={async () => {
-                                                        const newStart = prompt("YYYY-MM-DD HH:mm");
-                                                        if (!newStart) return;
-                                                        const newEnd = prompt("YYYY-MM-DD HH:mm");
-                                                        if (!newEnd) return;
-
-                                                        const res = await fetch(`/api/owner/bookings/${booking.id}`, {
-                                                            method: "PATCH",
-                                                            headers: { "Content-Type": "application/json" },
-                                                            body: JSON.stringify({
-                                                                action: "SUGGEST",
-                                                                proposedStartTime: new Date(newStart),
-                                                                proposedEndTime: new Date(newEnd),
-                                                            }),
-                                                        });
-                                                        if (res.ok) {
-                                                            toast.success(t("owner.bookings.suggestedToast"));
-                                                            fetchData();
-                                                        }
-                                                    }}
-                                                    className="text-xs h-8"
-                                                >
-                                                    {t("owner.bookings.suggestAlternative")}
-                                                </Button>
-                                            </div>
-                                        ) : (
+                                    <CardContent className="p-4 space-y-4">
+                                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div>
-                                                <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold rounded-full">
-                                                    {t("owner.bookings.onlyOwnerCanApprove")}
-                                                </span>
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="font-semibold text-gray-900">{booking.space?.name}</p>
+                                                    <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold">
+                                                        {booking.status === "OWNER_PROPOSED"
+                                                            ? t("renter.newProposedInterval")
+                                                            : t("renter.status.pending")}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-gray-600 mt-1">
+                                                    {new Date(booking.startTime).toLocaleString()} -{" "}
+                                                    {new Date(booking.endTime).toLocaleString()}
+                                                </p>
+                                                {booking.status === "OWNER_PROPOSED" &&
+                                                    booking.proposedStartTime &&
+                                                    booking.proposedEndTime && (
+                                                        <p className="text-xs font-bold text-violet-700 mt-1">
+                                                            {t("renter.newProposedInterval")}{" "}
+                                                            {new Date(booking.proposedStartTime).toLocaleString()} -{" "}
+                                                            {new Date(booking.proposedEndTime).toLocaleString()}
+                                                        </p>
+                                                    )}
+                                                <p className="text-xs text-gray-500 mt-1">
+                                                    {t("owner.bookings.requestedBy")}:{" "}
+                                                    {booking.renter?.name || booking.renter?.email || "Client"}
+                                                </p>
+                                            </div>
+                                            {canApproveThisBooking ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Button
+                                                        onClick={async () => {
+                                                            const res = await fetch(
+                                                                `/api/owner/bookings/${booking.id}`,
+                                                                {
+                                                                    method: "PATCH",
+                                                                    headers: { "Content-Type": "application/json" },
+                                                                    body: JSON.stringify({ action: "APPROVE" }),
+                                                                }
+                                                            );
+                                                            if (res.ok) {
+                                                                toast.success(t("owner.bookings.approvedToast"));
+                                                                fetchData();
+                                                            } else {
+                                                                const err = await res.json();
+                                                                toast.error(err.error || "Unauthorized");
+                                                            }
+                                                        }}
+                                                        className="bg-green-600 hover:bg-green-700 text-white text-xs h-8"
+                                                    >
+                                                        <Check className="w-3.5 h-3.5 mr-1" />
+                                                        {t("admin.verification.approve")}
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => openSuggestPanel(booking)}
+                                                        className="text-xs h-8 border-violet-300 text-violet-800 hover:bg-violet-50 font-semibold"
+                                                    >
+                                                        <CalendarClock className="w-3.5 h-3.5 mr-1.5" />
+                                                        {t("owner.bookings.suggestAlternative")}
+                                                    </Button>
+
+                                                    <Button
+                                                        variant="destructive"
+                                                        onClick={async () => {
+                                                            const res = await fetch(
+                                                                `/api/owner/bookings/${booking.id}`,
+                                                                {
+                                                                    method: "PATCH",
+                                                                    headers: { "Content-Type": "application/json" },
+                                                                    body: JSON.stringify({ action: "REJECT" }),
+                                                                }
+                                                            );
+                                                            if (res.ok) {
+                                                                toast.success(t("renter.status.rejected"));
+                                                                fetchData();
+                                                            } else {
+                                                                const err = await res.json();
+                                                                toast.error(err.error || "Unauthorized");
+                                                            }
+                                                        }}
+                                                        className="text-xs h-8"
+                                                    >
+                                                        <X className="w-3.5 h-3.5 mr-1" />
+                                                        {t("common.reject")}
+                                                    </Button>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold rounded-full">
+                                                        {t("owner.bookings.onlyOwnerCanApprove")}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Inline Date & Time Interval Picker to Reject Current Slot & Suggest Alternative Interval */}
+                                        {canApproveThisBooking && isSuggestOpen && (
+                                            <div className="p-3.5 rounded-xl bg-white border border-violet-200 shadow-sm space-y-3">
+                                                <div className="text-xs font-extrabold text-violet-900 uppercase tracking-wide flex items-center gap-1.5">
+                                                    <CalendarClock className="w-4 h-4 text-violet-600" />
+                                                    {t("owner.bookings.suggestAlternative")} — {t("renter.newProposedInterval")}
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="text-[11px] font-bold text-gray-600 block mb-1">
+                                                            {t("space.start")}
+                                                        </label>
+                                                        <input
+                                                            type="datetime-local"
+                                                            value={proposedStart}
+                                                            onChange={(e) => setProposedStart(e.target.value)}
+                                                            className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-[11px] font-bold text-gray-600 block mb-1">
+                                                            {t("space.end")}
+                                                        </label>
+                                                        <input
+                                                            type="datetime-local"
+                                                            value={proposedEnd}
+                                                            onChange={(e) => setProposedEnd(e.target.value)}
+                                                            className="w-full h-9 px-3 rounded-lg border border-gray-200 text-xs font-semibold"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => setSuggestingBookingId(null)}
+                                                        className="h-8 text-xs"
+                                                    >
+                                                        {t("common.cancel")}
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handleSendSuggestedInterval(booking.id)}
+                                                        className="h-8 text-xs bg-violet-600 hover:bg-violet-700 text-white font-bold"
+                                                    >
+                                                        {t("owner.bookings.suggestAlternative")}
+                                                    </Button>
+                                                </div>
                                             </div>
                                         )}
                                     </CardContent>
@@ -182,14 +296,15 @@ export default function BookingsPage() {
                 <div className="grid gap-4">
                     {recentBookings.map((booking) => {
                         const isOwnerBlock = booking.accessCode === "OWNER_BLOCK";
-                        const hasProof = !isOwnerBlock && hasBookingProofOfPayment(booking);
+                        const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
+                        const hasProof = !isOwnerBlock && !isRejected && hasBookingProofOfPayment(booking);
                         const proofRef = booking.paymentId || booking.transaction?.stripePaymentId;
 
                         return (
                             <Card
                                 key={booking.id}
                                 className={
-                                    isOwnerBlock
+                                    isOwnerBlock || isRejected
                                         ? "bg-red-50/40 border-red-200"
                                         : hasProof
                                         ? "bg-emerald-50/30 border-emerald-200"
@@ -217,7 +332,7 @@ export default function BookingsPage() {
                                     <div className="flex items-center gap-2">
                                         <span
                                             className={`px-3 py-1 text-xs font-bold rounded-full ${
-                                                isOwnerBlock
+                                                isOwnerBlock || isRejected
                                                     ? "bg-red-100 text-red-800 border border-red-200"
                                                     : hasProof
                                                     ? "bg-emerald-600 text-white"
@@ -226,6 +341,8 @@ export default function BookingsPage() {
                                         >
                                             {isOwnerBlock
                                                 ? `${t("card.occupied100")} • ${t("card.otherSources")}`
+                                                : isRejected
+                                                ? t("renter.status.rejected")
                                                 : hasProof
                                                 ? t("renter.status.reserved")
                                                 : booking.status === "CONFIRMED"

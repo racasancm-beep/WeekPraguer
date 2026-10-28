@@ -189,6 +189,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
     const isReserved = (booking.status === "CONFIRMED" || booking.status === "COMPLETED") && hasProof;
     const isConfirmedAwaitingPayment = booking.status === "CONFIRMED" && !hasProof;
     const isPending = booking.status === "PENDING";
+    const isOwnerProposed = booking.status === "OWNER_PROPOSED";
     const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
 
     const handleAction = async (action: "approve" | "reject") => {
@@ -248,6 +249,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
 
     let statusText = booking.status;
     if (isPending) statusText = t("renter.status.pending");
+    else if (isOwnerProposed) statusText = t("renter.newProposedInterval");
     else if (isConfirmedAwaitingPayment) statusText = t("renter.status.approved");
     else if (isReserved) statusText = t("renter.status.reserved");
     else if (isRejected) statusText = t("renter.status.rejected");
@@ -261,7 +263,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                     ? "border-2 border-emerald-300 bg-emerald-50/15"
                     : isConfirmedAwaitingPayment
                     ? "border-2 border-blue-300 bg-blue-50/15"
-                    : isPending
+                    : isPending || isOwnerProposed
                     ? "border border-amber-200 bg-amber-50/10"
                     : ""
             }
@@ -281,7 +283,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                             ? "bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
                             : isConfirmedAwaitingPayment
                             ? "bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
-                            : isPending
+                            : isPending || isOwnerProposed
                             ? "bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
                             : "bg-red-600 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
                     }
