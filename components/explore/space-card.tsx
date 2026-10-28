@@ -3,9 +3,10 @@
 import { Space, SpacePhoto } from "@prisma/client";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MapPin, Users, Ruler, Ban } from "lucide-react";
+import { MapPin, Users, Ruler } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { formatOwnerBlockedPeriods } from "@/lib/utils";
 
 interface SpaceCardProps {
     space: Space & { photos: SpacePhoto[]; bookings?: any[] };
@@ -27,16 +28,7 @@ export function SpaceCard({ space }: SpaceCardProps) {
         (bk: any) => bk.accessCode === "OWNER_BLOCK" && new Date(bk.endTime) >= todayUtcStart
     );
     const hasOwnerBlock = activeOwnerBlocks.length > 0;
-
-    const blockedDatesFormatted = activeOwnerBlocks
-        .map((bk: any) => {
-            const d = new Date(bk.startTime);
-            const day = String(d.getUTCDate()).padStart(2, "0");
-            const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-            const year = d.getUTCFullYear();
-            return `${day}.${month}.${year}`;
-        })
-        .slice(0, 4);
+    const blockedPeriods = formatOwnerBlockedPeriods(activeOwnerBlocks);
 
     let bookedHoursToday = 0;
     if (space.bookings) {
@@ -81,12 +73,6 @@ export function SpaceCard({ space }: SpaceCardProps) {
                         {translateCategory(space.category)}
                     </div>
                 )}
-                {hasOwnerBlock && (
-                    <div className="absolute top-2.5 right-2.5 bg-red-600/95 text-white backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-md flex items-center gap-1">
-                        <Ban className="w-3 h-3" />
-                        {t("card.notAvailable")}
-                    </div>
-                )}
                 {space.photos.length > 1 && (
                     <div className="absolute bottom-2.5 right-2.5 bg-black/60 text-white backdrop-blur-sm px-2 py-0.5 rounded-md text-[11px] font-medium">
                         📷 {space.photos.length}
@@ -129,9 +115,8 @@ export function SpaceCard({ space }: SpaceCardProps) {
                                 {t("card.otherSources")}
                             </span>
                         </div>
-                        <div className="text-[10px] font-semibold text-red-600 truncate">
-                            {t("card.notAvailable")} • {t("card.blockedDatesLabel")} {blockedDatesFormatted.join(", ")}
-                            {activeOwnerBlocks.length > 4 ? ` +${activeOwnerBlocks.length - 4}` : ""}
+                        <div className="text-[10px] font-bold text-red-700 leading-snug break-words">
+                            {t("card.blockedDatesLabel")} {blockedPeriods.join(", ")}
                         </div>
                     </div>
                 ) : (

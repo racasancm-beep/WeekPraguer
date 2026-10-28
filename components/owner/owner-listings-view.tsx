@@ -2,9 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler, Pencil, Ban } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
+import { formatOwnerBlockedPeriods } from "@/lib/utils";
 
 interface OwnerListingsViewProps {
     spaces: any[];
@@ -60,15 +61,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                             (bk: any) => bk.accessCode === "OWNER_BLOCK" && new Date(bk.endTime) >= todayUtcStart
                         );
                         const hasOwnerBlock = activeOwnerBlocks.length > 0;
-                        const blockedDatesFormatted = activeOwnerBlocks
-                            .map((bk: any) => {
-                                const d = new Date(bk.startTime);
-                                const day = String(d.getUTCDate()).padStart(2, "0");
-                                const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-                                const year = d.getUTCFullYear();
-                                return `${day}.${month}.${year}`;
-                            })
-                            .slice(0, 4);
+                        const blockedPeriods = formatOwnerBlockedPeriods(activeOwnerBlocks);
 
                         return (
                             <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
@@ -90,12 +83,6 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                         }`}>
                                         {space.active ? (space.isClean ? t("owner.listings.active") : t("owner.listings.cleaningNeeded")) : t("owner.listings.inactive")}
                                     </div>
-                                    {hasOwnerBlock && (
-                                        <div className="absolute top-2 left-2 bg-red-600/95 text-white px-2.5 py-1 rounded text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-md">
-                                            <Ban className="w-3 h-3" />
-                                            {t("card.notAvailable")}
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="p-4">
@@ -134,8 +121,8 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                                     {t("card.otherSources")}
                                                 </span>
                                             </div>
-                                            <div className="text-[10px] font-semibold text-red-600 truncate">
-                                                {t("card.blockedDatesLabel")} {blockedDatesFormatted.join(", ")}
+                                            <div className="text-[10px] font-bold text-red-700 leading-snug break-words">
+                                                {t("card.blockedDatesLabel")} {blockedPeriods.join(", ")}
                                             </div>
                                         </div>
                                     )}

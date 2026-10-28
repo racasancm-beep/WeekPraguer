@@ -8,16 +8,10 @@ export async function GET(
     const { id } = await params;
 
     try {
-        const startOfTodayUtc = new Date();
-        startOfTodayUtc.setUTCHours(0, 0, 0, 0);
-
         const bookings = await prisma.booking.findMany({
             where: {
                 spaceId: id,
                 status: { in: ["CONFIRMED", "PENDING", "COMPLETED"] },
-                endTime: {
-                    gte: startOfTodayUtc,
-                },
             },
             orderBy: {
                 startTime: "asc",

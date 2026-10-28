@@ -23,7 +23,7 @@ import {
     Trash2
 } from "lucide-react";
 import Link from "next/link";
-import { formatPrice } from "@/lib/utils";
+import { expandBookingDateKeys, formatOwnerBlockedPeriods, formatPrice } from "@/lib/utils";
 import MapComponent from "@/components/ui/map-component";
 import { SpaceForm } from "@/components/owner/space-form";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -59,6 +59,7 @@ interface SpaceDetailed {
     active?: boolean;
     amenitiesList: string;
     photos: { id?: string; url: string }[];
+    bookings?: any[];
 }
 
 interface BookingSlot {
@@ -94,6 +95,18 @@ function formatUtcDateDisplay(isoOrDate: string | Date): string {
     ].join(".");
 }
 
+function formatBlockPeriodItem(b: any): string {
+    const keys = expandBookingDateKeys(b);
+    if (keys.length === 0) return formatUtcDateDisplay(b.startTime);
+    if (keys.length === 1) {
+        const [y, m, d] = keys[0].split("-");
+        return `${d}.${m}.${y}`;
+    }
+    const [sy, sm, sd] = keys[0].split("-");
+    const [ey, em, ed] = keys[keys.length - 1].split("-");
+    return `${sd}.${sm}.${sy} - ${ed}.${em}.${ey}`;
+}
+
 export default function SpaceDetailsPage() {
     const { t, translateAmenity, translateCategory } = useLanguage();
     const { id } = useParams();
@@ -116,6 +129,30 @@ export default function SpaceDetailsPage() {
         if (id) fetchSpace();
     }, [id]);
 
+    const applyBookingsToCalendar = (bData: any[]) => {
+        setExistingBookings(bData);
+
+        const keysSet = new Set<string>();
+        const dateObjs: Date[] = [];
+
+        bData.forEach((b: any) => {
+            // Mark all dates in full-day bookings and owner blocks as completely unavailable on the calendar
+            if (b.accessCode === "OWNER_BLOCK" || !b.isHourly) {
+                const rangeKeys = expandBookingDateKeys(b);
+                rangeKeys.forEach((key) => {
+                    if (!keysSet.has(key)) {
+                        keysSet.add(key);
+                        const [y, m, day] = key.split("-").map(Number);
+                        dateObjs.push(new Date(y, m - 1, day));
+                    }
+                });
+            }
+        });
+
+        setBookedDateKeys(Array.from(keysSet));
+        setBookedDates(dateObjs);
+    };
+
     const fetchSpace = async () => {
         try {
             const res = await fetch(`/api/spaces/${id}`);
@@ -123,29 +160,20 @@ export default function SpaceDetailsPage() {
             const data = await res.json();
             setSpace(data);
 
+            let combinedBookings: any[] = Array.isArray(data.bookings) ? data.bookings : [];
+
             const bookingsRes = await fetch(`/api/spaces/${id}/bookings`);
             if (bookingsRes.ok) {
                 const bData = await bookingsRes.json();
-                setExistingBookings(bData);
-
-                const keysSet = new Set<string>();
-                const dateObjs: Date[] = [];
-
-                bData.forEach((b: any) => {
-                    // Mark full-day bookings and owner blocks as completely unavailable on the calendar
-                    if (b.accessCode === "OWNER_BLOCK" || !b.isHourly) {
-                        const key = toUtcDateKey(b.startTime);
-                        if (!keysSet.has(key)) {
-                            keysSet.add(key);
-                            const [y, m, day] = key.split("-").map(Number);
-                            dateObjs.push(new Date(y, m - 1, day));
-                        }
-                    }
-                });
-
-                setBookedDateKeys(Array.from(keysSet));
-                setBookedDates(dateObjs);
+                if (Array.isArray(bData) && bData.length > 0) {
+                    const mapById = new Map<string, any>();
+                    combinedBookings.forEach((b) => mapById.set(b.id, b));
+                    bData.forEach((b) => mapById.set(b.id, b));
+                    combinedBookings = Array.from(mapById.values());
+                }
             }
+
+            applyBookingsToCalendar(combinedBookings);
         } catch (error) {
             toast.error("Error loading space details");
         } finally {
@@ -367,6 +395,7 @@ export default function SpaceDetailsPage() {
 
     const ownerBlocks = existingBookings.filter((b: any) => b.accessCode === "OWNER_BLOCK");
     const hasOwnerBlocks = ownerBlocks.length > 0;
+    const blockedPeriods = formatOwnerBlockedPeriods(ownerBlocks);
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -414,12 +443,6 @@ export default function SpaceDetailsPage() {
                                 <Shield className="w-3.5 h-3.5 text-emerald-600" />
                                 {t("space.verifiedHost")}
                             </span>
-                            {hasOwnerBlocks && (
-                                <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-red-700 bg-red-100 border border-red-200 px-3 py-1 rounded-full uppercase tracking-wide">
-                                    <Ban className="w-3.5 h-3.5 text-red-600" />
-                                    {t("card.notAvailable")} • {t("card.occupied100")} ({t("card.otherSources")})
-                                </span>
-                            )}
                         </div>
 
                         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2">
@@ -444,36 +467,6 @@ export default function SpaceDetailsPage() {
                         </Button>
                     )}
                 </div>
-
-                {/* Global Blocked Period Banner visible to everyone */}
-                {hasOwnerBlocks && (
-                    <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-start sm:items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shrink-0">
-                                <Ban className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <div className="text-sm font-extrabold text-red-800 uppercase tracking-wide">
-                                    {t("space.blockedBannerTitle")}
-                                </div>
-                                <div className="text-xs font-semibold text-red-700 mt-1 flex flex-wrap items-center gap-1.5">
-                                    <span>{t("card.blockedDatesLabel")}</span>
-                                    {ownerBlocks.map((b: any) => (
-                                        <span
-                                            key={b.id}
-                                            className="px-2 py-0.5 rounded-md bg-white border border-red-200 text-red-800 font-bold"
-                                        >
-                                            {formatUtcDateDisplay(b.startTime)}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-extrabold uppercase tracking-wider self-start sm:self-center shrink-0">
-                            {t("card.occupied100")} • {t("card.otherSources")}
-                        </div>
-                    </div>
-                )}
 
                 {/* Inline Full Space Editor when Owner clicks "Make Changes / Edit Space" */}
                 {canEditSpace && isEditing && (
@@ -686,8 +679,8 @@ export default function SpaceDetailsPage() {
                                         </span>
                                         <span>{t("card.otherSources")}</span>
                                     </div>
-                                    <div className="text-[11px] font-semibold text-red-600">
-                                        {t("card.notAvailable")}
+                                    <div className="text-[11px] font-bold text-red-700 leading-snug break-words">
+                                        {t("card.blockedDatesLabel")} {blockedPeriods.join(", ")}
                                     </div>
                                 </div>
                             )}
@@ -718,7 +711,7 @@ export default function SpaceDetailsPage() {
                                         modifiers={{ blocked: bookedDates }}
                                         modifiersClassNames={{
                                             blocked:
-                                                "bg-red-100 text-red-700 font-extrabold line-through decoration-red-600 opacity-90",
+                                                "!bg-red-100 !text-red-700 !opacity-100 rounded-md [&_button]:!bg-red-600 [&_button]:!text-white [&_button]:!opacity-100 [&_button]:font-extrabold [&_button]:line-through [&_button]:cursor-not-allowed",
                                         }}
                                         disabled={(d) => {
                                             const todayMidnight = new Date();
@@ -773,7 +766,7 @@ export default function SpaceDetailsPage() {
                                                     >
                                                         <div>
                                                             <span className="font-extrabold text-red-800">
-                                                                {formatUtcDateDisplay(b.startTime)}
+                                                                {formatBlockPeriodItem(b)}
                                                             </span>
                                                             <span className="block text-[10px] font-bold text-red-600">
                                                                 {t("card.occupied100")} • {t("card.otherSources")}
@@ -846,7 +839,7 @@ export default function SpaceDetailsPage() {
                                                                                 ":00";
                                                                             const isBooked = existingBookings.some(
                                                                                 (b) => {
-                                                                                    if (toUtcDateKey(b.startTime) === key) {
+                                                                                    if (expandBookingDateKeys(b).includes(key)) {
                                                                                         if (b.accessCode === "OWNER_BLOCK") {
                                                                                             return true;
                                                                                         }
@@ -893,7 +886,7 @@ export default function SpaceDetailsPage() {
                                                                                 ":00";
                                                                             const isBooked = existingBookings.some(
                                                                                 (b) => {
-                                                                                    if (toUtcDateKey(b.startTime) === key) {
+                                                                                    if (expandBookingDateKeys(b).includes(key)) {
                                                                                         if (b.accessCode === "OWNER_BLOCK") {
                                                                                             return true;
                                                                                         }
