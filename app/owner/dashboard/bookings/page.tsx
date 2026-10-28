@@ -6,37 +6,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
-import { CalendarClock, Check, Mail, Phone, User, Wallet, X } from "lucide-react";
+import { CalendarClock, Check, Mail, Phone, User, X } from "lucide-react";
+import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
 function hasBookingProofOfPayment(booking: any): boolean {
     return (
         Boolean(booking?.paymentId && String(booking.paymentId).trim().length > 0) ||
         booking?.transaction?.paymentStatus === "COMPLETED"
     );
-}
-
-function getReservationAmount(booking: any): number {
-    if (booking?.accessCode === "OWNER_BLOCK") return 0;
-    if (typeof booking?.basePrice === "number" && booking.basePrice > 0) {
-        return Math.round(booking.basePrice * 100) / 100;
-    }
-    if (typeof booking?.totalPrice === "number" && booking.totalPrice > 0) {
-        const ins = typeof booking?.insurance === "number" && booking.insurance > 0 ? booking.insurance : 0;
-        const net = booking.totalPrice - ins;
-        return Math.round((net > 0 ? net : booking.totalPrice) * 100) / 100;
-    }
-    if (booking?.space && booking?.startTime && booking?.endTime) {
-        const hours = Math.max(
-            1,
-            Math.round(
-                (new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime()) / (1000 * 60 * 60)
-            )
-        );
-        return booking.isHourly === false && booking.space.dailyRate
-            ? booking.space.dailyRate
-            : hours * (booking.space.hourlyRate || 0);
-    }
-    return 0;
 }
 
 function formatReservationPeriod(booking: any): string {
@@ -161,7 +138,6 @@ export default function BookingsPage() {
                                 );
 
                             const isSuggestOpen = suggestingBookingId === booking.id;
-                            const reservationAmount = getReservationAmount(booking);
 
                             return (
                                 <Card key={booking.id} className="border-yellow-200 bg-yellow-50/30">
@@ -177,18 +153,12 @@ export default function BookingsPage() {
                                                     </span>
                                                 </div>
 
-                                                {/* Period + Reservation Amount (No Platform Fee) side by side */}
+                                                {/* Period + Reservation Pricing (15% Platform Fee + 85% Owner Net) */}
                                                 <div className="flex flex-wrap items-center gap-2.5">
                                                     <p className="text-sm font-medium text-gray-700">
                                                         {formatReservationPeriod(booking)}
                                                     </p>
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-extrabold">
-                                                        <Wallet className="w-3.5 h-3.5 text-emerald-700" />
-                                                        {t("owner.bookings.reservationAmount")}: {reservationAmount} RON
-                                                        <span className="text-[10px] font-bold text-emerald-700">
-                                                            ({t("owner.bookings.noPlatformFee")})
-                                                        </span>
-                                                    </span>
+                                                    <BookingPriceBreakdown booking={booking} highlightOwnerNet />
                                                 </div>
 
                                                 {booking.status === "OWNER_PROPOSED" &&
@@ -375,7 +345,6 @@ export default function BookingsPage() {
                         const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
                         const hasProof = !isOwnerBlock && !isRejected && hasBookingProofOfPayment(booking);
                         const proofRef = booking.paymentId || booking.transaction?.stripePaymentId;
-                        const reservationAmount = getReservationAmount(booking);
 
                         return (
                             <Card
@@ -392,20 +361,12 @@ export default function BookingsPage() {
                                     <div className="space-y-2">
                                         <p className="font-semibold text-gray-900">{booking.space?.name}</p>
 
-                                        {/* Period + Reservation Amount (Platform Fee Removed) side by side */}
+                                        {/* Period + Reservation Pricing (15% Platform Fee + 85% Owner Net) */}
                                         <div className="flex flex-wrap items-center gap-2.5">
                                             <p className="text-sm font-medium text-gray-700">
                                                 {formatReservationPeriod(booking)}
                                             </p>
-                                            {!isOwnerBlock && (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-extrabold">
-                                                    <Wallet className="w-3.5 h-3.5 text-emerald-700" />
-                                                    {t("owner.bookings.reservationAmount")}: {reservationAmount} RON
-                                                    <span className="text-[10px] font-bold text-emerald-700">
-                                                        ({t("owner.bookings.noPlatformFee")})
-                                                    </span>
-                                                </span>
-                                            )}
+                                            {!isOwnerBlock && <BookingPriceBreakdown booking={booking} highlightOwnerNet />}
                                         </div>
 
                                         {isOwnerBlock ? (

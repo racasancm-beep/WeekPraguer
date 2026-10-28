@@ -40,6 +40,7 @@ import {
 } from "recharts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
 interface ProfileSpace {
     id: string;
@@ -58,6 +59,9 @@ interface ProfileBooking {
     startTime: string;
     endTime: string;
     totalPrice: number;
+    platformFee?: number;
+    ownerNet?: number;
+    accessCode?: string | null;
     status: string;
 }
 
@@ -574,14 +578,16 @@ export default function AdminDashboard() {
                                     </h4>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {selectedProfile.recentBookings.map((bk) => (
-                                            <div key={bk.id} className="p-3 rounded-xl bg-white border flex justify-between items-center">
-                                                <div>
-                                                    <p className="text-xs font-bold text-gray-900">{bk.spaceName}</p>
-                                                    <p className="text-[10px] text-gray-500">
-                                                        {new Date(bk.startTime).toLocaleDateString()} • {bk.status}
-                                                    </p>
+                                            <div key={bk.id} className="p-3 rounded-xl bg-white border space-y-2">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <p className="text-xs font-bold text-gray-900">{bk.spaceName}</p>
+                                                        <p className="text-[10px] text-gray-500">
+                                                            {new Date(bk.startTime).toLocaleDateString()} - {new Date(bk.endTime).toLocaleDateString()} • {bk.status}
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <span className="text-xs font-black text-blue-600">{bk.totalPrice} RON</span>
+                                                <BookingPriceBreakdown booking={bk} compact />
                                             </div>
                                         ))}
                                     </div>

@@ -2,38 +2,15 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, Wallet } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
+import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
 interface OwnerListingsViewProps {
     spaces: any[];
     isAdminAllView: boolean;
-}
-
-function getCleanBookingAmount(bk: any, space: any): number {
-    if (bk?.accessCode === "OWNER_BLOCK") return 0;
-    if (typeof bk?.basePrice === "number" && bk.basePrice > 0) {
-        return Math.round(bk.basePrice * 100) / 100;
-    }
-    if (typeof bk?.totalPrice === "number" && bk.totalPrice > 0) {
-        const ins = typeof bk?.insurance === "number" && bk.insurance > 0 ? bk.insurance : 0;
-        const net = bk.totalPrice - ins;
-        return Math.round((net > 0 ? net : bk.totalPrice) * 100) / 100;
-    }
-    if (bk?.startTime && bk?.endTime && space) {
-        const hours = Math.max(
-            1,
-            Math.round(
-                (new Date(bk.endTime).getTime() - new Date(bk.startTime).getTime()) / (1000 * 60 * 60)
-            )
-        );
-        return bk.isHourly === false && space.dailyRate
-            ? space.dailyRate
-            : hours * (space.hourlyRate || 0);
-    }
-    return 0;
 }
 
 export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewProps) {
@@ -181,22 +158,16 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                             </div>
                                             <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
                                                 {confirmedRenterBookings.map((bk: any) => {
-                                                    const amount = getCleanBookingAmount(bk, space);
                                                     return (
                                                         <div
                                                             key={bk.id}
                                                             className="p-2 rounded-md bg-white border border-emerald-200 text-[11px] space-y-1"
                                                         >
-                                                            <div className="flex flex-wrap items-center justify-between gap-1.5">
-                                                                <span className="font-bold text-gray-800">
-                                                                    {new Date(bk.startTime).toLocaleDateString()} -{" "}
-                                                                    {new Date(bk.endTime).toLocaleDateString()}
-                                                                </span>
-                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-extrabold text-[10px]">
-                                                                    <Wallet className="w-3 h-3 text-emerald-700" />
-                                                                    {amount} RON ({t("owner.bookings.noPlatformFee")})
-                                                                </span>
+                                                            <div className="font-bold text-gray-800">
+                                                                {new Date(bk.startTime).toLocaleDateString()} -{" "}
+                                                                {new Date(bk.endTime).toLocaleDateString()}
                                                             </div>
+                                                            <BookingPriceBreakdown booking={bk} space={space} highlightOwnerNet compact />
                                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-700 pt-1 border-t border-gray-100">
                                                                 <span className="inline-flex items-center gap-1 font-bold text-gray-900">
                                                                     <User className="w-3 h-3 text-violet-600" />

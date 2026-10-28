@@ -244,12 +244,15 @@ function EarningsPageContent() {
                                                 {booking.renter?.phone || t("owner.bookings.noPhoneProvided")}
                                             </p>
                                         </div>
-                                        <div className="ml-auto pl-2 text-right shrink-0">
-                                            <div className="font-bold text-sm text-gray-900 dark:text-gray-100">
-                                                +RON{Number(booking.basePrice || booking.totalPrice || 0).toFixed(2)}
+                                        <div className="ml-auto pl-2 text-right shrink-0 space-y-0.5">
+                                            <div className="text-[10px] font-semibold text-gray-500">
+                                                {t("owner.bookings.totalAmount")}: {Number(booking.totalPrice || 0).toFixed(2)} RON
                                             </div>
-                                            <div className="text-[10px] font-semibold text-emerald-700">
-                                                {t("owner.bookings.noPlatformFee")}
+                                            <div className="text-[10px] font-semibold text-amber-700">
+                                                {t("owner.bookings.platformFee")}: -{Number(booking.platformFee ?? booking.commission ?? 0).toFixed(2)} RON
+                                            </div>
+                                            <div className="font-bold text-sm text-emerald-700">
+                                                +RON{Number(booking.ownerEarnings || 0).toFixed(2)}
                                             </div>
                                         </div>
                                     </div>

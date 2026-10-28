@@ -965,6 +965,11 @@ export default function SpaceDetailsPage() {
                                                 <span>{t("space.estimatedTotal")}</span>
                                                 <span className="text-violet-600">{formatPrice(totalPrice)}</span>
                                             </div>
+                                            <div className="flex justify-between items-center text-xs font-semibold text-amber-700">
+                                                <span>{t("owner.bookings.platformFee")}</span>
+                                                <span>{formatPrice(Math.round(totalPrice * 15) / 100)}</span>
+                                            </div>
+                                            <p className="text-[11px] text-gray-500">{t("space.platformFeeIncluded")}</p>
                                         </div>
                                     )}
 

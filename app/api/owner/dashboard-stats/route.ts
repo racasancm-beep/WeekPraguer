@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { startOfMonth, endOfMonth, format, addMonths, subDays } from "date-fns";
+import { getBookingBreakdown } from "@/lib/pricing";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -68,46 +69,26 @@ export async function GET(req: Request) {
             orderBy: { startTime: "asc" }
         });
 
+        // Owner earnings = Total minus 15% platform fee (rejected bookings and owner blocks earn nothing)
         const calculateOwnerEarnings = (b: any) => {
-            if (b.accessCode === "OWNER_BLOCK") return 0;
-            if (typeof b.basePrice === "number" && b.basePrice > 0) {
-                return Math.round(b.basePrice * 100) / 100;
-            }
-            if (typeof b.totalPrice === "number" && b.totalPrice > 0) {
-                const ins = typeof b.insurance === "number" && b.insurance > 0 ? b.insurance : 0;
-                const net = b.totalPrice - ins;
-                return Math.round((net > 0 ? net : b.totalPrice) * 100) / 100;
-            }
-            if (b.space && b.startTime && b.endTime) {
-                const hours = Math.max(
-                    1,
-                    Math.round(
-                        (new Date(b.endTime).getTime() - new Date(b.startTime).getTime()) / (1000 * 60 * 60)
-                    )
-                );
-                return b.isHourly === false && b.space.dailyRate
-                    ? b.space.dailyRate
-                    : hours * (b.space.hourlyRate || 0);
-            }
-            return 0;
+            if (b.accessCode === "OWNER_BLOCK" || b.status === "REJECTED" || b.status === "CANCELLED") return 0;
+            return getBookingBreakdown(b).ownerNet;
         };
 
-        const normalizeBookingWithoutPlatformFee = (b: any) => {
-            const amount = calculateOwnerEarnings(b);
+        const normalizeBookingWithPlatformFee = (b: any) => {
+            const { total, platformFee, ownerNet } = getBookingBreakdown(b);
             return {
                 ...b,
-                basePrice: amount,
-                totalPrice: amount,
-                ownerEarnings: amount,
-                commission: 0,
-                insurance: 0,
-                cleaningFee: 0,
-                adminEarnings: 0,
+                totalPrice: total,
+                platformFee,
+                commission: platformFee,
+                ownerEarnings: ownerNet,
+                adminEarnings: platformFee,
             };
         };
 
-        const normalizedPendingBookings = pendingBookings.map(normalizeBookingWithoutPlatformFee);
-        const normalizedRawBookings = rawBookings.map(normalizeBookingWithoutPlatformFee);
+        const normalizedPendingBookings = pendingBookings.map(normalizeBookingWithPlatformFee);
+        const normalizedRawBookings = rawBookings.map(normalizeBookingWithPlatformFee);
 
         const totalRevenue = normalizedRawBookings.reduce((sum: number, b: any) => sum + calculateOwnerEarnings(b), 0);
         const totalCount = normalizedRawBookings.filter((b: any) => b.accessCode !== "OWNER_BLOCK").length;

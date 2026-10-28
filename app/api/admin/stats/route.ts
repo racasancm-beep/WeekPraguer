@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { startOfMonth, endOfMonth, format, addMonths } from "date-fns";
+import { getBookingBreakdown } from "@/lib/pricing";
 
 export async function GET() {
     const session = await getServerSession(authOptions);
@@ -86,18 +87,13 @@ export async function GET() {
             };
         });
 
+        // Total paid by renter; 15% platform fee (Admin) and 85% Owner net
         const getSplit = (b: any) => {
-            const total =
-                typeof b.basePrice === "number" && b.basePrice > 0
-                    ? b.basePrice
-                    : typeof b.totalPrice === "number" && b.totalPrice > 0
-                    ? b.totalPrice - (typeof b.insurance === "number" && b.insurance > 0 ? b.insurance : 0)
-                    : 0;
-
+            const { total, platformFee, ownerNet } = getBookingBreakdown(b, spaceMap.get(b.spaceId));
             return {
                 renter: total,
-                owner: total,
-                admin: 0
+                owner: ownerNet,
+                admin: platformFee
             };
         };
 
@@ -145,13 +141,17 @@ export async function GET() {
                 })),
                 recentBookings: relevantBookings.slice(0, 8).map((b: any) => {
                     const sp = spaceMap.get(b.spaceId);
+                    const split = getSplit(b);
                     return {
                         id: b.id,
                         spaceName: sp?.name || "Space",
                         city: sp?.city || "",
                         startTime: b.startTime,
                         endTime: b.endTime,
-                        totalPrice: b.totalPrice,
+                        totalPrice: split.renter,
+                        platformFee: split.admin,
+                        ownerNet: split.owner,
+                        accessCode: b.accessCode,
                         status: b.status,
                     };
                 }),

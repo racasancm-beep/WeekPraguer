@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { getBookingBreakdown } from "@/lib/pricing";
 import { startOfMonth, endOfMonth, subMonths, eachWeekendOfInterval } from "date-fns";
 
 export async function GET(req: Request) {
@@ -52,7 +53,9 @@ export async function GET(req: Request) {
             }
         });
 
-        const totalRevenue = pastBookings.reduce((acc, b) => acc + b.totalPrice, 0);
+        const totalRevenue = pastBookings
+            .filter((b) => b.accessCode !== "OWNER_BLOCK")
+            .reduce((acc, b) => acc + getBookingBreakdown(b).ownerNet, 0);
         const avgMonthlyRevenue = totalRevenue / 3;
         const nextMonthForecast = avgMonthlyRevenue * 1.1;
 

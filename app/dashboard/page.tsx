@@ -19,6 +19,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { toast } from "sonner";
+import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
 function hasBookingProofOfPayment(booking: any): boolean {
     return (
@@ -353,8 +354,15 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                             {isReserved ? t("renter.totalPaid") : t("space.estimatedTotal")}
                         </p>
                         <p className="font-black text-lg">{booking.totalPrice} RON</p>
+                        <p className="text-[11px] font-semibold text-amber-700">
+                            {t("space.platformFeeIncluded")} ({booking.platformFee ?? 0} RON)
+                        </p>
                     </div>
                 </div>
+
+                {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && (
+                    <BookingPriceBreakdown booking={booking} />
+                )}
 
                 {/* STAGE 1: PENDING FOR CONFIRMATION (Waiting for Owner Approval) */}
                 {isPending && (

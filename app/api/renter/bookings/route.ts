@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { getBookingBreakdown } from "@/lib/pricing";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -58,24 +59,13 @@ export async function GET(req: Request) {
         });
 
         const bookings = rawBookings.map((b: any) => {
-            const amount =
-                typeof b.basePrice === "number" && b.basePrice > 0
-                    ? Math.round(b.basePrice * 100) / 100
-                    : typeof b.totalPrice === "number" && b.totalPrice > 0
-                    ? Math.round(
-                          ((b.totalPrice - (typeof b.insurance === "number" && b.insurance > 0 ? b.insurance : 0)) ||
-                              b.totalPrice) *
-                              100
-                      ) / 100
-                    : 0;
+            const { total, platformFee, ownerNet } = getBookingBreakdown(b);
             return {
                 ...b,
-                basePrice: amount,
-                totalPrice: amount,
-                ownerEarnings: amount,
-                commission: 0,
-                insurance: 0,
-                cleaningFee: 0,
+                totalPrice: total,
+                platformFee,
+                commission: platformFee,
+                ownerEarnings: ownerNet,
             };
         });
 
