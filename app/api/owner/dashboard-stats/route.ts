@@ -57,13 +57,14 @@ export async function GET(req: Request) {
                     },
                 },
                 renter: true,
+                transaction: true,
             },
             orderBy: { createdAt: "desc" }
         });
 
         const rawBookings = await (prisma as any).booking.findMany({
             where: { spaceId: { in: spaceIds }, status: { in: ["CONFIRMED", "COMPLETED"] } },
-            include: { space: true, renter: true },
+            include: { space: true, renter: true, transaction: true },
             orderBy: { startTime: "asc" }
         });
 

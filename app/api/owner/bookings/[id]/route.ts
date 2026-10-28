@@ -70,11 +70,26 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         if (action === "APPROVE") {
-            await prisma.booking.update({
+            const updated = await prisma.booking.update({
                 where: { id: bookingId },
                 data: { status: "CONFIRMED" },
             });
-            return NextResponse.json({ success: true });
+            return NextResponse.json({
+                success: true,
+                status: updated.status,
+                message: "Reservation request approved. Renter notified to proceed with payment.",
+            });
+        }
+
+        if (action === "REJECT") {
+            const updated = await prisma.booking.update({
+                where: { id: bookingId },
+                data: { status: "REJECTED" },
+            });
+            return NextResponse.json({
+                success: true,
+                status: updated.status,
+            });
         }
 
         if (action === "SUGGEST") {

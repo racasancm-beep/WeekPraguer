@@ -7,6 +7,13 @@ import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 
+function hasBookingProofOfPayment(booking: any): boolean {
+    return (
+        Boolean(booking?.paymentId && String(booking.paymentId).trim().length > 0) ||
+        booking?.transaction?.paymentStatus === "COMPLETED"
+    );
+}
+
 export default function BookingsPage() {
     const [pendingBookings, setPendingBookings] = useState<any[]>([]);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
@@ -67,17 +74,22 @@ export default function BookingsPage() {
                                 <Card key={booking.id} className="border-yellow-200 bg-yellow-50/30">
                                     <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div>
-                                            <p className="font-semibold text-gray-900">{booking.space?.name}</p>
-                                            <p className="text-sm text-gray-600">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-semibold text-gray-900">{booking.space?.name}</p>
+                                                <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-bold">
+                                                    {t("renter.status.pending")}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-1">
                                                 {new Date(booking.startTime).toLocaleString()} -{" "}
                                                 {new Date(booking.endTime).toLocaleString()}
                                             </p>
                                             <p className="text-xs text-gray-500 mt-1">
-                                                {t("owner.bookings.requestedBy")}: {booking.renter?.name || "Client"}
+                                                {t("owner.bookings.requestedBy")}: {booking.renter?.name || booking.renter?.email || "Client"}
                                             </p>
                                         </div>
                                         {canApproveThisBooking ? (
-                                            <div className="flex gap-2">
+                                            <div className="flex flex-wrap gap-2">
                                                 <Button
                                                     onClick={async () => {
                                                         const res = await fetch(`/api/owner/bookings/${booking.id}`, {
@@ -96,6 +108,27 @@ export default function BookingsPage() {
                                                     className="bg-green-600 hover:bg-green-700 text-white text-xs h-8"
                                                 >
                                                     {t("admin.verification.approve")}
+                                                </Button>
+
+                                                <Button
+                                                    variant="destructive"
+                                                    onClick={async () => {
+                                                        const res = await fetch(`/api/owner/bookings/${booking.id}`, {
+                                                            method: "PATCH",
+                                                            headers: { "Content-Type": "application/json" },
+                                                            body: JSON.stringify({ action: "REJECT" }),
+                                                        });
+                                                        if (res.ok) {
+                                                            toast.success(t("renter.status.rejected"));
+                                                            fetchData();
+                                                        } else {
+                                                            const err = await res.json();
+                                                            toast.error(err.error || "Unauthorized");
+                                                        }
+                                                    }}
+                                                    className="text-xs h-8"
+                                                >
+                                                    {t("common.reject")}
                                                 </Button>
 
                                                 <Button
@@ -149,10 +182,19 @@ export default function BookingsPage() {
                 <div className="grid gap-4">
                     {recentBookings.map((booking) => {
                         const isOwnerBlock = booking.accessCode === "OWNER_BLOCK";
+                        const hasProof = !isOwnerBlock && hasBookingProofOfPayment(booking);
+                        const proofRef = booking.paymentId || booking.transaction?.stripePaymentId;
+
                         return (
                             <Card
                                 key={booking.id}
-                                className={isOwnerBlock ? "bg-red-50/40 border-red-200" : "bg-white border-gray-200"}
+                                className={
+                                    isOwnerBlock
+                                        ? "bg-red-50/40 border-red-200"
+                                        : hasProof
+                                        ? "bg-emerald-50/30 border-emerald-200"
+                                        : "bg-white border-gray-200"
+                                }
                             >
                                 <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <div>
@@ -164,19 +206,28 @@ export default function BookingsPage() {
                                         <p className="text-xs text-gray-500 mt-1">
                                             {isOwnerBlock
                                                 ? `${t("card.occupied100")} • ${t("card.otherSources")} (${t("card.notAvailable")})`
-                                                : `${t("owner.bookings.bookedBy")}: ${booking.renter?.name || "Client"}`}
+                                                : `${t("owner.bookings.bookedBy")}: ${booking.renter?.name || booking.renter?.email || "Client"}`}
                                         </p>
+                                        {hasProof && proofRef && (
+                                            <p className="text-xs font-mono font-bold text-emerald-700 mt-1">
+                                                {t("renter.proofLabel")} {proofRef}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span
                                             className={`px-3 py-1 text-xs font-bold rounded-full ${
                                                 isOwnerBlock
                                                     ? "bg-red-100 text-red-800 border border-red-200"
-                                                    : "bg-green-100 text-green-800"
+                                                    : hasProof
+                                                    ? "bg-emerald-600 text-white"
+                                                    : "bg-blue-100 text-blue-800 border border-blue-200"
                                             }`}
                                         >
                                             {isOwnerBlock
                                                 ? `${t("card.occupied100")} • ${t("card.otherSources")}`
+                                                : hasProof
+                                                ? t("renter.status.reserved")
                                                 : booking.status === "CONFIRMED"
                                                 ? t("renter.status.approved")
                                                 : booking.status}

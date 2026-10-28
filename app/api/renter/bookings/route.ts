@@ -15,27 +15,46 @@ export async function GET(req: Request) {
         const targetUserId = searchParams.get("userId");
         const isAdmin = (session.user as any).role === "ADMIN";
 
-        const whereClause = isAdmin
+        let resolvedRenterId = (session.user as any).id;
+        if (!isAdmin && session.user?.email) {
+            const dbUser = await prisma.user.findFirst({
+                where: { email: { equals: session.user.email.trim(), mode: "insensitive" } },
+                select: { id: true },
+            });
+            if (dbUser) resolvedRenterId = dbUser.id;
+        }
+
+        const baseFilter = isAdmin
             ? targetUserId
                 ? { renterId: targetUserId }
                 : {}
-            : { renterId: (session.user as any).id };
+            : { renterId: resolvedRenterId };
+
+        const whereClause = {
+            ...baseFilter,
+            OR: [{ accessCode: null }, { accessCode: { not: "OWNER_BLOCK" } }],
+        };
 
         let inspectedUser = null;
         if (isAdmin && targetUserId) {
             inspectedUser = await (prisma as any).user.findUnique({
                 where: { id: targetUserId },
-                select: { id: true, name: true, email: true, role: true }
+                select: { id: true, name: true, email: true, role: true },
             });
         }
 
         const bookings = await prisma.booking.findMany({
             where: whereClause,
             include: {
-                space: true,
-                renter: { select: { id: true, name: true, email: true } }
+                space: {
+                    include: {
+                        owner: { select: { id: true, name: true, email: true } },
+                    },
+                },
+                renter: { select: { id: true, name: true, email: true } },
+                transaction: true,
             },
-            orderBy: { startTime: "desc" }
+            orderBy: { createdAt: "desc" },
         });
 
         return NextResponse.json({ bookings, inspectedUser });
