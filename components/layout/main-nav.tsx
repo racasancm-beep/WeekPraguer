@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -9,12 +10,17 @@ import { useSession, signOut } from "next-auth/react";
 
 export function MainNav() {
     const { t } = useLanguage();
+    const pathname = usePathname();
     const { data: session, status } = useSession();
     const role = (session?.user as any)?.role;
     const isAdmin = role === "ADMIN";
     const isOwner = role === "OWNER";
     const isOwnerOrAdmin = isOwner || isAdmin;
     const listSpaceHref = session ? (isOwnerOrAdmin ? "/owner/dashboard/listings/create" : "/owner/dashboard/listings/create") : "/register?role=OWNER";
+    const loginNavHref =
+        pathname && pathname.startsWith("/spaces/")
+            ? `/login?callbackUrl=${encodeURIComponent(pathname)}`
+            : "/login";
     const tickerText = t("nav.tickerText");
 
     const userName = session?.user?.name || session?.user?.email?.split("@")[0] || "";
@@ -151,7 +157,7 @@ export function MainNav() {
                                 {t("nav.dashboard")}
                             </Link>
                         ) : (
-                            <Link href="/login" className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
+                            <Link href={loginNavHref} className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
                                 {t("nav.login")}
                             </Link>
                         )}

@@ -126,7 +126,32 @@ export default function SpaceDetailsPage() {
     const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (id) fetchSpace();
+        if (id) {
+            fetchSpace();
+            try {
+                const savedStateRaw = sessionStorage.getItem(`pendingBookingState_${id}`);
+                if (savedStateRaw) {
+                    const parsed = JSON.parse(savedStateRaw);
+                    if (Array.isArray(parsed.selectedDates) && parsed.selectedDates.length > 0) {
+                        const restoredDates = parsed.selectedDates.map((iso: string) => new Date(iso));
+                        setSelectedDates(restoredDates);
+                    }
+                    if (parsed.slots && typeof parsed.slots === "object") {
+                        const restoredSlots: Record<string, BookingSlot> = {};
+                        Object.entries(parsed.slots).forEach(([k, v]: [string, any]) => {
+                            restoredSlots[k] = {
+                                ...v,
+                                date: new Date(v.date),
+                            };
+                        });
+                        setSlots(restoredSlots);
+                    }
+                    sessionStorage.removeItem(`pendingBookingState_${id}`);
+                }
+            } catch {
+                // ignore storage errors
+            }
+        }
     }, [id]);
 
     const applyBookingsToCalendar = (bData: any[]) => {
@@ -311,8 +336,23 @@ export default function SpaceDetailsPage() {
 
     const handleBook = async () => {
         if (!session) {
+            const returnPath = `/spaces/${id}`;
+            try {
+                sessionStorage.setItem("postAuthRedirectUrl", returnPath);
+                if (selectedDates.length > 0) {
+                    sessionStorage.setItem(
+                        `pendingBookingState_${id}`,
+                        JSON.stringify({
+                            selectedDates: selectedDates.map((d) => d.toISOString()),
+                            slots,
+                        })
+                    );
+                }
+            } catch {
+                // ignore storage errors
+            }
             toast.error(t("space.errSignIn"));
-            router.push(`/login?callbackUrl=/spaces/${id}`);
+            router.push(`/login?callbackUrl=${encodeURIComponent(returnPath)}`);
             return;
         }
 

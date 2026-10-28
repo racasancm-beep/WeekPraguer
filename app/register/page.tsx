@@ -19,6 +19,8 @@ function RegisterForm() {
     const { t } = useLanguage();
     const searchParams = useSearchParams();
     const initialRole = searchParams.get("role")?.toUpperCase() as UserRole;
+    const paramCallbackUrl = searchParams.get("callbackUrl");
+    const [resolvedCallbackUrl, setResolvedCallbackUrl] = useState<string | null>(null);
     const [role, setRole] = useState<UserRole>(
         ["OWNER", "RENTER"].includes(initialRole) ? initialRole : "RENTER"
     );
@@ -31,15 +33,46 @@ function RegisterForm() {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
 
-    // If user is already logged in as OWNER or ADMIN and clicks "List a Space", take them straight to Add New Space
+    useEffect(() => {
+        if (paramCallbackUrl && paramCallbackUrl.startsWith("/")) {
+            setResolvedCallbackUrl(paramCallbackUrl);
+            try {
+                sessionStorage.setItem("postAuthRedirectUrl", paramCallbackUrl);
+            } catch {
+                // ignore storage errors
+            }
+        } else {
+            try {
+                const stored = sessionStorage.getItem("postAuthRedirectUrl");
+                if (stored && stored.startsWith("/")) {
+                    setResolvedCallbackUrl(stored);
+                }
+            } catch {
+                // ignore storage errors
+            }
+        }
+    }, [paramCallbackUrl]);
+
+    const activeCallback = paramCallbackUrl || resolvedCallbackUrl;
+
+    // If user is already logged in, take them either back to their space callbackUrl or to Add New Space (if OWNER/ADMIN)
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
+            if (activeCallback && activeCallback.startsWith("/")) {
+                try {
+                    sessionStorage.removeItem("postAuthRedirectUrl");
+                } catch {
+                    // ignore
+                }
+                router.replace(activeCallback);
+                return;
+            }
             const userRole = (session.user as any).role;
             if (userRole === "OWNER" || userRole === "ADMIN") {
                 router.replace("/owner/dashboard/listings/create");
             }
         }
-    }, [status, session, router]);
+    }, [status, session, router, activeCallback]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -63,14 +96,24 @@ function RegisterForm() {
                 });
 
                 if (signInResult?.ok) {
-                    if (role === "OWNER") {
+                    if (activeCallback && activeCallback.startsWith("/")) {
+                        try {
+                            sessionStorage.removeItem("postAuthRedirectUrl");
+                        } catch {
+                            // ignore
+                        }
+                        router.push(activeCallback);
+                    } else if (role === "OWNER") {
                         router.push("/owner/dashboard/listings/create");
                     } else {
                         router.push("/dashboard");
                     }
                     router.refresh();
                 } else {
-                    router.push("/login?registered=true");
+                    const loginUrl = activeCallback
+                        ? `/login?registered=true&callbackUrl=${encodeURIComponent(activeCallback)}`
+                        : "/login?registered=true";
+                    router.push(loginUrl);
                 }
             } else {
                 toast.error(data.message || "Registration failed");
@@ -81,6 +124,10 @@ function RegisterForm() {
             setLoading(false);
         }
     };
+
+    const loginHref = activeCallback
+        ? `/login?callbackUrl=${encodeURIComponent(activeCallback)}`
+        : "/login";
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -257,7 +304,7 @@ function RegisterForm() {
 
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
                 {t("register.alreadyHaveAccount")}{" "}
-                <Link href="/login" className="text-[#008080] font-semibold hover:underline">
+                <Link href={loginHref} className="text-[#008080] font-semibold hover:underline">
                     {t("register.signIn")}
                 </Link>
             </p>
