@@ -84,7 +84,7 @@ export default function RenterLayout({
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto py-6 px-4">
+            <div className="py-4 px-4">
                 <nav className="space-y-1">
                     {navigation.map((item) => {
                         const isActive = pathname === item.href;
@@ -93,7 +93,7 @@ export default function RenterLayout({
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setIsMobileOpen(false)}
-                                className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                                className={`flex items-center px-3 py-2 text-sm font-medium rounded-xl transition-all ${
                                     isActive
                                         ? "bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-400 shadow-sm font-bold"
                                         : "text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -108,7 +108,7 @@ export default function RenterLayout({
             </div>
 
             {/* Bottom-Left Corner: Unique Referral QR Code with Darker Genie */}
-            <div className="mt-auto border-t border-gray-200 dark:border-gray-800">
+            <div className="mt-2 border-t border-gray-200 dark:border-gray-800">
                 <ProfileQrCard role="CUSTOMER" />
             </div>
         </div>
