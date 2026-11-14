@@ -4,12 +4,14 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
-import { Calendar, Lock, User, Briefcase, Eye, EyeOff } from "lucide-react";
+import { Calendar, Lock, User, Briefcase, Eye, EyeOff, QrCode, Upload, CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { scanQRCodeFromImageFile } from "@/lib/qr-scanner";
+import { extractReferralCode } from "@/lib/referral";
 
 type UserRole = "OWNER" | "RENTER";
 
@@ -32,6 +34,76 @@ function RegisterForm() {
     });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // Referral QR code states
+    const urlRef = searchParams.get("ref");
+    const [hasQrCode, setHasQrCode] = useState<boolean>(Boolean(urlRef));
+    const [referralCode, setReferralCode] = useState<string>(urlRef ? extractReferralCode(urlRef) : "");
+    const [scanningQr, setScanningQr] = useState(false);
+    const [qrImagePreview, setQrImagePreview] = useState<string | null>(null);
+    const [verifiedReferrer, setVerifiedReferrer] = useState<{ name: string; role: string } | null>(null);
+    const [referralError, setReferralError] = useState<string | null>(null);
+
+    const verifyCode = async (codeToVerify: string) => {
+        const clean = extractReferralCode(codeToVerify);
+        if (!clean) {
+            setVerifiedReferrer(null);
+            setReferralError(null);
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/referrals/verify?code=${encodeURIComponent(clean)}`);
+            const json = await res.json();
+            if (json.valid) {
+                setVerifiedReferrer({
+                    name: json.referrerName,
+                    role: json.referrerRole === "OWNER" ? "Proprietar" : "Client",
+                });
+                setReferralError(null);
+            } else {
+                setVerifiedReferrer(null);
+                setReferralError(json.error || "Cod QR invalid sau deja utilizat.");
+            }
+        } catch {
+            setVerifiedReferrer(null);
+            setReferralError("Eroare la verificarea codului QR.");
+        }
+    };
+
+    useEffect(() => {
+        if (urlRef) {
+            verifyCode(urlRef);
+        }
+    }, [urlRef]);
+
+    const handleQrImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setScanningQr(true);
+        setReferralError(null);
+
+        // Preview image
+        const objectUrl = URL.createObjectURL(file);
+        setQrImagePreview(objectUrl);
+
+        try {
+            const scannedCode = await scanQRCodeFromImageFile(file);
+            if (scannedCode) {
+                setReferralCode(scannedCode);
+                toast.success(t("referral.scannedSuccess") || "Cod QR scanat cu succes din imagine!");
+                await verifyCode(scannedCode);
+            } else {
+                setReferralError(t("referral.scanFailed") || "Nu s-a putut citi niciun cod QR valid din această imagine. Te rugăm să introduci codul manual.");
+            }
+        } catch (err) {
+            console.error("QR Scan error:", err);
+            setReferralError("Eroare la procesarea imaginii codului QR.");
+        } finally {
+            setScanningQr(false);
+        }
+    };
 
     useEffect(() => {
         if (paramCallbackUrl && paramCallbackUrl.startsWith("/")) {
