@@ -151,10 +151,15 @@ function RegisterForm() {
         setLoading(true);
 
         try {
+            const payload: any = { ...formData, role };
+            if (hasQrCode && referralCode.trim()) {
+                payload.referralCode = referralCode.trim();
+            }
+
             const response = await fetch("/api/auth/register", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...formData, role }),
+                body: JSON.stringify(payload),
             });
 
             const data = await response.json();
