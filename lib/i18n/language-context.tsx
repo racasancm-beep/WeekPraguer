@@ -553,7 +553,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "admin.verification.success": "Utilizator verificat cu succes",
         "admin.verification.error": "Eroare la verificarea utilizatorului",
 
-        "owner.roleBadge": "Owner",
+        "owner.roleBadge": "Proprietar",
         "owner.backToAdminHub": "Înapoi la Panoul ADMIN",
         "owner.dashboardTitle": "Panou Proprietar",
         "owner.nav.earningsGraphs": "Venituri & Grafice",
@@ -674,7 +674,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "owner.form.creatingBtn": "Se publică spațiul...",
         "owner.form.createBtn": "Publică Spațiul",
 
-        "renter.roleBadge": "Customer",
+        "renter.roleBadge": "Client",
         "renter.nav.myBookings": "Rezervările Mele",
         "renter.nav.exploreSpaces": "Explorează Spații",
         "renter.viewingProfile": "Vizualizare Profil Client",
