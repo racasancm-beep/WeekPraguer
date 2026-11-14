@@ -43,7 +43,7 @@ export default function RenterLayout({
     ];
 
     const Sidebar = () => (
-        <div className="flex h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800">
+        <div className="flex min-h-full flex-col bg-white dark:bg-gray-900 border-r dark:border-gray-800 overflow-y-auto">
             <div className="p-4 border-b dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
                 <div className="flex items-center mb-3 px-1">
                     <Avatar className="h-9 w-9 mr-3 border-2 border-white dark:border-gray-800 shadow-sm">
