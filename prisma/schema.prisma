@@ -38,6 +38,10 @@ model User {
   receivedReviews      Review[]         @relation("ReviewSubject")
   sessions             Session[]
   ownedSpaces          Space[]          @relation("SpaceOwner")
+  referralCodes        ReferralCode[]   @relation("GeneratedReferrals")
+  usedReferralCode     ReferralCode?    @relation("UsedReferralCode")
+  referredUsers        Referral[]       @relation("ReferrerUser")
+  referredBy           Referral?        @relation("RefereeUser")
 
   @@map("users")
 }
@@ -220,4 +224,44 @@ enum SubscriptionTier {
   PREMIUM
   ULTIMATE
 }
+
+model ReferralCode {
+  id           String         @id @default(cuid())
+  code         String         @unique
+  referrerId   String
+  referrerRole UserRole
+  used         Boolean        @default(false)
+  usedAt       DateTime?
+  usedById     String?        @unique
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  referrer     User           @relation("GeneratedReferrals", fields: [referrerId], references: [id], onDelete: Cascade)
+  usedBy       User?          @relation("UsedReferralCode", fields: [usedById], references: [id])
+  referrals    Referral[]
+
+  @@map("referral_codes")
+}
+
+model Referral {
+  id                String         @id @default(cuid())
+  referrerId        String
+  refereeId         String         @unique
+  referralCodeId    String
+  status            ReferralStatus @default(PENDING)
+  qualifiedAt       DateTime?
+  qualificationType String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  referrer          User           @relation("ReferrerUser", fields: [referrerId], references: [id], onDelete: Cascade)
+  referee           User           @relation("RefereeUser", fields: [refereeId], references: [id], onDelete: Cascade)
+  referralCode      ReferralCode   @relation(fields: [referralCodeId], references: [id], onDelete: Cascade)
+
+  @@map("referrals")
+}
+
+enum ReferralStatus {
+  PENDING
+  CONFIRMED
+}
+
 

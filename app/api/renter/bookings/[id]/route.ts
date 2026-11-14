@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { checkAndQualifyReferralsForBooking } from "@/lib/referral";
 
 async function resolveSessionUserId(session: any): Promise<string | null> {
     const rawId = (session?.user as any)?.id;
@@ -107,6 +108,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 });
             });
 
+            // Trigger referral qualification check
+            try {
+                await checkAndQualifyReferralsForBooking({
+                    renterId: updatedBooking.renterId,
+                    ownerId: updatedBooking.space.ownerId,
+                    bookingId: updatedBooking.id,
+                });
+            } catch (err) {
+                console.error("Referral qualification check error:", err);
+            }
+
             return NextResponse.json({
                 success: true,
                 effectiveStatus: "RESERVED",
@@ -128,7 +140,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                     proposedStartTime: null,
                     proposedEndTime: null,
                 },
+                include: {
+                    space: true,
+                },
             });
+
+            // Trigger referral qualification check
+            try {
+                await checkAndQualifyReferralsForBooking({
+                    renterId: updatedBooking.renterId,
+                    ownerId: updatedBooking.space.ownerId,
+                    bookingId: updatedBooking.id,
+                });
+            } catch (err) {
+                console.error("Referral qualification check error:", err);
+            }
+
             return NextResponse.json({ success: true, booking: updatedBooking });
         } else if (action === "reject") {
             const updatedBooking = await prisma.booking.update({

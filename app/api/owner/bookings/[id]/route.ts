@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { checkAndQualifyReferralsForBooking } from "@/lib/referral";
 
 async function resolveOwnerUserId(session: any): Promise<string | null> {
     const rawId = (session?.user as any)?.id;
@@ -74,6 +75,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 where: { id: bookingId },
                 data: { status: "CONFIRMED" },
             });
+
+            // Trigger referral qualification check
+            try {
+                await checkAndQualifyReferralsForBooking({
+                    renterId: booking.renterId,
+                    ownerId: booking.space.ownerId,
+                    bookingId: updated.id,
+                });
+            } catch (err) {
+                console.error("Referral qualification error:", err);
+            }
+
             return NextResponse.json({
                 success: true,
                 status: updated.status,
