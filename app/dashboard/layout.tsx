@@ -56,7 +56,7 @@ export default function RenterLayout({
                                 {session.user?.name || session.user?.email?.split("@")[0] || "Member"}
                             </p>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400 uppercase tracking-tighter">
-                                {isAdmin ? "Admin → Renter" : t("renter.roleBadge")}
+                                {isAdmin ? "Admin → Customer" : t("renter.roleBadge")}
                             </span>
                         </div>
                         <p className="text-[11px] text-gray-500 truncate">{session.user?.email}</p>

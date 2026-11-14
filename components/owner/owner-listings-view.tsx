@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, ChevronDown, ChevronUp } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
@@ -150,46 +151,16 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                         </div>
                                     )}
 
-                                    {/* Confirmed / Reserved Bookings for this Space: Period + Amount (No Platform Fee) + Renter Contact Details */}
+                                    {/* Confirmed / Reserved Bookings for this Space: Period + Amount (Owner Price) + Customer Contact Details */}
                                     {confirmedRenterBookings.length > 0 && (
                                         <div className="mb-3 p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-2">
                                             <div className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-900">
                                                 {t("owner.listings.confirmedReservationsTitle")} ({confirmedRenterBookings.length})
                                             </div>
-                                            <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
-                                                {confirmedRenterBookings.map((bk: any) => {
-                                                    return (
-                                                        <div
-                                                            key={bk.id}
-                                                            className="p-2 rounded-md bg-white border border-emerald-200 text-[11px] space-y-1"
-                                                        >
-                                                            <div className="font-bold text-gray-800">
-                                                                {new Date(bk.startTime).toLocaleDateString()} -{" "}
-                                                                {new Date(bk.endTime).toLocaleDateString()}
-                                                            </div>
-                                                            <BookingPriceBreakdown booking={bk} space={space} highlightOwnerNet compact />
-                                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-700 pt-1 border-t border-gray-100">
-                                                                <span className="inline-flex items-center gap-1 font-bold text-gray-900">
-                                                                    <User className="w-3 h-3 text-violet-600" />
-                                                                    {bk.renter?.name || bk.renter?.email || "Client"}
-                                                                </span>
-                                                                {bk.renter?.email && (
-                                                                    <a
-                                                                        href={`mailto:${bk.renter.email}`}
-                                                                        className="inline-flex items-center gap-1 font-mono text-blue-700 hover:underline"
-                                                                    >
-                                                                        <Mail className="w-3 h-3 text-blue-600" />
-                                                                        {bk.renter.email}
-                                                                    </a>
-                                                                )}
-                                                                <span className="inline-flex items-center gap-1 font-semibold">
-                                                                    <Phone className="w-3 h-3 text-emerald-600" />
-                                                                    {bk.renter?.phone || t("owner.bookings.noPhoneProvided")}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                })}
+                                            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                                {confirmedRenterBookings.map((bk: any) => (
+                                                    <OwnerConfirmedReservationItem key={bk.id} bk={bk} space={space} />
+                                                ))}
                                             </div>
                                         </div>
                                     )}
@@ -217,6 +188,69 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                             </div>
                         );
                     })}
+                </div>
+            )}
+        </div>
+    );
+}
+
+function OwnerConfirmedReservationItem({ bk, space }: { bk: any; space: any }) {
+    const { t } = useLanguage();
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+        <div
+            className={`p-2 rounded-md border text-[11px] transition-all ${
+                isExpanded ? "bg-white border-emerald-300 shadow-sm" : "bg-white/90 border-emerald-200 hover:border-emerald-400 cursor-pointer"
+            }`}
+            onClick={() => {
+                if (!isExpanded) setIsExpanded(true);
+            }}
+        >
+            <div className="flex items-center justify-between gap-1">
+                <div className="font-bold text-gray-800">
+                    {new Date(bk.startTime).toLocaleDateString()} - {new Date(bk.endTime).toLocaleDateString()}
+                </div>
+                <div className="flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 uppercase">
+                        {t("renter.status.approved")}
+                    </span>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setIsExpanded(!isExpanded);
+                        }}
+                        className="p-0.5 rounded text-gray-500 hover:text-emerald-700"
+                        title={isExpanded ? t("common.hideDetails") : t("common.showDetails")}
+                    >
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                </div>
+            </div>
+
+            {isExpanded && (
+                <div className="mt-2 pt-2 border-t border-gray-100 space-y-1.5">
+                    <BookingPriceBreakdown booking={bk} space={space} highlightOwnerNet compact />
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px] text-gray-700 pt-1 border-t border-gray-100">
+                        <span className="inline-flex items-center gap-1 font-bold text-gray-900">
+                            <User className="w-3 h-3 text-violet-600" />
+                            {bk.renter?.name || bk.renter?.email || "Customer"}
+                        </span>
+                        {bk.renter?.email && (
+                            <a
+                                href={`mailto:${bk.renter.email}`}
+                                className="inline-flex items-center gap-1 font-mono text-blue-700 hover:underline"
+                            >
+                                <Mail className="w-3 h-3 text-blue-600" />
+                                {bk.renter.email}
+                            </a>
+                        )}
+                        <span className="inline-flex items-center gap-1 font-semibold">
+                            <Phone className="w-3 h-3 text-emerald-600" />
+                            {bk.renter?.phone || t("owner.bookings.noPhoneProvided")}
+                        </span>
+                    </div>
                 </div>
             )}
         </div>

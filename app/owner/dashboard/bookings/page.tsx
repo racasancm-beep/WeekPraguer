@@ -340,109 +340,166 @@ export default function BookingsPage() {
             <div className="mt-8">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.historyTitle")}</h2>
                 <div className="grid gap-4">
-                    {recentBookings.map((booking) => {
-                        const isOwnerBlock = booking.accessCode === "OWNER_BLOCK";
-                        const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
-                        const hasProof = !isOwnerBlock && !isRejected && hasBookingProofOfPayment(booking);
-                        const proofRef = booking.paymentId || booking.transaction?.stripePaymentId;
-
-                        return (
-                            <Card
-                                key={booking.id}
-                                className={
-                                    isOwnerBlock || isRejected
-                                        ? "bg-red-50/40 border-red-200"
-                                        : hasProof
-                                        ? "bg-emerald-50/30 border-emerald-200"
-                                        : "bg-white border-gray-200"
-                                }
-                            >
-                                <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div className="space-y-2">
-                                        <p className="font-semibold text-gray-900">{booking.space?.name}</p>
-
-                                        {/* Period + Reservation Pricing (15% Platform Fee + 85% Owner Net) */}
-                                        <div className="flex flex-wrap items-center gap-2.5">
-                                            <p className="text-sm font-medium text-gray-700">
-                                                {formatReservationPeriod(booking)}
-                                            </p>
-                                            {!isOwnerBlock && <BookingPriceBreakdown booking={booking} highlightOwnerNet />}
-                                        </div>
-
-                                        {isOwnerBlock ? (
-                                            <p className="text-xs text-red-700 font-semibold">
-                                                {`${t("card.occupied100")} • ${t("card.otherSources")} (${t("card.notAvailable")})`}
-                                            </p>
-                                        ) : (
-                                            /* Renter Contact Details for Confirmed / Reserved Space */
-                                            <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
-                                                <span className="font-black uppercase tracking-wider text-gray-500 text-[10px]">
-                                                    {t("owner.bookings.renterContactTitle")}:
-                                                </span>
-                                                <span className="inline-flex items-center gap-1 font-bold text-gray-900">
-                                                    <User className="w-3.5 h-3.5 text-violet-600" />
-                                                    {booking.renter?.name || booking.renter?.email || "Client"}
-                                                </span>
-                                                {booking.renter?.email && (
-                                                    <a
-                                                        href={`mailto:${booking.renter.email}`}
-                                                        className="inline-flex items-center gap-1 font-mono font-semibold text-blue-700 hover:underline"
-                                                    >
-                                                        <Mail className="w-3.5 h-3.5 text-blue-600" />
-                                                        {booking.renter.email}
-                                                    </a>
-                                                )}
-                                                <span className="inline-flex items-center gap-1 font-semibold text-gray-700">
-                                                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                                                    {booking.renter?.phone ? (
-                                                        <a
-                                                            href={`tel:${booking.renter.phone}`}
-                                                            className="hover:underline text-emerald-800 font-bold"
-                                                        >
-                                                            {booking.renter.phone}
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-gray-400">
-                                                            {t("owner.bookings.noPhoneProvided")}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {hasProof && proofRef && (
-                                            <p className="text-xs font-mono font-bold text-emerald-700">
-                                                {t("renter.proofLabel")} {proofRef}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <span
-                                            className={`px-3 py-1 text-xs font-bold rounded-full ${
-                                                isOwnerBlock || isRejected
-                                                    ? "bg-red-100 text-red-800 border border-red-200"
-                                                    : hasProof
-                                                    ? "bg-emerald-600 text-white"
-                                                    : "bg-blue-100 text-blue-800 border border-blue-200"
-                                            }`}
-                                        >
-                                            {isOwnerBlock
-                                                ? `${t("card.occupied100")} • ${t("card.otherSources")}`
-                                                : isRejected
-                                                ? t("renter.status.rejected")
-                                                : hasProof
-                                                ? t("renter.status.reserved")
-                                                : booking.status === "CONFIRMED"
-                                                ? t("renter.status.approved")
-                                                : booking.status}
-                                        </span>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        );
-                    })}
+                    {recentBookings.map((booking) => (
+                        <OwnerBookingHistoryItem key={booking.id} booking={booking} />
+                    ))}
                 </div>
             </div>
         </div>
     );
+}
+
+function OwnerBookingHistoryItem({ booking }: { booking: any }) {
+    const { t } = useLanguage();
+    const isOwnerBlock = booking.accessCode === "OWNER_BLOCK";
+    const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
+    const hasProof = !isOwnerBlock && !isRejected && hasBookingProofOfPayment(booking);
+    const proofRef = booking.paymentId || booking.transaction?.stripePaymentId;
+    const isConfirmed = !isOwnerBlock && !isRejected && (booking.status === "CONFIRMED" || booking.status === "COMPLETED" || hasProof);
+
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const statusBadgeText = isOwnerBlock
+        ? `${t("card.occupied100")} • ${t("card.otherSources")}`
+        : isRejected
+        ? t("renter.status.rejected")
+        : hasProof
+        ? t("renter.status.reserved")
+        : booking.status === "CONFIRMED"
+        ? t("renter.status.approved")
+        : booking.status;
+
+    const badgeClassName = `px-3 py-1 text-xs font-bold rounded-full ${
+        isOwnerBlock || isRejected
+            ? "bg-red-100 text-red-800 border border-red-200"
+            : hasProof
+            ? "bg-emerald-600 text-white"
+            : "bg-blue-100 text-blue-800 border border-blue-200"
+    }`;
+
+    // Small collapsed view at beginning for confirmed rented spaces
+    if (isConfirmed && !isExpanded) {
+        return (
+            <Card
+                onClick={() => setIsExpanded(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setIsExpanded(true);
+                    }
+                }}
+                className={`cursor-pointer transition-all hover:shadow-md hover:border-violet-300 group ${
+                    hasProof ? "bg-emerald-50/30 border-emerald-200" : "bg-white border-blue-200"
+                }`}
+            >
+                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
+                        <div className="font-bold text-base text-gray-900 group-hover:text-[#008080] transition-colors truncate">
+                            {booking.space?.name}
+                        </div>
+                        <div className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span>{formatReservationPeriod(booking)}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                        <span className={badgeClassName}>{statusBadgeText}</span>
+                        <div className="p-1.5 rounded-full bg-gray-100 group-hover:bg-[#008080] group-hover:text-white text-gray-500 transition-colors">
+                            <ChevronDown className="w-4 h-4" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
+    return (
+        <Card
+            className={
+                isOwnerBlock || isRejected
+                    ? "bg-red-50/40 border-red-200"
+                    : hasProof
+                    ? "bg-emerald-50/30 border-emerald-200"
+                    : "bg-white border-gray-200"
+            }
+        >
+            <CardContent className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-2 flex-1">
+                    <p className="font-semibold text-gray-900">{booking.space?.name}</p>
+
+                    {/* Period + Reservation Pricing (Owner Price + Platform Fee) */}
+                    <div className="flex flex-wrap items-center gap-2.5">
+                        <p className="text-sm font-medium text-gray-700">
+                            {formatReservationPeriod(booking)}
+                        </p>
+                        {!isOwnerBlock && <BookingPriceBreakdown booking={booking} highlightOwnerNet />}
+                    </div>
+
+                    {isOwnerBlock ? (
+                        <p className="text-xs text-red-700 font-semibold">
+                            {`${t("card.occupied100")} • ${t("card.otherSources")} (${t("card.notAvailable")})`}
+                        </p>
+                    ) : (
+                        /* Customer Contact Details for Confirmed / Reserved Space */
+                        <div className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+                            <span className="font-black uppercase tracking-wider text-gray-500 text-[10px]">
+                                {t("owner.bookings.renterContactTitle")}:
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-bold text-gray-900">
+                                <User className="w-3.5 h-3.5 text-violet-600" />
+                                {booking.renter?.name || booking.renter?.email || "Customer"}
+                            </span>
+                            {booking.renter?.email && (
+                                <a
+                                    href={`mailto:${booking.renter.email}`}
+                                    className="inline-flex items-center gap-1 font-mono font-semibold text-blue-700 hover:underline"
+                                >
+                                    <Mail className="w-3.5 h-3.5 text-blue-600" />
+                                    {booking.renter.email}
+                                </a>
+                            )}
+                            <span className="inline-flex items-center gap-1 font-semibold text-gray-700">
+                                <Phone className="w-3.5 h-3.5 text-emerald-600" />
+                                {booking.renter?.phone ? (
+                                    <a
+                                        href={`tel:${booking.renter.phone}`}
+                                        className="hover:underline text-emerald-800 font-bold"
+                                    >
+                                        {booking.renter.phone}
+                                    </a>
+                                ) : (
+                                    <span className="text-gray-400">
+                                        {t("owner.bookings.noPhoneProvided")}
+                                    </span>
+                                )}
+                            </span>
+                        </div>
+                    )}
+
+                    {hasProof && proofRef && (
+                        <p className="text-xs font-mono font-bold text-emerald-700">
+                            {t("renter.proofLabel")} {proofRef}
+                        </p>
+                    )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className={badgeClassName}>{statusBadgeText}</span>
+                    {isConfirmed && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsExpanded(false)}
+                            className="h-8 text-xs font-bold gap-1 text-gray-600 hover:text-gray-900 border-gray-300"
+                        >
+                            <ChevronUp className="w-4 h-4" />
+                            <span className="hidden sm:inline">{t("common.hideDetails")}</span>
+                        </Button>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 }

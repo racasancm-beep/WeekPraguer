@@ -619,7 +619,7 @@ export default function AdminDashboard() {
                                         <div className="flex items-center gap-3 min-w-0">
                                             <Avatar className="h-9 w-9">
                                                 <AvatarFallback className="bg-blue-100 text-blue-700 text-xs font-bold">
-                                                    {u.name?.[0] || "R"}
+                                                    {u.name?.[0] || "C"}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="min-w-0">
