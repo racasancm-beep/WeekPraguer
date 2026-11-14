@@ -2344,8 +2344,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "register.title": "Konto erstellen",
         "register.subtitle": "Werde Teil der Community für stundenweise buchbare Räume",
         "register.iWantTo": "Ich möchte:",
-        "register.rentSpace": "Customer",
-        "register.listSpace": "Owner of a space",
+        "register.rentSpace": "Kunde",
+        "register.listSpace": "Eigentümer eines Raumes",
         "register.fullName": "Vollständiger Name",
         "register.fullNamePlaceholder": "Max Mustermann",
         "register.emailAddress": "E-Mail-Adresse",
@@ -2621,7 +2621,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "admin.verification.success": "Benutzer erfolgreich verifiziert",
         "admin.verification.error": "Fehler bei der Verifizierung",
 
-        "owner.roleBadge": "Owner",
+        "owner.roleBadge": "Eigentümer",
         "owner.backToAdminHub": "Zurück zum ADMIN-Zentrum",
         "owner.dashboardTitle": "Gastgeber-Dashboard",
         "owner.nav.earningsGraphs": "Einnahmen & Diagramme",
@@ -2742,7 +2742,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "owner.form.creatingBtn": "Raum wird veröffentlicht...",
         "owner.form.createBtn": "Raum veröffentlichen",
 
-        "renter.roleBadge": "Customer",
+        "renter.roleBadge": "Kunde",
         "renter.nav.myBookings": "Meine Buchungen",
         "renter.nav.exploreSpaces": "Räume entdecken",
         "renter.viewingProfile": "Mieter-Profil wird angezeigt",
