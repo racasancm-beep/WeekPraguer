@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { ProfileQrCard } from "@/components/referral/profile-qr-card";
 
 export default function RenterLayout({
     children,
@@ -104,6 +105,11 @@ export default function RenterLayout({
                         );
                     })}
                 </nav>
+            </div>
+
+            {/* Bottom-Left Corner: Unique Referral QR Code with Darker Genie */}
+            <div className="mt-auto border-t border-gray-200 dark:border-gray-800">
+                <ProfileQrCard role="CUSTOMER" />
             </div>
         </div>
     );
