@@ -249,10 +249,10 @@ function EarningsPageContent() {
                                                 {t("owner.bookings.totalAmount")}: {Number(booking.totalPrice || 0).toFixed(2)} RON
                                             </div>
                                             <div className="text-[10px] font-semibold text-amber-700">
-                                                {t("owner.bookings.platformFee")}: -{Number(booking.platformFee ?? booking.commission ?? 0).toFixed(2)} RON
+                                                {t("owner.bookings.platformFee")}: {Number(booking.platformFee ?? booking.commission ?? 0).toFixed(2)} RON
                                             </div>
                                             <div className="font-bold text-sm text-emerald-700">
-                                                +RON{Number(booking.ownerEarnings || 0).toFixed(2)}
+                                                {t("owner.bookings.ownerPrice")}: RON{Number(booking.ownerEarnings || 0).toFixed(2)}
                                             </div>
                                         </div>
                                     </div>

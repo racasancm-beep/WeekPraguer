@@ -69,20 +69,22 @@ export async function GET(req: Request) {
             orderBy: { startTime: "asc" }
         });
 
-        // Owner earnings = Total minus 15% platform fee (rejected bookings and owner blocks earn nothing)
+        // Owner earnings = the amount the owner put for the space (rejected bookings and owner blocks earn 0)
         const calculateOwnerEarnings = (b: any) => {
             if (b.accessCode === "OWNER_BLOCK" || b.status === "REJECTED" || b.status === "CANCELLED") return 0;
-            return getBookingBreakdown(b).ownerNet;
+            return getBookingBreakdown(b).ownerPrice;
         };
 
         const normalizeBookingWithPlatformFee = (b: any) => {
-            const { total, platformFee, ownerNet } = getBookingBreakdown(b);
+            const { total, platformFee, ownerPrice } = getBookingBreakdown(b);
             return {
                 ...b,
+                basePrice: ownerPrice,
+                ownerPrice,
                 totalPrice: total,
                 platformFee,
                 commission: platformFee,
-                ownerEarnings: ownerNet,
+                ownerEarnings: ownerPrice,
                 adminEarnings: platformFee,
             };
         };

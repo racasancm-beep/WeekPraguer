@@ -8,6 +8,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Navigation, RotateCcw, Search, Loader2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { calculateSpaceCustomerPrice } from "@/lib/pricing";
 
 // Google Maps style red pin SVG icon
 const googlePinSvg = encodeURIComponent(`
@@ -458,7 +459,7 @@ export default function InteractiveMap({
                                         </div>
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                                             <span className="text-sm font-black text-[#008080]">
-                                                {space.hourlyRate} RON/h
+                                                {calculateSpaceCustomerPrice(space.hourlyRate)} RON/h
                                             </span>
                                             <Link
                                                 href={`/spaces/${space.id}`}

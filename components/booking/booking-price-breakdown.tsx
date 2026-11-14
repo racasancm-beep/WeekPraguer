@@ -7,20 +7,27 @@ import { getBookingBreakdown } from "@/lib/pricing";
 interface BookingPriceBreakdownProps {
     booking: any;
     space?: any;
-    /** Highlights the owner's net payout (owner view) */
+    /** Highlights the owner's price (owner view) */
     highlightOwnerNet?: boolean;
     compact?: boolean;
 }
 
 /**
- * Displays Total / Platform Fee (15% of total) / Owner Net (85%) for a booking.
- * Used in Owner, Renter and Admin profiles.
+ * Displays the price split for dashboards (Owners and Admin):
+ * - Total (Owner price + 15% Platform fee)
+ * - Owner Price (the amount the owner put for the space)
+ * - Platform Fee (15% from the owner's price)
  */
-export function BookingPriceBreakdown({ booking, space, highlightOwnerNet = false, compact = false }: BookingPriceBreakdownProps) {
+export function BookingPriceBreakdown({
+    booking,
+    space,
+    highlightOwnerNet = false,
+    compact = false,
+}: BookingPriceBreakdownProps) {
     const { t } = useLanguage();
     if (!booking || booking.accessCode === "OWNER_BLOCK") return null;
 
-    const { total, platformFee, ownerNet } = getBookingBreakdown(booking, space);
+    const { total, platformFee, ownerPrice } = getBookingBreakdown(booking, space);
     const textSize = compact ? "text-[10px]" : "text-xs";
 
     return (
@@ -29,9 +36,6 @@ export function BookingPriceBreakdown({ booking, space, highlightOwnerNet = fals
                 <Wallet className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
                 {t("owner.bookings.totalAmount")}: {total} RON
             </span>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold">
-                {t("owner.bookings.platformFee")}: {platformFee} RON
-            </span>
             <span
                 className={`px-2.5 py-0.5 rounded-full font-bold border ${
                     highlightOwnerNet
@@ -39,7 +43,10 @@ export function BookingPriceBreakdown({ booking, space, highlightOwnerNet = fals
                         : "bg-emerald-50 text-emerald-900 border-emerald-300"
                 }`}
             >
-                {t("owner.bookings.ownerNet")}: {ownerNet} RON
+                {t("owner.bookings.ownerPrice")}: {ownerPrice} RON
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 font-bold">
+                {t("owner.bookings.platformFee")}: {platformFee} RON
             </span>
         </div>
     );

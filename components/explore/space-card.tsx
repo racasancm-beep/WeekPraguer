@@ -7,6 +7,7 @@ import { MapPin, Users, Ruler } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
+import { calculateSpaceCustomerPrice } from "@/lib/pricing";
 
 interface SpaceCardProps {
     space: Space & { photos: SpacePhoto[]; bookings?: any[] };
@@ -133,7 +134,7 @@ export function SpaceCard({ space }: SpaceCardProps) {
             <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-gray-100 mt-1">
                 <div>
                     <span className="font-black text-lg text-[#008080]">
-                        {space.hourlyRate} RON
+                        {calculateSpaceCustomerPrice(space.hourlyRate)} RON
                     </span>
                     <span className="text-xs text-gray-500 ml-1">/ h</span>
                 </div>

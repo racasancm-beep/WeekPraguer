@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut } from "lucide-react";
@@ -7,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LanguageSelector } from "@/components/ui/language-selector";
 import { useSession, signOut } from "next-auth/react";
+import { ListSpaceModal } from "@/components/owner/list-space-modal";
 
 export function MainNav() {
     const { t } = useLanguage();
     const pathname = usePathname();
     const { data: session, status } = useSession();
+    const [listSpaceModalOpen, setListSpaceModalOpen] = useState(false);
     const role = (session?.user as any)?.role;
     const isAdmin = role === "ADMIN";
     const isOwner = role === "OWNER";
@@ -164,12 +167,18 @@ export function MainNav() {
 
                         <LanguageSelector variant="dropdown" />
 
-                        <Link href={listSpaceHref}>
-                            <Button className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-6 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                                {t("nav.listSpace")}
-                            </Button>
-                        </Link>
+                        <Button
+                            onClick={() => setListSpaceModalOpen(true)}
+                            className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-6 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                        >
+                            {t("nav.listSpace")}
+                        </Button>
                     </div>
+
+                    <ListSpaceModal
+                        open={listSpaceModalOpen}
+                        onOpenChange={setListSpaceModalOpen}
+                    />
 
                     <div className="flex lg:hidden items-center gap-2">
                         <LanguageSelector variant="dropdown" />

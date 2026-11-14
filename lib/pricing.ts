@@ -1,83 +1,131 @@
 /**
- * Platform Fee Rule:
- * The platform fee is 15% of the reservation TOTAL (the amount paid by the renter).
- * The owner receives the remaining 85%.
+ * Pricing Engine Rules:
+ * - Owner sets the space price (hourlyRate, dailyRate, weekendRate).
+ * - Platform fee is 15% from the amount the owner put for the space.
+ * - Total amount displayed to customers everywhere = Owner Price + 15% Platform Fee (Owner Price * 1.15).
+ * - In Dashboards for Owners and Admin, this amount is split into Owner Price and Platform Fee.
  */
-export const PLATFORM_FEE_RATE = 0.15;
-export const OWNER_SHARE_RATE = 1 - PLATFORM_FEE_RATE;
 
-// Kept for backwards compatibility with existing imports
+export const PLATFORM_FEE_RATE = 0.15; // 15% from the amount the owner put for the space
+
 export const PLATFORM_COMMISSION_RATE = PLATFORM_FEE_RATE;
 export const CLEANING_FEE_RATE = 0;
 export const INSURANCE_RATE = 0;
 
 export interface PricingBreakdown {
-    basePrice: number;
+    basePrice: number;    // Owner price
     cleaningFee: number;
     insurance: number;
-    totalPrice: number;
-    commission: number;
-    ownerPayout: number;
+    totalPrice: number;   // Customer total (ownerPrice + 15%)
+    commission: number;   // Platform fee (15% of ownerPrice)
+    ownerPayout: number;  // Owner net price
     cleanerPayout: number;
 }
 
 export interface BookingAmountBreakdown {
-    total: number;
-    platformFee: number;
-    ownerNet: number;
+    ownerPrice: number;    // The amount the owner put for the space
+    platformFee: number;   // 15% from that amount
+    total: number;         // ownerPrice + platformFee (1.15 * ownerPrice)
+    ownerNet: number;      // alias to ownerPrice for backwards compatibility
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
+const round2 = (n: number) => Math.round(Number(n || 0) * 100) / 100;
 
-/** Splits a reservation total into Platform Fee (15%) and Owner Net (85%). */
-export function splitTotal(total: number): BookingAmountBreakdown {
-    const cleanTotal = round2(Math.max(0, total || 0));
-    const platformFee = round2(cleanTotal * PLATFORM_FEE_RATE);
+/**
+ * Calculates the customer-facing price displayed everywhere on the platform:
+ * Owner Price + 15% Platform Fee (Owner Price * 1.15).
+ */
+export function calculateSpaceCustomerPrice(ownerRate: number): number {
+    const cleanRate = Math.max(0, Number(ownerRate) || 0);
+    return round2(cleanRate * (1 + PLATFORM_FEE_RATE));
+}
+
+/**
+ * Splits an owner price into:
+ * - Owner Price (the amount the owner put for the space)
+ * - Platform Fee (15% from that amount)
+ * - Total Amount (Owner Price + Platform Fee)
+ */
+export function splitOwnerPrice(ownerPrice: number): BookingAmountBreakdown {
+    const cleanOwnerPrice = round2(Math.max(0, Number(ownerPrice) || 0));
+    const platformFee = round2(cleanOwnerPrice * PLATFORM_FEE_RATE);
+    const total = round2(cleanOwnerPrice + platformFee);
     return {
-        total: cleanTotal,
+        ownerPrice: cleanOwnerPrice,
         platformFee,
-        ownerNet: round2(cleanTotal - platformFee),
+        total,
+        ownerNet: cleanOwnerPrice,
     };
 }
 
 /**
- * Returns the Total / Platform Fee (15%) / Owner Net (85%) breakdown for any booking.
+ * Backwards compatibility helper if only total is available.
+ */
+export function splitTotal(total: number): BookingAmountBreakdown {
+    const cleanTotal = round2(Math.max(0, Number(total) || 0));
+    const ownerPrice = round2(cleanTotal / (1 + PLATFORM_FEE_RATE));
+    const platformFee = round2(cleanTotal - ownerPrice);
+    return {
+        ownerPrice,
+        platformFee,
+        total: cleanTotal,
+        ownerNet: ownerPrice,
+    };
+}
+
+/**
+ * Returns the Owner Price / Platform Fee (15%) / Total breakdown for any booking.
  * Owner calendar blocks always return 0.
  */
 export function getBookingBreakdown(booking: any, space?: any): BookingAmountBreakdown {
-    if (!booking || booking.accessCode === "OWNER_BLOCK") return splitTotal(0);
+    if (!booking || booking.accessCode === "OWNER_BLOCK") {
+        return { ownerPrice: 0, platformFee: 0, total: 0, ownerNet: 0 };
+    }
 
-    let total = 0;
-    if (typeof booking.totalPrice === "number" && booking.totalPrice > 0) {
-        total = booking.totalPrice;
-    } else if (typeof booking.basePrice === "number" && booking.basePrice > 0) {
-        total = booking.basePrice;
-    } else {
-        const sp = space || booking.space;
-        if (sp && booking.startTime && booking.endTime) {
-            const hours = Math.max(
-                1,
-                Math.round(
-                    (new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime()) /
-                        (1000 * 60 * 60)
-                )
-            );
-            total = booking.isHourly === false && sp.dailyRate ? sp.dailyRate : hours * (sp.hourlyRate || 0);
+    // If basePrice is explicitly recorded (the amount the owner put for the space)
+    if (typeof booking.basePrice === "number" && booking.basePrice > 0) {
+        return splitOwnerPrice(booking.basePrice);
+    }
+
+    // If we have space rate & duration, compute from the amount the owner put for the space
+    const sp = space || booking.space;
+    if (sp && booking.startTime && booking.endTime) {
+        const hours = Math.max(
+            1,
+            Math.round(
+                (new Date(booking.endTime).getTime() - new Date(booking.startTime).getTime()) /
+                    (1000 * 60 * 60)
+            )
+        );
+        const ownerRateTotal = booking.isHourly === false && sp.dailyRate
+            ? sp.dailyRate
+            : hours * (sp.hourlyRate || 0);
+        if (ownerRateTotal > 0) {
+            return splitOwnerPrice(ownerRateTotal);
         }
     }
-    return splitTotal(total);
+
+    // If only totalPrice was recorded
+    if (typeof booking.totalPrice === "number" && booking.totalPrice > 0) {
+        return splitTotal(booking.totalPrice);
+    }
+
+    return { ownerPrice: 0, platformFee: 0, total: 0, ownerNet: 0 };
 }
 
-/** Booking price: renter pays the total; 15% platform fee and 85% owner payout come out of it. */
-export function calculatePricing(basePrice: number, _isSelfCleaning: boolean = false): PricingBreakdown {
-    const { total, platformFee, ownerNet } = splitTotal(basePrice);
+/**
+ * Calculates pricing for a booking from the owner's price:
+ * Total = ownerPrice + 15% Platform fee.
+ */
+export function calculatePricing(ownerPrice: number, _isSelfCleaning: boolean = false): PricingBreakdown {
+    const { ownerPrice: basePrice, platformFee, total } = splitOwnerPrice(ownerPrice);
     return {
-        basePrice: total,
+        basePrice,
         cleaningFee: 0,
         insurance: 0,
         totalPrice: total,
         commission: platformFee,
-        ownerPayout: ownerNet,
+        ownerPayout: basePrice,
         cleanerPayout: 0,
     };
 }

@@ -87,12 +87,12 @@ export async function GET() {
             };
         });
 
-        // Total paid by renter; 15% platform fee (Admin) and 85% Owner net
+        // Customer total = ownerPrice + 15% platform fee (Admin)
         const getSplit = (b: any) => {
-            const { total, platformFee, ownerNet } = getBookingBreakdown(b, spaceMap.get(b.spaceId));
+            const { total, platformFee, ownerPrice } = getBookingBreakdown(b, spaceMap.get(b.spaceId));
             return {
                 renter: total,
-                owner: ownerNet,
+                owner: ownerPrice,
                 admin: platformFee
             };
         };

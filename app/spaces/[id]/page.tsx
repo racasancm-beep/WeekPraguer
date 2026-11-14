@@ -27,6 +27,7 @@ import { expandBookingDateKeys, formatOwnerBlockedPeriods, formatPrice } from "@
 import MapComponent from "@/components/ui/map-component";
 import { SpaceForm } from "@/components/owner/space-form";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { calculateSpaceCustomerPrice } from "@/lib/pricing";
 
 interface SpaceDetailed {
     id: string;
@@ -234,7 +235,7 @@ export default function SpaceDetailsPage() {
         }));
     };
 
-    const calculateTotalPrice = () => {
+    const calculateOwnerBasePrice = () => {
         if (!space) return 0;
         let total = 0;
         Object.values(slots).forEach((slot) => {
@@ -247,7 +248,12 @@ export default function SpaceDetailsPage() {
                 total += hours * space.hourlyRate;
             }
         });
-        return total;
+        return Math.round(total * 100) / 100;
+    };
+
+    const calculateTotalPrice = () => {
+        const ownerBase = calculateOwnerBasePrice();
+        return Math.round(ownerBase * 1.15 * 100) / 100;
     };
 
     const sessionUserId = (session?.user as any)?.id;
@@ -423,6 +429,8 @@ export default function SpaceDetailsPage() {
         amenities = ["High-Speed WiFi", "Natural Light", "Climate Control"];
     }
 
+    const ownerBasePrice = calculateOwnerBasePrice();
+    const platformFee = Math.round(ownerBasePrice * 15) / 100;
     const totalPrice = calculateTotalPrice();
     const photos = space.photos || [];
     const activePhoto =
@@ -695,13 +703,13 @@ export default function SpaceDetailsPage() {
                             <div>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <span className="text-3xl font-black text-gray-900">
-                                        {formatPrice(space.hourlyRate)}
+                                        {formatPrice(calculateSpaceCustomerPrice(space.hourlyRate))}
                                     </span>
                                     <span className="text-sm text-gray-500 font-medium">{t("space.perHour")}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">
                                     {t("space.or")}{" "}
-                                    <span className="font-bold text-gray-700">{formatPrice(space.dailyRate)}</span>{" "}
+                                    <span className="font-bold text-gray-700">{formatPrice(calculateSpaceCustomerPrice(space.dailyRate))}</span>{" "}
                                     {t("space.perFullDay")}
                                 </p>
                             </div>
@@ -965,9 +973,13 @@ export default function SpaceDetailsPage() {
                                                 <span>{t("space.estimatedTotal")}</span>
                                                 <span className="text-violet-600">{formatPrice(totalPrice)}</span>
                                             </div>
+                                            <div className="flex justify-between items-center text-xs font-semibold text-gray-600">
+                                                <span>{t("owner.bookings.ownerPrice")}</span>
+                                                <span>{formatPrice(ownerBasePrice)}</span>
+                                            </div>
                                             <div className="flex justify-between items-center text-xs font-semibold text-amber-700">
                                                 <span>{t("owner.bookings.platformFee")}</span>
-                                                <span>{formatPrice(Math.round(totalPrice * 15) / 100)}</span>
+                                                <span>{formatPrice(platformFee)}</span>
                                             </div>
                                             <p className="text-[11px] text-gray-500">{t("space.platformFeeIncluded")}</p>
                                         </div>
