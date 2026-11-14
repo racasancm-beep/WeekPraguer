@@ -553,7 +553,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "admin.verification.success": "Utilizator verificat cu succes",
         "admin.verification.error": "Eroare la verificarea utilizatorului",
 
-        "owner.roleBadge": "Proprietar",
+        "owner.roleBadge": "Owner",
         "owner.backToAdminHub": "Înapoi la Panoul ADMIN",
         "owner.dashboardTitle": "Panou Proprietar",
         "owner.nav.earningsGraphs": "Venituri & Grafice",
@@ -674,7 +674,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "owner.form.creatingBtn": "Se publică spațiul...",
         "owner.form.createBtn": "Publică Spațiul",
 
-        "renter.roleBadge": "Client",
+        "renter.roleBadge": "Customer",
         "renter.nav.myBookings": "Rezervările Mele",
         "renter.nav.exploreSpaces": "Explorează Spații",
         "renter.viewingProfile": "Vizualizare Profil Client",
@@ -1935,7 +1935,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "admin.verification.success": "Felhasználó sikeresen hitelesítve",
         "admin.verification.error": "Hiba a hitelesítés során",
 
-        "owner.roleBadge": "Házigazda",
+        "owner.roleBadge": "Owner",
         "owner.backToAdminHub": "Vissza az ADMIN Központba",
         "owner.dashboardTitle": "Házigazda Vezérlőpult",
         "owner.nav.earningsGraphs": "Bevételek és Grafikonok",
@@ -2056,7 +2056,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "owner.form.creatingBtn": "Helyszín közzététele...",
         "owner.form.createBtn": "Helyszín Közzététele",
 
-        "renter.roleBadge": "Ügyfél",
+        "renter.roleBadge": "Customer",
         "renter.nav.myBookings": "Foglalásaim",
         "renter.nav.exploreSpaces": "Helyszínek Böngészése",
         "renter.viewingProfile": "Bérlői Profil Megtekintése",
@@ -2621,7 +2621,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "admin.verification.success": "Benutzer erfolgreich verifiziert",
         "admin.verification.error": "Fehler bei der Verifizierung",
 
-        "owner.roleBadge": "Gastgeber",
+        "owner.roleBadge": "Owner",
         "owner.backToAdminHub": "Zurück zum ADMIN-Zentrum",
         "owner.dashboardTitle": "Gastgeber-Dashboard",
         "owner.nav.earningsGraphs": "Einnahmen & Diagramme",
@@ -2742,7 +2742,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "owner.form.creatingBtn": "Raum wird veröffentlicht...",
         "owner.form.createBtn": "Raum veröffentlichen",
 
-        "renter.roleBadge": "Kunde",
+        "renter.roleBadge": "Customer",
         "renter.nav.myBookings": "Meine Buchungen",
         "renter.nav.exploreSpaces": "Räume entdecken",
         "renter.viewingProfile": "Mieter-Profil wird angezeigt",

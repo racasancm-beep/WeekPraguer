@@ -502,4 +502,3 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
         </Card>
     );
 }
-}
