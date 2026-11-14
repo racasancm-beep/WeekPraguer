@@ -7,6 +7,7 @@ import Link from "next/link";
 import { LayoutDashboard, Building2, Calendar, LogOut, DollarSign, Activity, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
+import { ProfileQrCard } from "@/components/referral/profile-qr-card";
 
 export default function OwnerLayout({
     children,
@@ -107,6 +108,11 @@ export default function OwnerLayout({
                                 </Link>
                             );
                         })}
+                    </div>
+
+                    {/* Bottom-Left Corner: Unique Referral QR Code with Darker Genie */}
+                    <div className="mt-auto border-t border-gray-200 dark:border-gray-700">
+                        <ProfileQrCard role="OWNER" />
                     </div>
                 </div>
             </div>
