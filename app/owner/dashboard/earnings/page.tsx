@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
+import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
 
 interface StatItem {
     name: string;
@@ -216,7 +217,7 @@ function EarningsPageContent() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-6">
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             {recentBookings.length === 0 ? (
                                 <p className="text-sm text-gray-500 text-center py-8">{t("owner.earnings.noRecentBookings")}</p>
                             ) : (
@@ -224,43 +225,112 @@ function EarningsPageContent() {
                                     .filter((booking: any) => booking.accessCode !== "OWNER_BLOCK" && booking.status !== "REJECTED")
                                     .slice(0, 10)
                                     .map((booking: any) => (
-                                    <div key={booking.id} className="flex items-start">
-                                        <div className="h-10 w-10 shrink-0 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 font-bold">
-                                            {booking.renter?.name?.[0] || "U"}
-                                        </div>
-                                        <div className="ml-4 space-y-1 min-w-0">
-                                            <p className="text-sm font-medium leading-none text-gray-900 dark:text-gray-100">
-                                                {booking.renter?.name || t("owner.earnings.unknownUser")}
-                                            </p>
-                                            <p className="text-xs text-gray-500">
-                                                {booking.space?.name} • {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
-                                            </p>
-                                            {booking.renter?.email && (
-                                                <a href={`mailto:${booking.renter.email}`} className="block text-[11px] font-mono text-blue-700 hover:underline truncate">
-                                                    {booking.renter.email}
-                                                </a>
-                                            )}
-                                            <p className="text-[11px] text-gray-600">
-                                                {booking.renter?.phone || t("owner.bookings.noPhoneProvided")}
-                                            </p>
-                                        </div>
-                                        <div className="ml-auto pl-2 text-right shrink-0 space-y-0.5">
-                                            <div className="text-[10px] font-semibold text-gray-500">
-                                                {t("owner.bookings.totalAmount")}: {Number(booking.totalPrice || 0).toFixed(2)} RON
-                                            </div>
-                                            <div className="text-[10px] font-semibold text-amber-700">
-                                                {t("owner.bookings.platformFee")}: {Number(booking.platformFee ?? booking.commission ?? 0).toFixed(2)} RON
-                                            </div>
-                                            <div className="font-bold text-sm text-emerald-700">
-                                                {t("owner.bookings.ownerPrice")}: RON{Number(booking.ownerEarnings || 0).toFixed(2)}
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))
+                                        <RecentConfirmedBookingItem key={booking.id} booking={booking} />
+                                    ))
                             )}
                         </div>
                     </CardContent>
                 </Card>
+            </div>
+        </div>
+    );
+}
+
+function RecentConfirmedBookingItem({ booking }: { booking: any }) {
+    const { t } = useLanguage();
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    // Initial small / collapsed view displaying ONLY: Space name, Dates when rented, Status Confirmed
+    if (!isExpanded) {
+        return (
+            <div
+                onClick={() => setIsExpanded(true)}
+                role="button"
+                tabIndex={0}
+                className="p-3 rounded-2xl bg-gray-50/80 hover:bg-teal-50/30 border border-gray-200 hover:border-teal-300 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+            >
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-teal-100 text-[#008080] flex items-center justify-center font-bold text-xs shrink-0">
+                        {booking.space?.name?.[0] || "S"}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="font-bold text-xs text-gray-900 group-hover:text-[#008080] transition-colors truncate">
+                            {booking.space?.name}
+                        </p>
+                        <p className="text-[11px] text-gray-500 flex items-center gap-1">
+                            <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                            <span>
+                                {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        {t("renter.status.approved") || "Confirmat"}
+                    </span>
+                    <div className="p-1 rounded-full bg-white group-hover:bg-[#008080] group-hover:text-white text-gray-400 transition-colors shadow-sm">
+                        <ChevronDown className="w-3.5 h-3.5" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Expanded view showing all details (Customer contact, Total, Platform fee, Owner price)
+    return (
+        <div className="p-3.5 rounded-2xl bg-white border-2 border-teal-200 shadow-sm transition-all space-y-3">
+            <div className="flex items-start justify-between gap-2 pb-2 border-b border-gray-100">
+                <div>
+                    <p className="font-black text-sm text-gray-900">{booking.space?.name}</p>
+                    <p className="text-xs text-gray-500">
+                        {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
+                    </p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        {t("renter.status.approved") || "Confirmat"}
+                    </span>
+                    <button
+                        onClick={() => setIsExpanded(false)}
+                        className="p-1 rounded-full hover:bg-gray-100 text-gray-500"
+                        title={t("common.hideDetails") || "Restrânge"}
+                    >
+                        <ChevronUp className="w-4 h-4" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Customer Contact */}
+                <div className="space-y-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
+                        <span className="text-[10px] uppercase text-gray-400 font-bold">Client:</span>
+                        {booking.renter?.name || t("owner.earnings.unknownUser")}
+                    </p>
+                    {booking.renter?.email && (
+                        <a href={`mailto:${booking.renter.email}`} className="block text-[11px] font-mono text-blue-700 hover:underline truncate">
+                            {booking.renter.email}
+                        </a>
+                    )}
+                    <p className="text-[11px] text-gray-600">
+                        {booking.renter?.phone || t("owner.bookings.noPhoneProvided")}
+                    </p>
+                </div>
+
+                {/* Price Breakdown */}
+                <div className="text-right shrink-0 space-y-0.5 bg-gray-50 p-2 rounded-xl border border-gray-100">
+                    <div className="text-[10px] font-semibold text-gray-500">
+                        {t("owner.bookings.totalAmount")}: {Number(booking.totalPrice || 0).toFixed(2)} RON
+                    </div>
+                    <div className="text-[10px] font-semibold text-amber-700">
+                        {t("owner.bookings.platformFee")}: {Number(booking.platformFee ?? booking.commission ?? 0).toFixed(2)} RON
+                    </div>
+                    <div className="font-bold text-xs text-emerald-700">
+                        {t("owner.bookings.ownerPrice")}: RON{Number(booking.ownerEarnings || 0).toFixed(2)}
+                    </div>
+                </div>
             </div>
         </div>
     );
