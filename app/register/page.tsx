@@ -314,6 +314,128 @@ function RegisterForm() {
                 </div>
             </div>
 
+            {/* Referral QR Code Option */}
+            <div className="p-4 rounded-2xl bg-teal-50/40 border border-teal-200/80 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                        <QrCode className="w-4 h-4 text-[#008080]" />
+                        {t("register.hasQrQuestion") || "Ai un cod QR de la un utilizator existent?"}
+                    </label>
+                    <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-teal-200/60 text-xs font-semibold self-start sm:self-auto">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setHasQrCode(false);
+                                setReferralCode("");
+                                setVerifiedReferrer(null);
+                                setReferralError(null);
+                                setQrImagePreview(null);
+                            }}
+                            className={`px-3 py-1 rounded-lg transition-all ${
+                                !hasQrCode ? "bg-gray-200 text-gray-800 font-bold shadow-sm" : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            {t("common.no") || "Nu"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setHasQrCode(true)}
+                            className={`px-3 py-1 rounded-lg transition-all ${
+                                hasQrCode ? "bg-[#008080] text-white font-bold shadow-sm" : "text-gray-500 hover:text-gray-700"
+                            }`}
+                        >
+                            {t("common.yes") || "Da, am cod QR"}
+                        </button>
+                    </div>
+                </div>
+
+                {hasQrCode && (
+                    <div className="space-y-3 pt-2 border-t border-teal-200/40">
+                        {/* Upload QR Image Box */}
+                        <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-1.5">
+                                {t("register.uploadQrLabel") || "Încarcă imaginea codului QR (poză / captură de ecran):"}
+                            </label>
+                            <div className="relative border-2 border-dashed border-teal-300 hover:border-[#008080] bg-white rounded-xl p-3 text-center transition-colors">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleQrImageUpload}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                {scanningQr ? (
+                                    <div className="flex items-center justify-center gap-2 text-xs text-teal-700 font-bold py-2">
+                                        <QrCode className="w-4 h-4 animate-spin text-[#008080]" />
+                                        {t("register.scanningQr") || "Se scanează imaginea codului QR..."}
+                                    </div>
+                                ) : qrImagePreview ? (
+                                    <div className="flex items-center justify-center gap-3">
+                                        <img
+                                            src={qrImagePreview}
+                                            alt="QR Preview"
+                                            className="w-12 h-12 object-contain rounded-lg border border-teal-200"
+                                        />
+                                        <div className="text-left">
+                                            <p className="text-xs font-bold text-teal-900">
+                                                {t("register.qrImageLoaded") || "Imagine QR încărcată"}
+                                            </p>
+                                            <p className="text-[10px] text-gray-500">
+                                                {t("register.clickToChange") || "Apasă pentru a alege altă imagine"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center justify-center py-1">
+                                        <Upload className="w-6 h-6 text-[#008080] mb-1" />
+                                        <p className="text-xs font-bold text-gray-800">
+                                            {t("register.uploadQrAction") || "Apasă sau trage poza codului QR aici"}
+                                        </p>
+                                        <p className="text-[10px] text-gray-400">PNG, JPG, WEBP, Captură ecran</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Manual Code Input */}
+                        <div>
+                            <label htmlFor="referralCode" className="block text-xs font-bold text-gray-700 mb-1">
+                                {t("register.orEnterCode") || "Sau introdu codul de recomandare manual:"}
+                            </label>
+                            <Input
+                                id="referralCode"
+                                type="text"
+                                placeholder="MG-OWN-1234 sau MG-CUST-1234"
+                                value={referralCode}
+                                onChange={(e) => {
+                                    const val = e.target.value.toUpperCase();
+                                    setReferralCode(val);
+                                    verifyCode(val);
+                                }}
+                                className="h-10 text-xs font-mono font-bold uppercase tracking-wider bg-white"
+                            />
+                        </div>
+
+                        {/* Verification Status */}
+                        {verifiedReferrer && (
+                            <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 flex items-center gap-2 text-xs text-emerald-900 font-bold">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <span>
+                                    {t("register.referrerVerified") || "Recomandat de"}:{" "}
+                                    <span className="text-emerald-950 font-black">{verifiedReferrer.name}</span> ({verifiedReferrer.role})
+                                </span>
+                            </div>
+                        )}
+
+                        {referralError && (
+                            <div className="p-2.5 rounded-xl bg-red-50 border border-red-300 flex items-center gap-2 text-xs text-red-800 font-semibold">
+                                <XCircle className="w-4 h-4 text-red-600 shrink-0" />
+                                <span>{referralError}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
             {/* GDPR Consent */}
             <div className="flex items-start gap-3">
                 <input
