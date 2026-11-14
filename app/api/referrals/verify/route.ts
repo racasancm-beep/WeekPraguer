@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { extractReferralCode } from "@/lib/referral";
+import { extractReferralCode } from "@/lib/referral-utils";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
     try {

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import QRCode from "qrcode";
 import { DarkerGenieBadge } from "@/components/referral/darker-genie-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,17 +32,13 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Immediate client-side fallback generation to ensure the QR code is NEVER blank
-    const generateClientFallback = async (forcedRole: "OWNER" | "CUSTOMER") => {
+    const generateClientFallback = (forcedRole: "OWNER" | "CUSTOMER") => {
         try {
             const prefix = forcedRole === "OWNER" ? "MG-OWN" : "MG-CUST";
             const randomCode = `${prefix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
             const origin = typeof window !== "undefined" ? window.location.origin : "https://www.mygenieurope.com";
             const registrationUrl = `${origin}/register?ref=${randomCode}`;
-            const qrDataUrl = await QRCode.toDataURL(registrationUrl, {
-                width: 320,
-                margin: 2,
-                color: { dark: "#111827", light: "#ffffff" },
-            });
+            const qrDataUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(registrationUrl)}`;
             return {
                 code: randomCode,
                 registrationUrl,
@@ -69,28 +64,19 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                     return;
                 }
             }
-            setData((prev) => {
-                if (prev) return prev;
-                generateClientFallback(role).then((fb) => fb && setData(fb));
-                return prev;
-            });
+            setData((prev) => prev || generateClientFallback(role));
         } catch (e) {
             console.error("Failed to load referral QR code from server", e);
-            setData((prev) => {
-                if (prev) return prev;
-                generateClientFallback(role).then((fb) => fb && setData(fb));
-                return prev;
-            });
+            setData((prev) => prev || generateClientFallback(role));
         } finally {
             setRefreshing(false);
         }
     };
 
     useEffect(() => {
-        generateClientFallback(role).then((fallback) => {
-            if (fallback) setData(fallback);
-            fetchCode(false);
-        });
+        const fallback = generateClientFallback(role);
+        if (fallback) setData(fallback);
+        fetchCode(false);
     }, [role]);
 
     const handleCopy = () => {

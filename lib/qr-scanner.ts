@@ -1,5 +1,5 @@
 import jsQR from "jsqr";
-import { extractReferralCode } from "@/lib/referral";
+import { extractReferralCode } from "@/lib/referral-utils";
 
 export async function scanQRCodeFromImageFile(file: File): Promise<string | null> {
     return new Promise((resolve) => {
