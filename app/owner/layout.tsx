@@ -90,14 +90,14 @@ export default function OwnerLayout({
                         </div>
                     )}
 
-                    <div className="flex-1 py-4 px-4 space-y-1 overflow-y-auto">
+                    <div className="py-3 px-3 space-y-1">
                         {navigation.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                                         isActive
                                             ? "bg-violet-50 text-violet-700 dark:bg-violet-900/20 dark:text-violet-300 font-bold"
                                             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -111,7 +111,7 @@ export default function OwnerLayout({
                     </div>
 
                     {/* Bottom-Left Corner: Unique Referral QR Code with Darker Genie */}
-                    <div className="mt-auto border-t border-gray-200 dark:border-gray-700">
+                    <div className="mt-2 border-t border-gray-200 dark:border-gray-700">
                         <ProfileQrCard role="OWNER" />
                     </div>
                 </div>
