@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
-import { CalendarClock, Check, Mail, Phone, User, X } from "lucide-react";
+import { Calendar, CalendarClock, Check, ChevronDown, ChevronUp, Mail, Phone, User, X } from "lucide-react";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
 function hasBookingProofOfPayment(booking: any): boolean {
