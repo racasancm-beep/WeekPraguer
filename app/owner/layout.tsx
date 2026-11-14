@@ -47,8 +47,8 @@ export default function OwnerLayout({
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
             {/* Sidebar positioned cleanly below MainNav */}
-            <div className="fixed top-[116px] bottom-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-30 hidden md:block">
-                <div className="flex flex-col h-full">
+            <div className="fixed top-[116px] bottom-0 left-0 w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-30 hidden md:block overflow-y-auto">
+                <div className="flex flex-col min-h-full">
                     {/* Top-Left User Profile + Type + Log Out */}
                     <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-900/40">
                         <div className="flex items-center mb-3 px-1">

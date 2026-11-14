@@ -91,7 +91,28 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
         );
     }
 
-    if (!data) return null;
+    if (!data) {
+        return (
+            <div className="p-3 m-2.5 rounded-2xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 text-xs text-center text-gray-500">
+                <QrCode className="w-5 h-5 mx-auto mb-1 text-gray-400" />
+                <p className="font-semibold text-gray-700 dark:text-gray-200">
+                    {t("referral.qrTitle") || "Cod QR Profil"}
+                </p>
+                <p className="text-[10px] text-gray-400 mt-0.5">
+                    {t("referral.singleUseNotice") || "Cod unic de recomandare"}
+                </p>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fetchCode(false)}
+                    className="mt-2 h-7 text-[10px] font-bold border-gray-300"
+                >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    {t("common.retry") || "Reîncarcă"}
+                </Button>
+            </div>
+        );
+    }
 
     const level = data.stats?.genieLevel || 0;
     const confirmedCount = data.stats?.confirmedReferrals || 0;
