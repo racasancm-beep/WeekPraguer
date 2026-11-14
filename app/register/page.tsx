@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { scanQRCodeFromImageFile } from "@/lib/qr-scanner";
-import { extractReferralCode } from "@/lib/referral";
+import { extractReferralCode } from "@/lib/referral-utils";
 
 type UserRole = "OWNER" | "RENTER";
 
