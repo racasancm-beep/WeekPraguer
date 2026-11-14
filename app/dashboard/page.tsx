@@ -15,6 +15,9 @@ import {
     ShieldCheck,
     Upload,
     KeyRound,
+    ChevronDown,
+    ChevronUp,
+    Calendar,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -189,6 +192,8 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
     const hasProof = hasBookingProofOfPayment(booking);
     const isReserved = (booking.status === "CONFIRMED" || booking.status === "COMPLETED") && hasProof;
     const isConfirmedAwaitingPayment = booking.status === "CONFIRMED" && !hasProof;
+    const isConfirmed = isConfirmedAwaitingPayment || isReserved;
+    const [isExpanded, setIsExpanded] = useState(false);
     const isPending = booking.status === "PENDING";
     const isOwnerProposed = booking.status === "OWNER_PROPOSED";
     const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
@@ -257,6 +262,58 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
 
     const proofDisplay = booking.paymentId || booking.transaction?.stripePaymentId;
 
+    // Small collapsed view at beginning for confirmed rented spaces
+    if (isConfirmed && !isExpanded) {
+        return (
+            <Card
+                onClick={() => setIsExpanded(true)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setIsExpanded(true);
+                    }
+                }}
+                className={`cursor-pointer transition-all hover:shadow-md hover:border-violet-400 group ${
+                    isReserved
+                        ? "border-2 border-emerald-300 bg-emerald-50/20"
+                        : "border-2 border-blue-300 bg-blue-50/20"
+                }`}
+            >
+                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 min-w-0">
+                        <div className="font-bold text-lg text-gray-900 group-hover:text-[#008080] transition-colors truncate">
+                            {booking.space?.name}
+                        </div>
+                        <div className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
+                            <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
+                            <span>
+                                {new Date(booking.startTime).toLocaleDateString()} •{" "}
+                                {new Date(booking.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
+                                {new Date(booking.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0">
+                        <Badge
+                            className={
+                                isReserved
+                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 text-xs font-extrabold uppercase tracking-wide"
+                                    : "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs font-extrabold uppercase tracking-wide"
+                            }
+                        >
+                            {statusText}
+                        </Badge>
+                        <div className="p-1.5 rounded-full bg-gray-100 group-hover:bg-[#008080] group-hover:text-white text-gray-500 transition-colors">
+                            <ChevronDown className="w-4 h-4" />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    }
+
     return (
         <Card
             className={
@@ -278,19 +335,32 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                         </p>
                     )}
                 </div>
-                <Badge
-                    className={
-                        isReserved
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
-                            : isConfirmedAwaitingPayment
-                            ? "bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
-                            : isPending || isOwnerProposed
-                            ? "bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
-                            : "bg-red-600 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
-                    }
-                >
-                    {statusText}
-                </Badge>
+                <div className="flex items-center gap-2">
+                    <Badge
+                        className={
+                            isReserved
+                                ? "bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
+                                : isConfirmedAwaitingPayment
+                                ? "bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
+                                : isPending || isOwnerProposed
+                                ? "bg-amber-100 text-amber-900 border border-amber-300 px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
+                                : "bg-red-600 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
+                        }
+                    >
+                        {statusText}
+                    </Badge>
+                    {isConfirmed && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsExpanded(false)}
+                            className="h-8 text-xs font-bold gap-1 text-gray-600 hover:text-gray-900 border-gray-300"
+                        >
+                            <ChevronUp className="w-4 h-4" />
+                            <span className="hidden sm:inline">{t("common.hideDetails")}</span>
+                        </Button>
+                    )}
+                </div>
             </CardHeader>
 
             <CardContent className="space-y-4">
