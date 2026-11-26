@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut, MessageSquare } from "lucide-react";
+import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LanguageSelector } from "@/components/ui/language-selector";
@@ -20,7 +20,7 @@ export function MainNav() {
     const isServiceOwner = role === "SERVICE_OWNER";
     const isOwner = role === "OWNER" || isServiceOwner;
     const isOwnerOrAdmin = isOwner || isAdmin;
-    const listSpaceHref = session ? "/owner/dashboard/listings/create" : "/register?role=OWNER";
+    const listSpaceHref = session ? "/owner/dashboard/listings/create" : "/register?role=OWNER&mode=owner";
     const loginNavHref =
         pathname && pathname.startsWith("/spaces/")
             ? `/login?callbackUrl=${encodeURIComponent(pathname)}`
@@ -112,7 +112,7 @@ export function MainNav() {
                     <div className="hidden lg:flex items-center gap-6">
                         {!isServiceOwner && (
                             <Link
-                                href="/explore"
+                                href="/explore?type=spaces"
                                 className={`text-sm tracking-wide transition-all ${
                                     isOwner
                                         ? "opacity-35 hover:opacity-100 font-medium text-gray-400 hover:text-gray-700"
@@ -124,12 +124,22 @@ export function MainNav() {
                         )}
                         
                         <div className={`relative group ${isOwner ? "opacity-35 hover:opacity-100 transition-opacity" : ""}`}>
-                            <div className={`flex items-center gap-1 text-sm tracking-wide outline-none cursor-pointer py-4 ${
-                                isOwner ? "font-medium text-gray-400 hover:text-gray-700" : "font-bold text-gray-600 group-hover:text-[#008080]"
-                            }`}>
+                            <Link
+                                href="/explore?type=servicii"
+                                className={`flex items-center gap-1 text-sm tracking-wide outline-none cursor-pointer py-4 ${
+                                    isOwner ? "font-medium text-gray-400 hover:text-gray-700" : "font-bold text-gray-600 group-hover:text-[#008080]"
+                                }`}
+                            >
                                 {t("nav.services")} <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
-                            </div>
-                            <div className="absolute top-full left-0 w-56 p-2 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            </Link>
+                            <div className="absolute top-full left-0 w-60 p-2 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                <Link
+                                    href="/explore?type=servicii"
+                                    className="cursor-pointer flex items-center gap-2 font-bold hover:bg-teal-50 px-2.5 py-2 rounded-lg text-sm text-[#008080] border-b border-gray-100 mb-1.5 transition-colors"
+                                >
+                                    <Sparkles className="w-4 h-4 text-[#008080]" />
+                                    <span>{t("nav.allServices") || "Toate Serviciile"}</span>
+                                </Link>
                                 {/* Ad block */}
                                 <div className="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-1 mb-2 rounded border border-yellow-200 text-center">
                                     {t("nav.sponsoredCleaning")}

@@ -21,7 +21,17 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
     const lng = searchParams.lng ? parseFloat(searchParams.lng as string) : undefined;
     const type = searchParams.type as string | undefined;
 
-    const where: any = { active: true };
+    const isServiceMode =
+        type === "servicii" ||
+        type === "services" ||
+        type === "SERVICE" ||
+        category === "servicii" ||
+        (q && q.toLowerCase() === "servicii");
+
+    const where: any = {
+        active: true,
+        isService: isServiceMode ? true : false,
+    };
 
     if (lat && lng) {
         const latOffset = 0.45;
@@ -32,44 +42,76 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
         where.city = { contains: city, mode: 'insensitive' };
     }
 
-    if (category) {
-        const serviceKeywords: Record<string, string[]> = {
-            curatenie: ["curatenie", "clean", "igienizare"],
-            catering: ["catering", "coffee", "mancare", "kitchen", "cocina"],
-            fotografie: ["foto", "video", "estudio", "camera"],
-            sonorizare: ["sunet", "sound", "dj", "audio", "microfon"],
-            proiectoare: ["proiector", "ecran", "led", "tv", "projector"],
-            asistenta: ["tehnic", "tech", "wifi", "internet", "it"],
-            securitate: ["securitate", "security", "paza", "acces"],
-            bar: ["bar", "bauturi", "cocktail", "barista"],
-            decor: ["decor", "flori", "mobilier", "design"],
-            hostess: ["hostess", "receptie", "protocol"]
-        };
+    if (category && category.toLowerCase() !== "servicii") {
+        if (isServiceMode) {
+            const serviceKeywords: Record<string, string[]> = {
+                curatenie: ["curatenie", "curățenie", "clean", "igienizare"],
+                catering: ["catering", "coffee", "mancare", "kitchen", "cocina"],
+                fotografie: ["foto", "video", "estudio", "camera"],
+                sonorizare: ["sunet", "sound", "dj", "audio", "microfon", "sonorizare"],
+                proiectoare: ["proiector", "ecran", "led", "tv", "projector"],
+                asistenta: ["tehnic", "tech", "wifi", "internet", "it", "asistență"],
+                securitate: ["securitate", "security", "paza", "acces"],
+                bar: ["bar", "bauturi", "cocktail", "barista"],
+                decor: ["decor", "flori", "mobilier", "design"],
+                hostess: ["hostess", "receptie", "protocol"]
+            };
 
-        const keywords = serviceKeywords[category.toLowerCase()];
-        if (keywords && keywords.length > 0) {
+            const keywords = serviceKeywords[category.toLowerCase()] || [category];
             where.OR = [
-                { category: { contains: category, mode: 'insensitive' } },
-                ...keywords.map(kw => ({ description: { contains: kw, mode: 'insensitive' } })),
+                { serviceCategory: { contains: category, mode: 'insensitive' } },
+                ...keywords.map(kw => ({ serviceCategory: { contains: kw, mode: 'insensitive' } })),
                 ...keywords.map(kw => ({ name: { contains: kw, mode: 'insensitive' } })),
-                ...keywords.map(kw => ({ amenitiesList: { contains: kw, mode: 'insensitive' } }))
+                ...keywords.map(kw => ({ description: { contains: kw, mode: 'insensitive' } }))
             ];
         } else {
-            where.OR = [
-                { category: { contains: category, mode: 'insensitive' } },
-                { description: { contains: category, mode: 'insensitive' } },
-                { name: { contains: category, mode: 'insensitive' } }
-            ];
+            const spaceKeywords: Record<string, string[]> = {
+                cocina: ["bucatarie", "kitchen", "gatit", "culinar"],
+                coworking: ["birou", "office", "desk", "lucru"],
+                estudio: ["studio", "foto", "video", "inregistrari"],
+                sala: ["sedinte", "conferinta", "meeting"],
+                gimnasio: ["sport", "fitness", "gym", "miscare"],
+                terraza: ["terasa", "rooftop", "aer liber"],
+                eventos: ["evenimente", "petrecere", "party"],
+                yoga: ["pilates", "relaxare", "meditatie"],
+                fotografia: ["foto", "sedinta", "shooting"],
+                taller: ["workshop", "creativ", "curs"]
+            };
+
+            const keywords = spaceKeywords[category.toLowerCase()];
+            if (keywords && keywords.length > 0) {
+                where.OR = [
+                    { category: { contains: category, mode: 'insensitive' } },
+                    ...keywords.map(kw => ({ description: { contains: kw, mode: 'insensitive' } })),
+                    ...keywords.map(kw => ({ name: { contains: kw, mode: 'insensitive' } })),
+                    ...keywords.map(kw => ({ amenitiesList: { contains: kw, mode: 'insensitive' } }))
+                ];
+            } else {
+                where.OR = [
+                    { category: { contains: category, mode: 'insensitive' } },
+                    { description: { contains: category, mode: 'insensitive' } },
+                    { name: { contains: category, mode: 'insensitive' } }
+                ];
+            }
         }
     }
 
     // Do not filter out if q is literally "servicii"
     if (q && q.toLowerCase() !== "servicii") {
-        where.OR = [
+        const textFilter: any[] = [
             { name: { contains: q, mode: 'insensitive' } },
             { description: { contains: q, mode: 'insensitive' } },
             { city: { contains: q, mode: 'insensitive' } }
         ];
+        if (isServiceMode) {
+            textFilter.push({ serviceCategory: { contains: q, mode: 'insensitive' } });
+        }
+        if (where.OR) {
+            where.AND = [{ OR: where.OR }, { OR: textFilter }];
+            delete where.OR;
+        } else {
+            where.OR = textFilter;
+        }
     }
 
     if (minPrice || maxPrice) {
@@ -150,7 +192,12 @@ export default async function ExploreSpacesPage({
     const params = await searchParams;
     const spaces = await getSpaces(params);
     const selectedCity = params.city as string | undefined;
-    const isServiceMode = params.type === "servicii" || params.category === "servicii";
+    const isServiceMode =
+        params.type === "servicii" ||
+        params.type === "services" ||
+        params.type === "SERVICE" ||
+        params.category === "servicii" ||
+        ((params.q as string)?.toLowerCase() === "servicii");
 
     const romaniaCitiesCoords: Record<string, [number, number]> = {
         "București": [44.4268, 26.1025],

@@ -106,7 +106,12 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
 
     const currentType = searchParams.get("type") || initialType;
     const currentQ = searchParams.get("q") || initialQuery;
-    const isServiceMode = currentType === "servicii" || searchParams.get("category") === "servicii" || (currentQ && currentQ.toLowerCase() === "servicii");
+    const isServiceMode =
+        currentType === "servicii" ||
+        currentType === "services" ||
+        currentType === "SERVICE" ||
+        searchParams.get("category") === "servicii" ||
+        (currentQ && currentQ.toLowerCase() === "servicii");
 
     const [city, setCity] = useState(searchParams.get("city") || initialCity || "");
     const [category, setCategory] = useState(searchParams.get("category") || initialCategory || "");
@@ -138,7 +143,7 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
             params.delete("category");
             if (params.get("q")?.toLowerCase() === "servicii") params.delete("q");
         } else {
-            params.delete("type");
+            params.set("type", "spaces");
             params.delete("category");
         }
         setCategory("");
@@ -159,6 +164,8 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
         if (category) params.set("category", category);
         if (isServiceMode) {
             params.set("type", "servicii");
+        } else {
+            params.set("type", "spaces");
         }
         if (priceRange[1] < 200) params.set("maxPrice", priceRange[1].toString());
         if (capacity) params.set("capacity", capacity);
@@ -179,7 +186,7 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
         if (isServiceMode) {
             router.push(`${pathname}?type=servicii`);
         } else {
-            router.push(pathname);
+            router.push(`${pathname}?type=spaces`);
         }
     };
 

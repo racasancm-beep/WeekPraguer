@@ -59,7 +59,7 @@ export function ListSpaceModal({ open, onOpenChange }: ListSpaceModalProps) {
 
                     {/* Option 2: Create New Owner Account */}
                     <Link
-                        href="/register?role=OWNER"
+                        href="/register?role=OWNER&mode=owner"
                         onClick={() => onOpenChange(false)}
                         className="group p-4 rounded-2xl border-2 border-[#008080] bg-teal-50/20 hover:bg-teal-50/60 transition-all flex items-center justify-between shadow-sm"
                     >
@@ -81,7 +81,7 @@ export function ListSpaceModal({ open, onOpenChange }: ListSpaceModalProps) {
 
                     {/* Option 3: Create New Service Owner Account */}
                     <Link
-                        href="/register?role=SERVICE_OWNER"
+                        href="/register?role=SERVICE_OWNER&mode=owner"
                         onClick={() => onOpenChange(false)}
                         className="group p-4 rounded-2xl border-2 border-emerald-600 bg-emerald-50/20 hover:bg-emerald-50/60 transition-all flex items-center justify-between shadow-sm"
                     >

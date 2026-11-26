@@ -37,6 +37,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Navigation
         "nav.explore": "Explorează Spații",
         "nav.services": "Servicii",
+        "nav.allServices": "Toate Serviciile",
         "nav.sponsoredCleaning": "SPONSORIZAT: 10% reducere la curățenie",
         "nav.cleaning": "Curățenie",
         "nav.security": "Asigurare & Pază",
@@ -128,8 +129,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Explore page & Filters
         "explore.title": "Explorează Spații cu Ora",
         "explore.subtitle": "Găsește și rezervă spații unice pentru orice proiect sau eveniment",
-        "explore.servicesTitle": "Explorează Servicii & Spații",
-        "explore.servicesSubtitle": "Găsește spații cu servicii verificate",
+        "explore.servicesTitle": "Explorează Servicii",
+        "explore.servicesSubtitle": "Descoperă servicii profesionale verificate pe platformă",
         "explore.spacesAvailable": "spații disponibile",
         "explore.viewSpace": "Vezi spațiul",
 
@@ -866,6 +867,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Navigation
         "nav.explore": "Explore Spaces",
         "nav.services": "Services",
+        "nav.allServices": "All Services",
         "nav.sponsoredCleaning": "SPONSORED: 10% off cleaning services",
         "nav.cleaning": "Cleaning",
         "nav.security": "Insurance & Security",
@@ -957,8 +959,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Explore page & Filters
         "explore.title": "Explore Spaces by the Hour",
         "explore.subtitle": "Find and book unique spaces for any project or event",
-        "explore.servicesTitle": "Explore Services & Spaces",
-        "explore.servicesSubtitle": "Find spaces with verified professional services",
+        "explore.servicesTitle": "Explore Services",
+        "explore.servicesSubtitle": "Discover verified professional services on the platform",
         "explore.spacesAvailable": "spaces available",
         "explore.viewSpace": "View space",
 
@@ -1695,6 +1697,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Navigation
         "nav.explore": "Helyszínek böngészése",
         "nav.services": "Szolgáltatások",
+        "nav.allServices": "Minden Szolgáltatás",
         "nav.sponsoredCleaning": "SZPONZORÁLT: 10% kedvezmény takarításra",
         "nav.cleaning": "Takarítás",
         "nav.security": "Biztosítás és Védelem",
@@ -1786,8 +1789,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Explore page & Filters
         "explore.title": "Helyszínek felfedezése óradíjjal",
         "explore.subtitle": "Találj és bérelj egyedi helyiségeket bármely projekthez vagy eseményhez",
-        "explore.servicesTitle": "Szolgáltatások és Helyszínek felfedezése",
-        "explore.servicesSubtitle": "Találj ellenőrzött szolgáltatásokkal rendelkező helyszíneket",
+        "explore.servicesTitle": "Szolgáltatások Felfedezése",
+        "explore.servicesSubtitle": "Fedezd fel az ellenőrzött szakmai szolgáltatásokat a platformon",
         "explore.spacesAvailable": "elérhető helyszín",
         "explore.viewSpace": "Megtekintés",
 
@@ -2524,6 +2527,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Navigation
         "nav.explore": "Räume entdecken",
         "nav.services": "Dienstleistungen",
+        "nav.allServices": "Alle Dienstleistungen",
         "nav.sponsoredCleaning": "GESPONSERT: 10% Rabatt auf Reinigung",
         "nav.cleaning": "Reinigung",
         "nav.security": "Versicherung & Sicherheit",
@@ -2615,8 +2619,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         // Explore page & Filters
         "explore.title": "Räume stundenweise entdecken",
         "explore.subtitle": "Finde und buche außergewöhnliche Räume für jedes Projekt oder Event",
-        "explore.servicesTitle": "Dienstleistungen & Räume entdecken",
-        "explore.servicesSubtitle": "Finde Räume mit geprüften Zusatzleistungen",
+        "explore.servicesTitle": "Dienstleistungen entdecken",
+        "explore.servicesSubtitle": "Entdecken Sie geprüfte professionelle Dienstleistungen auf der Plattform",
         "explore.spacesAvailable": "Räume verfügbar",
         "explore.viewSpace": "Raum ansehen",
 

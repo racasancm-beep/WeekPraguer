@@ -18,7 +18,7 @@ export function ExploreHeader({ isServiceMode, count }: ExploreHeaderProps) {
                 </h1>
                 <p className="text-gray-500 mt-1 text-sm font-medium">
                     {isServiceMode
-                        ? `${t("explore.servicesSubtitle")} (${count} ${t("explore.spacesAvailable")}).`
+                        ? `${t("explore.servicesSubtitle")} (${count} ${count === 1 ? (t("service.unitSingular") || "serviciu") : (t("service.unitPlural") || "servicii")}).`
                         : `${t("explore.subtitle")} (${count} ${t("explore.spacesAvailable")}).`}
                 </p>
             </div>
