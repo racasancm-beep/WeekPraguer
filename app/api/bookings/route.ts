@@ -186,11 +186,13 @@ export async function POST(req: Request) {
                     );
                 }
 
+                const isService = Boolean(space.isService);
                 const pricing = calculatePricing(
                     slot.isFullDay
                         ? space.dailyRate
                         : ((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * space.hourlyRate,
-                    Boolean((space as any).selfCleaning)
+                    Boolean((space as any).selfCleaning),
+                    isService
                 );
 
                 const booking = await tx.booking.create({

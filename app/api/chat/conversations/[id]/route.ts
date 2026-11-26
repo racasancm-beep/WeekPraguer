@@ -178,11 +178,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const isService = Boolean(conversation.space?.isService);
         const activeStatus = isChatActive(conversation.booking.endTime, isService);
 
-        // Check active chat window for spaces (must not be more than 48 hours after checkout)
-        // For services, profiles are allowed to communicate freely without expiration lockout
-        if (!isService && activeStatus.isExpired) {
+        // Check active chat window:
+        // For services: sending messages is permitted until 24 hours after the service date.
+        // For spaces: permitted until 48 hours after check-out.
+        if (activeStatus.isExpired) {
             return NextResponse.json(
-                { message: "Acest chat a fost închis automat la 48 de ore după check-out." },
+                {
+                    message: isService
+                        ? "Acest chat a fost închis automat la 24 de ore după data serviciului."
+                        : "Acest chat a fost închis automat la 48 de ore după check-out.",
+                },
                 { status: 400 }
             );
         }

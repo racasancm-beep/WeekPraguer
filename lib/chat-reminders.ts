@@ -16,25 +16,18 @@ function renderTemplate(template: string, vars: Record<string, string>): string 
 }
 
 export function isChatActive(endTime: Date | string, isService = false): { isActive: boolean; expiresAt: Date; isExpired: boolean } {
-    // For services, profiles communicate freely without expiration lockout
-    if (isService) {
-        return {
-            isActive: true,
-            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-            isExpired: false,
-        };
-    }
-
     const end = new Date(endTime);
+    const postHours = isService ? 24 : 48;
+
     if (isNaN(end.getTime())) {
         return {
             isActive: true,
-            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            expiresAt: new Date(Date.now() + postHours * 60 * 60 * 1000),
             isExpired: false,
         };
     }
-    // Active from reservation until 48 hours after checkout (for space rentals)
-    const expiresAt = new Date(end.getTime() + 48 * 60 * 60 * 1000);
+    // Active until 24 hours post-service date for services, 48 hours after checkout for spaces
+    const expiresAt = new Date(end.getTime() + postHours * 60 * 60 * 1000);
     const isExpired = Date.now() > expiresAt.getTime();
     return {
         isActive: !isExpired,

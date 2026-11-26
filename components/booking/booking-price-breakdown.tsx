@@ -26,6 +26,7 @@ export function BookingPriceBreakdown({
 }: BookingPriceBreakdownProps) {
     const { t } = useLanguage();
     if (!booking || booking.accessCode === "OWNER_BLOCK") return null;
+    if (booking?.space?.isService || space?.isService) return null;
 
     const { total, platformFee, ownerPrice } = getBookingBreakdown(booking, space);
     const textSize = compact ? "text-[10px]" : "text-xs";

@@ -165,7 +165,13 @@ export default function BookingsPage() {
                                                     <p className="text-sm font-medium text-gray-700">
                                                         {formatReservationPeriod(booking)}
                                                     </p>
-                                                    <BookingPriceBreakdown booking={booking} highlightOwnerNet />
+                                                    {booking.space?.isService ? (
+                                                        <span className="font-black text-xs text-[#008080] px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200">
+                                                            {booking.totalPrice} RON
+                                                        </span>
+                                                    ) : (
+                                                        <BookingPriceBreakdown booking={booking} highlightOwnerNet />
+                                                    )}
                                                 </div>
 
                                                 {booking.status === "OWNER_PROPOSED" &&
@@ -468,7 +474,15 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
                         <p className="text-sm font-medium text-gray-700">
                             {formatReservationPeriod(booking)}
                         </p>
-                        {!isOwnerBlock && <BookingPriceBreakdown booking={booking} highlightOwnerNet />}
+                        {!isOwnerBlock && (
+                            booking.space?.isService ? (
+                                <span className="font-black text-xs text-[#008080] px-2.5 py-0.5 rounded-full bg-teal-50 border border-teal-200">
+                                    {booking.totalPrice} RON
+                                </span>
+                            ) : (
+                                <BookingPriceBreakdown booking={booking} highlightOwnerNet />
+                            )
+                        )}
                     </div>
 
                     {isOwnerBlock ? (

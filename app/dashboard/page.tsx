@@ -455,7 +455,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                         </div>
                         <div
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg font-bold ${
-                                isReserved
+                                isReserved || isServiceConfirmed
                                     ? "bg-emerald-600 text-white shadow-sm"
                                     : "text-gray-400"
                             }`}
@@ -488,13 +488,15 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                             {isServiceConfirmed || isReserved ? t("renter.totalPaid") : t("space.estimatedTotal")}
                         </p>
                         <p className="font-black text-lg">{booking.totalPrice} RON</p>
-                        <p className="text-[11px] font-semibold text-amber-700">
-                            {t("space.platformFeeIncluded")} ({booking.platformFee ?? 0} RON)
-                        </p>
+                        {!isService && (
+                            <p className="text-[11px] font-semibold text-amber-700">
+                                {t("space.platformFeeIncluded")} ({booking.platformFee ?? 0} RON)
+                            </p>
+                        )}
                     </div>
                 </div>
 
-                {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && (
+                {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && !isService && (
                     <BookingPriceBreakdown booking={booking} />
                 )}
 

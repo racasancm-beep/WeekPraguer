@@ -459,7 +459,7 @@ export default function InteractiveMap({
                                         </div>
                                         <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                                             <span className="text-sm font-black text-[#008080]">
-                                                {calculateSpaceCustomerPrice(space.hourlyRate)} RON/h
+                                                {calculateSpaceCustomerPrice(space.hourlyRate, Boolean((space as any).isService))} RON/h
                                             </span>
                                             <Link
                                                 href={`/spaces/${space.id}`}

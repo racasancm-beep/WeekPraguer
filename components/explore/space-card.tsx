@@ -148,7 +148,7 @@ export function SpaceCard({ space }: SpaceCardProps) {
             <CardFooter className="p-4 pt-0 flex items-center justify-between border-t border-gray-100 mt-1">
                 <div>
                     <span className="font-black text-lg text-[#008080]">
-                        {calculateSpaceCustomerPrice(space.hourlyRate)} RON
+                        {calculateSpaceCustomerPrice(space.hourlyRate, space.isService)} RON
                     </span>
                     <span className="text-xs text-gray-500 ml-1">/ h</span>
                 </div>

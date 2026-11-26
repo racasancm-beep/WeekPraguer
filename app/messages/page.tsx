@@ -323,14 +323,14 @@ function MessagesContent() {
                                                 </p>
                                                 <span
                                                     className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full ${
-                                                        conv.space?.isService
-                                                            ? "bg-teal-100 text-teal-800"
-                                                            : isExpired
+                                                        isExpired
                                                             ? "bg-gray-200 text-gray-600"
+                                                            : conv.space?.isService
+                                                            ? "bg-teal-100 text-teal-800"
                                                             : "bg-emerald-100 text-emerald-800"
                                                     }`}
                                                 >
-                                                    {conv.space?.isService ? "Liber" : isExpired ? "Arhivat" : "Activ"}
+                                                    {isExpired ? "Arhivat" : conv.space?.isService ? "Liber (24h)" : "Activ"}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-1.5 mb-0.5">
@@ -398,15 +398,17 @@ function MessagesContent() {
                                 </div>
 
                                 <div className="shrink-0 text-right">
-                                    {currentConversation.space?.isService ? (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
-                                            <CheckCircle2 className="w-3 h-3 text-teal-600" />
-                                            {t("chat.serviceChatActive") || "Chat Activ • Comunicare Liberă"}
-                                        </span>
-                                    ) : currentConversation.activeStatus?.isExpired ? (
+                                    {currentConversation.activeStatus?.isExpired ? (
                                         <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                             <Lock className="w-3 h-3" />
-                                            Închis (+48h după check-out)
+                                            {currentConversation.space?.isService
+                                                ? (t("chat.serviceChatClosed24h") || "Închis (+24h după serviciu)")
+                                                : "Închis (+48h după check-out)"}
+                                        </span>
+                                    ) : currentConversation.space?.isService ? (
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
+                                            <CheckCircle2 className="w-3 h-3 text-teal-600" />
+                                            {t("chat.serviceChatActive") || "Chat Activ (deschis până la 24h după serviciu)"}
                                         </span>
                                     ) : (
                                         <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-full">
@@ -512,12 +514,13 @@ function MessagesContent() {
                             </div>
 
                             {/* Chat Input or Expired notice */}
-                            {!currentConversation.space?.isService && currentConversation.activeStatus?.isExpired ? (
+                            {currentConversation.activeStatus?.isExpired ? (
                                 <div className="p-3 bg-gray-100 dark:bg-gray-900 border-t text-center text-xs text-gray-500 font-semibold flex items-center justify-center gap-2">
                                     <Lock className="w-4 h-4 text-gray-400" />
                                     <span>
-                                        {t("chat.chatExpiredNotice") ||
-                                            "Acest chat a fost arhivat automat la 48 de ore după finalizarea închirierii (check-out). Nu mai pot fi trimise mesaje noi."}
+                                        {currentConversation.space?.isService
+                                            ? (t("chat.serviceChatExpiredNotice") || "Acest chat a fost arhivat automat la 24 de ore după data serviciului. Nu mai pot fi trimise mesaje noi.")
+                                            : (t("chat.chatExpiredNotice") || "Acest chat a fost arhivat automat la 48 de ore după finalizarea închirierii (check-out). Nu mai pot fi trimise mesaje noi.")}
                                     </span>
                                 </div>
                             ) : (
