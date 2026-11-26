@@ -160,17 +160,19 @@ export function MainNav() {
                             </div>
                         </div>
 
-                        <Link
-                            href="/messages"
-                            className={`flex items-center gap-1.5 text-sm transition-all ${
-                                isOwner
-                                    ? "font-black text-[#008080] bg-teal-50 hover:bg-teal-100 border-2 border-[#008080]/30 px-3.5 py-2 rounded-xl shadow-sm hover:scale-105"
-                                    : "font-bold text-gray-700 hover:text-[#008080]"
-                            }`}
-                        >
-                            <MessageSquare className="w-4 h-4 text-[#008080]" />
-                            <span>{t("nav.chat") || "Chat"}</span>
-                        </Link>
+                        {session?.user && (
+                            <Link
+                                href="/messages"
+                                className={`flex items-center gap-1.5 text-sm transition-all ${
+                                    isOwner
+                                        ? "font-black text-[#008080] bg-teal-50 hover:bg-teal-100 border-2 border-[#008080]/30 px-3.5 py-2 rounded-xl shadow-sm hover:scale-105"
+                                        : "font-bold text-gray-700 hover:text-[#008080]"
+                                }`}
+                            >
+                                <MessageSquare className={`w-4 h-4 ${isOwner ? "text-[#008080]" : "text-[#008080]"}`} />
+                                <span>{t("nav.chat") || "Chat"}</span>
+                            </Link>
+                        )}
 
                         {isAdmin ? (
                             <Link
