@@ -25,7 +25,7 @@ export async function getUserReferralStats(userId: string): Promise<DarkerGenieS
 }
 
 export function generateReferralCodeString(role: UserRole): string {
-    const prefix = role === "OWNER" ? "MG-OWN" : "MG-CUST";
+    const prefix = role === "OWNER" ? "MG-OWN" : role === "SERVICE_OWNER" ? "MG-SERV" : "MG-CUST";
     const randomHex = crypto.randomBytes(4).toString("hex").toUpperCase();
     return `${prefix}-${randomHex}`;
 }

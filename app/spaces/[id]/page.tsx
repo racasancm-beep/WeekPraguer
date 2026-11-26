@@ -22,7 +22,8 @@ import {
     Ban,
     Trash2,
     Loader2,
-    AlertTriangle
+    AlertTriangle,
+    CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { expandBookingDateKeys, formatOwnerBlockedPeriods, formatPrice } from "@/lib/utils";
@@ -53,6 +54,10 @@ interface SpaceDetailed {
     district?: string;
     address: string;
     category?: string;
+    listingType?: string;
+    isService?: boolean;
+    serviceCategory?: string;
+    availableHours?: string;
     latitude?: number;
     longitude?: number;
     size: number;
@@ -516,15 +521,33 @@ export default function SpaceDetailsPage() {
                 <div className="mb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                     <div>
                         <div className="flex flex-wrap items-center gap-3 mb-2">
-                            {space.category && (
-                                <span className="text-xs font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-3 py-1 rounded-full">
-                                    {translateCategory(space.category)}
-                                </span>
+                            {space.isService ? (
+                                <>
+                                    <span className="text-xs font-black uppercase tracking-wider bg-[#008080] text-white px-3.5 py-1 rounded-full shadow-sm flex items-center gap-1.5">
+                                        <Sparkles className="w-3.5 h-3.5" />
+                                        {space.serviceCategory || space.category || t("service.badge") || "Serviciu Profesional"}
+                                    </span>
+                                    <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full ${
+                                        space.active !== false
+                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                            : "bg-red-50 text-red-700 border border-red-200"
+                                    }`}>
+                                        {space.active !== false ? t("service.availabilityNow") || "Disponibil Acum" : t("service.availabilityUnavailable") || "Momentan Indisponibil"}
+                                    </span>
+                                </>
+                            ) : (
+                                <>
+                                    {space.category && (
+                                        <span className="text-xs font-bold uppercase tracking-wider bg-violet-100 text-violet-800 px-3 py-1 rounded-full">
+                                            {translateCategory(space.category)}
+                                        </span>
+                                    )}
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
+                                        <Shield className="w-3.5 h-3.5 text-emerald-600" />
+                                        {t("space.verifiedHost")}
+                                    </span>
+                                </>
                             )}
-                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full">
-                                <Shield className="w-3.5 h-3.5 text-emerald-600" />
-                                {t("space.verifiedHost")}
-                            </span>
                         </div>
 
                         <h1 className="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight mb-2">
@@ -648,57 +671,109 @@ export default function SpaceDetailsPage() {
                     {/* Left Column (8 cols): Info, Details, Amenities, Location */}
                     <div className="lg:col-span-8 space-y-8">
                         {/* Quick Stats Banner */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-white rounded-3xl border border-gray-100 shadow-sm">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
-                                    <Users className="w-5 h-5" />
+                        {space.isService ? (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-white rounded-3xl border border-teal-100 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-[#008080]">
+                                        <Clock className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">{t("service.priceDisplay") || "Tarif Serviciu"}</div>
+                                        <div className="text-sm font-black text-gray-900">
+                                            {formatPrice(calculateSpaceCustomerPrice(space.hourlyRate))} / h
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 font-medium">{t("space.capacity")}</div>
-                                    <div className="text-sm font-bold text-gray-900">
-                                        {space.capacity} {t("space.people")}
+
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-[#008080]">
+                                        <Clock className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">{t("service.availableHours") || "Interval Orar"}</div>
+                                        <div className="text-sm font-bold text-gray-900">
+                                            {space.availableHours || "09:00 - 18:00"}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-[#008080]">
+                                        <CheckCircle2 className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">Disponibilitate</div>
+                                        <div className="text-sm font-bold text-emerald-700">
+                                            {space.active !== false ? (t("service.availabilityNow") || "Disponibil Acum") : (t("service.availabilityUnavailable") || "Indisponibil")}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-teal-50 flex items-center justify-center text-[#008080]">
+                                        <MapPin className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">Locație Serviciu</div>
+                                        <div className="text-sm font-bold text-gray-900 truncate max-w-[120px]">
+                                            {space.city}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 bg-white rounded-3xl border border-gray-100 shadow-sm">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                        <Users className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">{t("space.capacity")}</div>
+                                        <div className="text-sm font-bold text-gray-900">
+                                            {space.capacity} {t("space.people")}
+                                        </div>
+                                    </div>
+                                </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
-                                    <Ruler className="w-5 h-5" />
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                        <Ruler className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">{t("space.size")}</div>
+                                        <div className="text-sm font-bold text-gray-900">{space.size} m²</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 font-medium">{t("space.size")}</div>
-                                    <div className="text-sm font-bold text-gray-900">{space.size} m²</div>
-                                </div>
-                            </div>
 
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
-                                    <Wifi className="w-5 h-5" />
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                        <Wifi className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">{t("space.connectivity")}</div>
+                                        <div className="text-sm font-bold text-gray-900">
+                                            {space.hasWifi ? t("space.highSpeedWifi") : t("space.onRequest")}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 font-medium">{t("space.connectivity")}</div>
-                                    <div className="text-sm font-bold text-gray-900">
-                                        {space.hasWifi ? t("space.highSpeedWifi") : t("space.onRequest")}
+
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                        <Clock className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-gray-400 font-medium">{t("space.rental")}</div>
+                                        <div className="text-sm font-bold text-gray-900">{t("space.hourlyDaily")}</div>
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center text-violet-600">
-                                    <Clock className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 font-medium">{t("space.rental")}</div>
-                                    <div className="text-sm font-bold text-gray-900">{t("space.hourlyDaily")}</div>
-                                </div>
-                            </div>
-                        </div>
+                        )}
 
                         {/* Description */}
                         <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-4">
                             <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                <Clock className="w-5 h-5 text-violet-600" />
-                                {t("space.descriptionTitle")}
+                                {space.isService ? <Sparkles className="w-5 h-5 text-[#008080]" /> : <Clock className="w-5 h-5 text-violet-600" />}
+                                {space.isService ? (t("service.descriptionLabel") || "Descrierea Serviciului") : t("space.descriptionTitle")}
                             </h3>
                             <div className="text-gray-600 leading-relaxed text-sm sm:text-base whitespace-pre-line font-normal">
                                 {space.description}

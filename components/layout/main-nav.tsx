@@ -17,9 +17,10 @@ export function MainNav() {
     const [listSpaceModalOpen, setListSpaceModalOpen] = useState(false);
     const role = (session?.user as any)?.role;
     const isAdmin = role === "ADMIN";
-    const isOwner = role === "OWNER";
+    const isServiceOwner = role === "SERVICE_OWNER";
+    const isOwner = role === "OWNER" || isServiceOwner;
     const isOwnerOrAdmin = isOwner || isAdmin;
-    const listSpaceHref = session ? (isOwnerOrAdmin ? "/owner/dashboard/listings/create" : "/owner/dashboard/listings/create") : "/register?role=OWNER";
+    const listSpaceHref = session ? "/owner/dashboard/listings/create" : "/register?role=OWNER";
     const loginNavHref =
         pathname && pathname.startsWith("/spaces/")
             ? `/login?callbackUrl=${encodeURIComponent(pathname)}`
@@ -31,6 +32,8 @@ export function MainNav() {
     const userInitial = (userName?.[0] || userEmail?.[0] || "U").toUpperCase();
     const userRoleLabel = isAdmin
         ? "ADMIN"
+        : isServiceOwner
+        ? (t("owner.serviceOwnerRoleBadge") || "SERVICE OWNER")
         : isOwner
         ? t("owner.roleBadge")
         : t("renter.roleBadge");
@@ -209,9 +212,9 @@ export function MainNav() {
                         {!session && (
                             <Button
                                 onClick={() => setListSpaceModalOpen(true)}
-                                className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-6 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                                className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-5 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
                             >
-                                {t("nav.listSpace")}
+                                {t("nav.listSpaceOrService") || "List a Space / Service Owner"}
                             </Button>
                         )}
                     </div>

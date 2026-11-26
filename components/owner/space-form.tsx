@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, MapPin, Plus, X, KeyRound, ShieldCheck, MessageSquare } from "lucide-react";
+import { Loader2, MapPin, Plus, X, KeyRound, ShieldCheck, MessageSquare, Sparkles, Clock, CheckCircle2 } from "lucide-react";
 import MapComponent from "@/components/ui/map-component";
 import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -100,18 +101,31 @@ async function geocodeQuery(query: string): Promise<{ lat: number; lng: number; 
     return null;
 }
 
+const PRESET_SERVICE_CATEGORIES = [
+    "Curățenie & Igienizare",
+    "Securitate & Pază",
+    "Asistență IT & Tehnică",
+    "Catering & Evenimente",
+    "Foto & Video Pro",
+    "Design & Arhitectură",
+    "Consultanță Juridică & Financiară",
+    "Sonorizare & DJ",
+    "Decor & Flori",
+    "Hostess & Protocol",
+];
+
 const formSchema = z.object({
     name: z.string().min(2, "Required"),
-    description: z.string().min(3, "Required"),
+    description: z.string().min(3, "Required").max(500, "Maximum 500 characters"),
     category: z.string().optional().default("coworking"),
     address: z.string().min(2, "Required"),
     city: z.string().default("București"),
     district: z.string().optional(),
     latitude: z.coerce.number().optional(),
     longitude: z.coerce.number().optional(),
-    size: z.coerce.number().positive(),
-    capacity: z.coerce.number().int().positive(),
-    officeCount: z.coerce.number().int().optional(),
+    size: z.coerce.number().optional().default(1),
+    capacity: z.coerce.number().int().optional().default(1),
+    officeCount: z.coerce.number().int().optional().default(1),
     accessCode: z.string().optional().default(""),
     reminder24hTemplate: z.string().optional().default(""),
     reminder12hTemplate: z.string().optional().default(""),
@@ -150,9 +164,30 @@ function parseInitialAmenities(raw: any): string[] {
 
 export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFormProps) {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const { data: session } = useSession();
     const { t, translateAmenity } = useLanguage();
     const targetSpaceId = spaceId || initialData?.id;
     const isEditMode = Boolean(targetSpaceId);
+
+    const sessionRole = (session?.user as any)?.role;
+    const isServiceRole = sessionRole === "SERVICE_OWNER";
+    const initialIsService = Boolean(
+        initialData?.isService ||
+        initialData?.listingType === "SERVICE" ||
+        isServiceRole ||
+        searchParams?.get("type") === "SERVICE"
+    );
+
+    const [listingType, setListingType] = useState<"SPACE" | "SERVICE">(
+        initialIsService ? "SERVICE" : "SPACE"
+    );
+
+    const initialServiceCat = initialData?.serviceCategory || initialData?.category || PRESET_SERVICE_CATEGORIES[0];
+    const isInitialPreset = PRESET_SERVICE_CATEGORIES.includes(initialServiceCat);
+    const [serviceCategory, setServiceCategory] = useState<string>(isInitialPreset ? initialServiceCat : "__CUSTOM__");
+    const [customCategory, setCustomCategory] = useState<string>(!isInitialPreset && initialData?.serviceCategory ? initialData.serviceCategory : "");
+    const [availableHours, setAvailableHours] = useState<string>(initialData?.availableHours || "09:00 - 18:00");
 
     const [loading, setLoading] = useState(false);
     const [geocoding, setGeocoding] = useState(false);
@@ -378,11 +413,22 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
             const endpoint = isEditMode ? `/api/spaces/${targetSpaceId}` : "/api/owner/spaces";
             const method = isEditMode ? "PUT" : "POST";
 
+            const isServiceListing = listingType === "SERVICE";
+            const resolvedServiceCategory =
+                serviceCategory === "__CUSTOM__" ? customCategory.trim() : serviceCategory;
+
             const response = await fetch(endpoint, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...values,
+                    listingType,
+                    isService: isServiceListing,
+                    serviceCategory: isServiceListing ? (resolvedServiceCategory || "General") : null,
+                    availableHours: isServiceListing ? (availableHours.trim() || "09:00 - 18:00") : null,
+                    size: isServiceListing ? 1 : (Number(values.size) || 1),
+                    capacity: isServiceListing ? 1 : (Number(values.capacity) || 1),
+                    officeCount: isServiceListing ? 1 : (Number(values.officeCount) || 1),
                     latitude: Number.isFinite(finalLat) ? finalLat : 44.4268,
                     longitude: Number.isFinite(finalLng) ? finalLng : 26.1025,
                     dailyRate: values.dailyRate || values.hourlyRate * 8,
@@ -422,114 +468,224 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
 
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl bg-white dark:bg-gray-800 p-6 rounded-xl border">
-            <div className="space-y-4">
-                <h3 className="text-lg font-medium">{t("owner.form.basicInfo")}</h3>
-                <div className="grid gap-4">
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.spaceName")}</label>
-                        <Input {...form.register("name")} placeholder="e.g. Modern Office Victoriei" />
-                        {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.category")}</label>
-                        <select
-                            {...form.register("category")}
-                            className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
-                        >
-                            <option value="coworking">{t("catOpt.coworking")}</option>
-                            <option value="cocina">{t("catOpt.cocina")}</option>
-                            <option value="estudio">{t("catOpt.estudio")}</option>
-                            <option value="sala">{t("catOpt.sala")}</option>
-                            <option value="gimnasio">{t("catOpt.gimnasio")}</option>
-                            <option value="terraza">{t("catOpt.terraza")}</option>
-                            <option value="eventos">{t("catOpt.eventos")}</option>
-                            <option value="yoga">{t("catOpt.yoga")}</option>
-                            <option value="fotografia">{t("catOpt.fotografia")}</option>
-                            <option value="taller">{t("catOpt.taller")}</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.description")}</label>
-                        <Textarea {...form.register("description")} rows={4} />
-                        {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
-                    </div>
-                </div>
+            {/* Type selector: Space vs Service */}
+            <div className="flex items-center gap-3 p-1.5 bg-gray-100 dark:bg-gray-700/60 rounded-2xl w-full">
+                <button
+                    type="button"
+                    onClick={() => setListingType("SPACE")}
+                    className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                        listingType === "SPACE"
+                            ? "bg-white text-gray-900 shadow-md scale-[1.01]"
+                            : "text-gray-500 hover:text-gray-900"
+                    }`}
+                >
+                    <span>🏢</span> {t("service.typeSpace") || "Spațiu fizic de închiriat"}
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setListingType("SERVICE")}
+                    className={`flex-1 py-2.5 px-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${
+                        listingType === "SERVICE"
+                            ? "bg-[#008080] text-white shadow-md scale-[1.01]"
+                            : "text-gray-500 hover:text-gray-900"
+                    }`}
+                >
+                    <Sparkles className="w-4 h-4" /> {t("service.typeService") || "Serviciu profesional"}
+                </button>
             </div>
 
-            {/* Space Access Code (Cod Acces Spațiu) - Visible & Editable anytime by Owner */}
-            <div className="space-y-3 p-4 rounded-xl border border-teal-200 bg-teal-50/50 dark:bg-gray-800 dark:border-teal-900/60 shadow-sm">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-[#008080] text-white flex items-center justify-center shrink-0 shadow-sm">
-                        <KeyRound className="w-4 h-4" />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                            {t("owner.form.accessCodeTitle") || "Cod Acces Spațiu (pentru clienți)"}
+            {listingType === "SERVICE" ? (
+                /* SERVICE MODE */
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between pb-2 border-b">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-[#008080]" />
+                            {t("service.typeService") || "Informații Serviciu Profesional"}
                         </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {t("owner.form.accessCodeDesc") || "Codul de acces pe care clientul îl va vedea în panoul său după confirmarea rezervării (ex. cod cutie chei, PIN smart lock, interfon). Poate fi modificat oricând."}
-                        </p>
-                    </div>
-                </div>
-                <div>
-                    <Input
-                        {...form.register("accessCode")}
-                        placeholder={t("owner.form.accessCodePlaceholder") || "ex. 482910 sau KEY-1234"}
-                        className="font-mono text-base font-bold tracking-wider bg-white dark:bg-gray-900 border-teal-300 dark:border-teal-800"
-                    />
-                    <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-1.5 font-medium">
-                        {t("owner.form.accessCodeHint") || "Acest cod este vizibil clienților cu rezervare confirmată și poate fi actualizat oricând de proprietar."}
-                    </p>
-                </div>
-            </div>
-
-            {/* Automated Customer Messages Configuration (24h before renting & 12h before check-in) */}
-            <div className="space-y-4 p-4 rounded-xl border border-violet-200 bg-violet-50/50 dark:bg-gray-800 dark:border-violet-900/60 shadow-sm">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm">
-                        <MessageSquare className="w-4 h-4" />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                            {t("owner.form.remindersTitle") || "Mesaje Automate în Chat & Email pentru Clienți"}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {t("owner.form.remindersDesc") || "Personalizează mesajele automate trimise clientului cu 24h și 12h înainte de start. Când se trimit, vei primi notificare direct în chat."}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="space-y-3 pt-1">
-                    <div>
-                        <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1 block">
-                            {t("owner.form.reminder24hLabel") || "Mesaj automat cu 24 ore înainte de închiriere:"}
-                        </label>
-                        <Textarea
-                            {...form.register("reminder24hTemplate")}
-                            rows={3}
-                            placeholder="Bună ziua, {nume_client}! Vă reamintim că rezervarea dumneavoastră pentru {nume_spatiu} începe în 24 de ore ({ora_inceput}). Cod acces: {cod_acces}."
-                            className="text-xs bg-white dark:bg-gray-900"
-                        />
-                        <p className="text-[10px] text-gray-500 mt-1">
-                            Variabile: <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{nume_client}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{nume_spatiu}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{ora_inceput}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{data_inceput}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{adresa_spatiu}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{cod_acces}"}</code>
-                        </p>
+                        <span className="text-xs bg-teal-50 text-[#008080] border border-[#008080]/20 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
+                            {t("service.badge") || "Serviciu"}
+                        </span>
                     </div>
 
-                    <div>
-                        <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1 block">
-                            {t("owner.form.reminder12hLabel") || "Mesaj automat cu 12 ore înainte de check-in:"}
-                        </label>
-                        <Textarea
-                            {...form.register("reminder12hTemplate")}
-                            rows={3}
-                            placeholder="Bună ziua, {nume_client}! În 12 ore începe check-in-ul pentru spațiul {nume_spatiu}. Vă rugăm să pregătiți codul de acces ({cod_acces})."
-                            className="text-xs bg-white dark:bg-gray-900"
-                        />
+                    <div className="grid gap-4">
+                        <div>
+                            <label className="text-sm font-semibold mb-1 block text-gray-800 dark:text-gray-200">
+                                {t("owner.form.spaceName") || "Nume Serviciu"}
+                            </label>
+                            <Input
+                                {...form.register("name")}
+                                placeholder="ex. Curățenie Profesională pentru Birouri & Spații Comerciale"
+                            />
+                            {form.formState.errors.name && (
+                                <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-sm font-semibold mb-1 block text-gray-800 dark:text-gray-200">
+                                {t("service.categoryLabel") || "Categorie Serviciu"}
+                            </label>
+                            <select
+                                value={serviceCategory}
+                                onChange={(e) => setServiceCategory(e.target.value)}
+                                className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm font-medium"
+                            >
+                                {PRESET_SERVICE_CATEGORIES.map((cat) => (
+                                    <option key={cat} value={cat}>
+                                        {cat}
+                                    </option>
+                                ))}
+                                <option value="__CUSTOM__">
+                                    {t("service.customCategoryOption") || "+ Creează o categorie nouă..."}
+                                </option>
+                            </select>
+
+                            {serviceCategory === "__CUSTOM__" && (
+                                <div className="mt-2.5">
+                                    <Input
+                                        value={customCategory}
+                                        onChange={(e) => setCustomCategory(e.target.value)}
+                                        placeholder={t("service.customCategoryPlaceholder") || "Introdu numele categoriei tale personalizate..."}
+                                        className="border-[#008080] focus-visible:ring-[#008080]"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <div className="flex justify-between items-center mb-1">
+                                <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                    {t("service.descriptionLabel") || "Descrierea Serviciului (max. 500 caractere)"}
+                                </label>
+                                <span className="text-xs font-mono font-bold text-gray-500">
+                                    {Math.max(0, 500 - (form.watch("description")?.length || 0))} {t("service.charactersRemaining") || "caractere rămase"}
+                                </span>
+                            </div>
+                            <Textarea
+                                {...form.register("description")}
+                                maxLength={500}
+                                rows={5}
+                                placeholder={t("service.descriptionPlaceholder") || "Descrie în detaliu serviciul oferit, beneficiile, experiența și ce include prețul..."}
+                            />
+                            {form.formState.errors.description && (
+                                <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                /* SPACE MODE */
+                <>
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium">{t("owner.form.basicInfo")}</h3>
+                        <div className="grid gap-4">
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.spaceName")}</label>
+                                <Input {...form.register("name")} placeholder="e.g. Modern Office Victoriei" />
+                                {form.formState.errors.name && <p className="text-red-500 text-xs mt-1">{form.formState.errors.name.message}</p>}
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.category")}</label>
+                                <select
+                                    {...form.register("category")}
+                                    className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                                >
+                                    <option value="coworking">{t("catOpt.coworking")}</option>
+                                    <option value="cocina">{t("catOpt.cocina")}</option>
+                                    <option value="estudio">{t("catOpt.estudio")}</option>
+                                    <option value="sala">{t("catOpt.sala")}</option>
+                                    <option value="gimnasio">{t("catOpt.gimnasio")}</option>
+                                    <option value="terraza">{t("catOpt.terraza")}</option>
+                                    <option value="eventos">{t("catOpt.eventos")}</option>
+                                    <option value="yoga">{t("catOpt.yoga")}</option>
+                                    <option value="fotografia">{t("catOpt.fotografia")}</option>
+                                    <option value="taller">{t("catOpt.taller")}</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.description")}</label>
+                                <Textarea {...form.register("description")} rows={4} />
+                                {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Space Access Code (Cod Acces Spațiu) - Visible & Editable anytime by Owner */}
+                    <div className="space-y-3 p-4 rounded-xl border border-teal-200 bg-teal-50/50 dark:bg-gray-800 dark:border-teal-900/60 shadow-sm">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-[#008080] text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <KeyRound className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                    {t("owner.form.accessCodeTitle") || "Cod Acces Spațiu (pentru clienți)"}
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {t("owner.form.accessCodeDesc") || "Codul de acces pe care clientul îl va vedea în panoul său după confirmarea rezervării (ex. cod cutie chei, PIN smart lock, interfon). Poate fi modificat oricând."}
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <Input
+                                {...form.register("accessCode")}
+                                placeholder={t("owner.form.accessCodePlaceholder") || "ex. 482910 sau KEY-1234"}
+                                className="font-mono text-base font-bold tracking-wider bg-white dark:bg-gray-900 border-teal-300 dark:border-teal-800"
+                            />
+                            <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-1.5 font-medium">
+                                {t("owner.form.accessCodeHint") || "Acest cod este vizibil clienților cu rezervare confirmată și poate fi actualizat oricând de proprietar."}
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Automated Customer Messages Configuration (24h before renting & 12h before check-in) */}
+                    <div className="space-y-4 p-4 rounded-xl border border-violet-200 bg-violet-50/50 dark:bg-gray-800 dark:border-violet-900/60 shadow-sm">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <MessageSquare className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                    {t("owner.form.remindersTitle") || "Mesaje Automate în Chat & Email pentru Clienți"}
+                                </h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {t("owner.form.remindersDesc") || "Personalizează mesajele automate trimise clientului cu 24h și 12h înainte de start. Când se trimit, vei primi notificare direct în chat."}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3 pt-1">
+                            <div>
+                                <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1 block">
+                                    {t("owner.form.reminder24hLabel") || "Mesaj automat cu 24 ore înainte de închiriere:"}
+                                </label>
+                                <Textarea
+                                    {...form.register("reminder24hTemplate")}
+                                    rows={3}
+                                    placeholder="Bună ziua, {nume_client}! Vă reamintim că rezervarea dumneavoastră pentru {nume_spatiu} începe în 24 de ore ({ora_inceput}). Cod acces: {cod_acces}."
+                                    className="text-xs bg-white dark:bg-gray-900"
+                                />
+                                <p className="text-[10px] text-gray-500 mt-1">
+                                    Variabile: <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{nume_client}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{nume_spatiu}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{ora_inceput}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{data_inceput}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{adresa_spatiu}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{cod_acces}"}</code>
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1 block">
+                                    {t("owner.form.reminder12hLabel") || "Mesaj automat cu 12 ore înainte de check-in:"}
+                                </label>
+                                <Textarea
+                                    {...form.register("reminder12hTemplate")}
+                                    rows={3}
+                                    placeholder="Bună ziua, {nume_client}! În 12 ore începe check-in-ul pentru spațiul {nume_spatiu}. Vă rugăm să pregătiți codul de acces ({cod_acces})."
+                                    className="text-xs bg-white dark:bg-gray-900"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -599,143 +755,190 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                 </div>
             </div>
 
-            <div className="space-y-4">
-                <h3 className="text-lg font-medium">{t("owner.form.specsAmenities")}</h3>
-                <div className="grid grid-cols-3 gap-4">
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.size")}</label>
-                        <Input type="number" {...form.register("size")} />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.capacity")}</label>
-                        <Input type="number" {...form.register("capacity")} />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.offices")}</label>
-                        <Input type="number" {...form.register("officeCount")} />
-                    </div>
-                </div>
+            {listingType === "SERVICE" ? (
+                /* SERVICE MODE: Pricing, Time Interval & Availability */
+                <div className="space-y-4 p-5 rounded-2xl border border-teal-200 bg-teal-50/40 dark:bg-gray-800 dark:border-teal-900/60 shadow-sm">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-[#008080]" />
+                        {t("service.priceDisplay") || "Tarif & Interval Disponibil pentru Rezervare"}
+                    </h3>
 
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="wifi"
-                            checked={Boolean(form.watch("hasWifi"))}
-                            onCheckedChange={(c) => form.setValue("hasWifi", Boolean(c))}
-                        />
-                        <label htmlFor="wifi" className="text-sm font-medium">{translateAmenity("High-Speed Wi-Fi")}</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-sm font-semibold mb-1 block text-gray-800 dark:text-gray-200">
+                                {t("owner.form.hourlyRate") || "Preț pe Oră"} (RON)
+                            </label>
+                            <Input type="number" {...form.register("hourlyRate")} placeholder="150" />
+                            {form.formState.errors.hourlyRate && (
+                                <p className="text-red-500 text-xs mt-1">{form.formState.errors.hourlyRate.message}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-sm font-semibold mb-1 block text-gray-800 dark:text-gray-200">
+                                {t("service.availableHours") || "Interval Orar Disponibil"}
+                            </label>
+                            <Input
+                                value={availableHours}
+                                onChange={(e) => setAvailableHours(e.target.value)}
+                                placeholder={t("service.availableHoursPlaceholder") || "09:00 - 18:00"}
+                            />
+                        </div>
                     </div>
-                    <div className="flex items-center space-x-2">
+
+                    <div className="pt-2 flex items-center space-x-2.5">
                         <Checkbox
-                            id="proj"
-                            checked={Boolean(form.watch("hasProjector"))}
-                            onCheckedChange={(c) => form.setValue("hasProjector", Boolean(c))}
-                        />
-                        <label htmlFor="proj" className="text-sm font-medium">{translateAmenity("Projector / Screen")}</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="kit"
-                            checked={Boolean(form.watch("hasKitchen"))}
-                            onCheckedChange={(c) => form.setValue("hasKitchen", Boolean(c))}
-                        />
-                        <label htmlFor="kit" className="text-sm font-medium">{translateAmenity("Kitchen Access")}</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="ac"
-                            checked={Boolean(form.watch("hasAC"))}
-                            onCheckedChange={(c) => form.setValue("hasAC", Boolean(c))}
-                        />
-                        <label htmlFor="ac" className="text-sm font-medium">{translateAmenity("Air Conditioning")}</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="parking"
-                            checked={Boolean(form.watch("hasParking"))}
-                            onCheckedChange={(c) => form.setValue("hasParking", Boolean(c))}
-                        />
-                        <label htmlFor="parking" className="text-sm font-medium">{translateAmenity("On-site Parking")}</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Checkbox
-                            id="activeStatus"
+                            id="serviceActiveStatus"
                             checked={Boolean(form.watch("active"))}
                             onCheckedChange={(c) => form.setValue("active", Boolean(c))}
                         />
-                        <label htmlFor="activeStatus" className="text-sm font-semibold text-emerald-700">
-                            {t("owner.form.statusActive")}
+                        <label htmlFor="serviceActiveStatus" className="text-sm font-bold text-emerald-700 dark:text-emerald-400 cursor-pointer">
+                            {t("service.statusActive") || "Serviciu activ & disponibil pentru rezervare"}
                         </label>
                     </div>
                 </div>
+            ) : (
+                /* SPACE MODE: Specs, Amenities & Rates */
+                <>
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium">{t("owner.form.specsAmenities")}</h3>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.size")}</label>
+                                <Input type="number" {...form.register("size")} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.capacity")}</label>
+                                <Input type="number" {...form.register("capacity")} />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.offices")}</label>
+                                <Input type="number" {...form.register("officeCount")} />
+                            </div>
+                        </div>
 
-                <div className="pt-4 border-t">
-                    <label className="text-sm font-medium mb-3 block text-muted-foreground uppercase tracking-wider">{t("owner.form.additionalAmenities")}</label>
-                    <div className="grid grid-cols-2 gap-y-3">
-                        {AMENITIES_OPTIONS.map((amenity) => (
-                            <div key={amenity} className="flex items-center space-x-2">
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="flex items-center space-x-2">
                                 <Checkbox
-                                    id={`amenity-${amenity}`}
-                                    checked={watchedAmenities.includes(amenity)}
-                                    onCheckedChange={(checked) => {
-                                        const current = form.getValues("amenitiesList") || [];
-                                        if (checked) {
-                                            form.setValue("amenitiesList", [...current, amenity]);
-                                        } else {
-                                            form.setValue("amenitiesList", current.filter(a => a !== amenity));
-                                        }
-                                    }}
+                                    id="wifi"
+                                    checked={Boolean(form.watch("hasWifi"))}
+                                    onCheckedChange={(c) => form.setValue("hasWifi", Boolean(c))}
                                 />
-                                <label htmlFor={`amenity-${amenity}`} className="text-sm leading-none cursor-pointer">
-                                    {translateAmenity(amenity)}
+                                <label htmlFor="wifi" className="text-sm font-medium">{translateAmenity("High-Speed Wi-Fi")}</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="proj"
+                                    checked={Boolean(form.watch("hasProjector"))}
+                                    onCheckedChange={(c) => form.setValue("hasProjector", Boolean(c))}
+                                />
+                                <label htmlFor="proj" className="text-sm font-medium">{translateAmenity("Projector / Screen")}</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="kit"
+                                    checked={Boolean(form.watch("hasKitchen"))}
+                                    onCheckedChange={(c) => form.setValue("hasKitchen", Boolean(c))}
+                                />
+                                <label htmlFor="kit" className="text-sm font-medium">{translateAmenity("Kitchen Access")}</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="ac"
+                                    checked={Boolean(form.watch("hasAC"))}
+                                    onCheckedChange={(c) => form.setValue("hasAC", Boolean(c))}
+                                />
+                                <label htmlFor="ac" className="text-sm font-medium">{translateAmenity("Air Conditioning")}</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="parking"
+                                    checked={Boolean(form.watch("hasParking"))}
+                                    onCheckedChange={(c) => form.setValue("hasParking", Boolean(c))}
+                                />
+                                <label htmlFor="parking" className="text-sm font-medium">{translateAmenity("On-site Parking")}</label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="activeStatus"
+                                    checked={Boolean(form.watch("active"))}
+                                    onCheckedChange={(c) => form.setValue("active", Boolean(c))}
+                                />
+                                <label htmlFor="activeStatus" className="text-sm font-semibold text-emerald-700">
+                                    {t("owner.form.statusActive")}
                                 </label>
                             </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
+                        </div>
 
-            <div className="space-y-4">
-                <h3 className="text-lg font-medium">{t("owner.form.ratesPricing")}</h3>
-                <div className="grid grid-cols-3 gap-4">
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.hourlyRate")}</label>
-                        <Input type="number" {...form.register("hourlyRate")} placeholder="100" />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.dailyRate")}</label>
-                        <Input type="number" {...form.register("dailyRate")} placeholder="600" />
-                    </div>
-                    <div>
-                        <label className="text-sm font-medium mb-1 block">{t("owner.form.weekendRate")}</label>
-                        <Input type="number" {...form.register("weekendRate")} placeholder="1100" />
-                    </div>
-                </div>
-
-                <div className="pt-6 mt-4 border-t-2 border-dashed border-violet-100 dark:border-violet-900/30">
-                    <div className="flex items-start space-x-3 p-4 bg-violet-50 dark:bg-violet-900/10 rounded-2xl border border-violet-100 dark:border-violet-800">
-                        <Checkbox
-                            id="selfCleaning"
-                            checked={Boolean(form.watch("selfCleaning"))}
-                            onCheckedChange={c => form.setValue("selfCleaning", Boolean(c))}
-                        />
-                        <div className="grid gap-1.5 leading-none">
-                            <label
-                                htmlFor="selfCleaning"
-                                className="text-sm font-black leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-violet-900 dark:text-violet-200"
-                            >
-                                {t("owner.form.selfCleaningTitle")}
-                            </label>
-                            <p className="text-[11px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider">
-                                {t("owner.form.selfCleaningLaw")}
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {t("owner.form.selfCleaningDesc")}
-                            </p>
+                        <div className="pt-4 border-t">
+                            <label className="text-sm font-medium mb-3 block text-muted-foreground uppercase tracking-wider">{t("owner.form.additionalAmenities")}</label>
+                            <div className="grid grid-cols-2 gap-y-3">
+                                {AMENITIES_OPTIONS.map((amenity) => (
+                                    <div key={amenity} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`amenity-${amenity}`}
+                                            checked={watchedAmenities.includes(amenity)}
+                                            onCheckedChange={(checked) => {
+                                                const current = form.getValues("amenitiesList") || [];
+                                                if (checked) {
+                                                    form.setValue("amenitiesList", [...current, amenity]);
+                                                } else {
+                                                    form.setValue("amenitiesList", current.filter(a => a !== amenity));
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor={`amenity-${amenity}`} className="text-sm leading-none cursor-pointer">
+                                            {translateAmenity(amenity)}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-medium">{t("owner.form.ratesPricing")}</h3>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.hourlyRate")}</label>
+                                <Input type="number" {...form.register("hourlyRate")} placeholder="100" />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.dailyRate")}</label>
+                                <Input type="number" {...form.register("dailyRate")} placeholder="600" />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-1 block">{t("owner.form.weekendRate")}</label>
+                                <Input type="number" {...form.register("weekendRate")} placeholder="1100" />
+                            </div>
+                        </div>
+
+                        <div className="pt-6 mt-4 border-t-2 border-dashed border-violet-100 dark:border-violet-900/30">
+                            <div className="flex items-start space-x-3 p-4 bg-violet-50 dark:bg-violet-900/10 rounded-2xl border border-violet-100 dark:border-violet-800">
+                                <Checkbox
+                                    id="selfCleaning"
+                                    checked={Boolean(form.watch("selfCleaning"))}
+                                    onCheckedChange={c => form.setValue("selfCleaning", Boolean(c))}
+                                />
+                                <div className="grid gap-1.5 leading-none">
+                                    <label
+                                        htmlFor="selfCleaning"
+                                        className="text-sm font-black leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-violet-900 dark:text-violet-200"
+                                    >
+                                        {t("owner.form.selfCleaningTitle")}
+                                    </label>
+                                    <p className="text-[11px] text-violet-600 dark:text-violet-400 font-bold uppercase tracking-wider">
+                                        {t("owner.form.selfCleaningLaw")}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {t("owner.form.selfCleaningDesc")}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <div className="space-y-4">
                 <div className="flex justify-between items-center">

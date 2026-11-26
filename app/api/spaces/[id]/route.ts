@@ -73,9 +73,9 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
         const sessionEmail = session.user?.email?.trim().toLowerCase();
         const sessionRole = (session.user as any)?.role;
 
-        // Strictly only the OWNER of this specific space can modify it (ADMIN and other owners are not allowed)
+        // Strictly only the OWNER or SERVICE_OWNER of this specific space can modify it (ADMIN and other owners are not allowed)
         const isOwnerOfSpace =
-            sessionRole === "OWNER" &&
+            (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER") &&
             Boolean(
                 (sessionUserId && existingSpace.ownerId === sessionUserId) ||
                 (sessionEmail && existingSpace.owner?.email?.trim().toLowerCase() === sessionEmail)
@@ -169,6 +169,10 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
                     body.selfCleaning !== undefined ? Boolean(body.selfCleaning) : existingSpace.selfCleaning,
                 active: body.active !== undefined ? Boolean(body.active) : existingSpace.active,
                 isClean: body.isClean !== undefined ? Boolean(body.isClean) : existingSpace.isClean,
+                listingType: body.listingType !== undefined ? String(body.listingType) : existingSpace.listingType,
+                isService: body.isService !== undefined ? Boolean(body.isService) : existingSpace.isService,
+                serviceCategory: body.serviceCategory !== undefined ? (body.serviceCategory ? String(body.serviceCategory).trim() : null) : existingSpace.serviceCategory,
+                availableHours: body.availableHours !== undefined ? (body.availableHours ? String(body.availableHours).trim() : null) : existingSpace.availableHours,
                 amenitiesList: amenitiesListValue,
                 ...(photoUrls
                     ? {
@@ -228,7 +232,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
 
         const isAdmin = sessionRole === "ADMIN";
         const isOwnerOfSpace =
-            sessionRole === "OWNER" &&
+            (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER") &&
             Boolean(
                 (sessionUserId && existingSpace.ownerId === sessionUserId) ||
                 (sessionEmail && existingSpace.owner?.email?.trim().toLowerCase() === sessionEmail)

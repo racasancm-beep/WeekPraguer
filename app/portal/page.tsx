@@ -27,6 +27,7 @@ export default function PortalPage() {
 
         switch (role) {
             case "OWNER":
+            case "SERVICE_OWNER":
                 router.push("/owner/dashboard");
                 break;
             case "RENTER":

@@ -114,6 +114,10 @@ model Space {
   active        Boolean      @default(true)
   isClean       Boolean      @default(true)
   selfCleaning          Boolean      @default(false)
+  listingType           String       @default("SPACE")
+  isService             Boolean      @default(false)
+  serviceCategory       String?
+  availableHours        String?      @default("09:00 - 18:00")
   reminder24hTemplate   String?
   reminder12hTemplate   String?
   createdAt             DateTime     @default(now())
@@ -210,6 +214,7 @@ enum UserRole {
   OWNER
   RENTER
   ADMIN
+  SERVICE_OWNER
 }
 
 enum BookingStatus {

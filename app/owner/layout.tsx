@@ -20,20 +20,22 @@ export default function OwnerLayout({
     const { t } = useLanguage();
     const role = (session?.user as any)?.role;
     const isAdmin = role === "ADMIN";
+    const isServiceOwner = role === "SERVICE_OWNER";
+    const isOwnerOrService = role === "OWNER" || role === "SERVICE_OWNER" || isAdmin;
 
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
-        } else if (status === "authenticated" && role !== "OWNER" && role !== "ADMIN") {
+        } else if (status === "authenticated" && !isOwnerOrService) {
             router.push("/dashboard");
         }
-    }, [status, role, router]);
+    }, [status, isOwnerOrService, router]);
 
     if (status === "loading") {
         return <div className="min-h-screen flex items-center justify-center">{t("common.loading")}</div>;
     }
 
-    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
+    if (!session || !isOwnerOrService) {
         return null;
     }
 
@@ -61,7 +63,7 @@ export default function OwnerLayout({
                                         {session.user?.name || session.user?.email?.split("@")[0]}
                                     </p>
                                     <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200">
-                                        {isAdmin ? "Admin → Owner" : t("owner.roleBadge")}
+                                        {isAdmin ? "Admin → Owner" : isServiceOwner ? (t("owner.serviceOwnerRoleBadge") || "Service Owner") : t("owner.roleBadge")}
                                     </span>
                                 </div>
                                 <p className="text-xs text-gray-500 truncate max-w-[160px]">

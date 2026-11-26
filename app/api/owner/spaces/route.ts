@@ -36,6 +36,11 @@ const spaceSchema = z.object({
     amenitiesList: z.array(z.string()).optional().default([]),
     // Photos
     photos: z.array(z.string()).optional().default([]),
+    // Service fields
+    listingType: z.string().optional().default("SPACE"),
+    isService: z.boolean().optional().default(false),
+    serviceCategory: z.string().optional().nullable(),
+    availableHours: z.string().optional().nullable(),
 });
 
 async function resolveOwnerId(session: any): Promise<string | null> {
@@ -56,7 +61,7 @@ async function resolveOwnerId(session: any): Promise<string | null> {
     }
 
     const fallbackOwner = await prisma.user.findFirst({
-        where: { role: { in: ["OWNER", "ADMIN"] } },
+        where: { role: { in: ["OWNER", "ADMIN", "SERVICE_OWNER"] } },
         select: { id: true },
     });
     return fallbackOwner?.id || null;
@@ -117,6 +122,10 @@ export async function POST(req: Request) {
                 selfCleaning: Boolean(data.selfCleaning),
                 active: data.active ?? true,
                 amenitiesList: data.amenitiesList ? JSON.stringify(data.amenitiesList) : null,
+                listingType: data.listingType || (data.isService ? "SERVICE" : "SPACE"),
+                isService: Boolean(data.isService || data.listingType === "SERVICE"),
+                serviceCategory: data.serviceCategory || null,
+                availableHours: data.availableHours || "09:00 - 18:00",
                 photos: {
                     create: photoUrls.map(url => ({ url }))
                 }

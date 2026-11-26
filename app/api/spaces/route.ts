@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     const session = await getServerSession(authOptions);
     const role = (session?.user as any)?.role;
 
-    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
+    if (!session || (role !== "OWNER" && role !== "ADMIN" && role !== "SERVICE_OWNER")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -30,6 +30,10 @@ export async function POST(req: Request) {
                 dailyRate: body.dailyRate,
                 weekendRate: body.weekendRate,
                 amenitiesList: JSON.stringify(body.amenities || (body as any).amenitiesList || []),
+                listingType: (json as any).listingType || ((json as any).isService ? "SERVICE" : "SPACE"),
+                isService: Boolean((json as any).isService || (json as any).listingType === "SERVICE"),
+                serviceCategory: (json as any).serviceCategory || null,
+                availableHours: (json as any).availableHours || "09:00 - 18:00",
                 latitude: typeof (json as any).latitude === "number" ? (json as any).latitude : 44.4268,
                 longitude: typeof (json as any).longitude === "number" ? (json as any).longitude : 26.1025,
             },
@@ -49,8 +53,21 @@ export async function GET(req: Request) {
     const minPrice = searchParams.get("minPrice");
     const maxPrice = searchParams.get("maxPrice");
     const capacity = searchParams.get("capacity");
+    const isServiceParam = searchParams.get("isService");
+    const listingTypeParam = searchParams.get("listingType");
+    const serviceCategoryParam = searchParams.get("serviceCategory");
 
     const where: any = { active: true };
+
+    if (isServiceParam !== null) {
+        where.isService = isServiceParam === "true";
+    }
+    if (listingTypeParam) {
+        where.listingType = listingTypeParam;
+    }
+    if (serviceCategoryParam) {
+        where.serviceCategory = { contains: serviceCategoryParam, mode: "insensitive" };
+    }
 
     if (city) {
         where.city = { contains: city, mode: "insensitive" };

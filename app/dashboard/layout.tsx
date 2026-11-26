@@ -24,9 +24,10 @@ export default function RenterLayout({
     const isAdmin = (session?.user as any)?.role === "ADMIN";
 
     useEffect(() => {
+        const userRole = (session?.user as any)?.role;
         if (status === "unauthenticated") {
             router.push("/login");
-        } else if (status === "authenticated" && (session?.user as any)?.role === "OWNER") {
+        } else if (status === "authenticated" && (userRole === "OWNER" || userRole === "SERVICE_OWNER")) {
             router.push("/owner/dashboard/earnings");
         }
     }, [status, session, router]);

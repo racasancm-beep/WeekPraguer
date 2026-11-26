@@ -10,7 +10,7 @@ import { formatOwnerBlockedPeriods } from "@/lib/utils";
 import { calculateSpaceCustomerPrice } from "@/lib/pricing";
 
 interface SpaceCardProps {
-    space: Space & { photos: SpacePhoto[]; bookings?: any[] };
+    space: Space & { photos: SpacePhoto[]; bookings?: any[]; isService?: boolean; serviceCategory?: string | null; availableHours?: string | null };
 }
 
 export function SpaceCard({ space }: SpaceCardProps) {
@@ -69,9 +69,10 @@ export function SpaceCard({ space }: SpaceCardProps) {
                         {t("card.noImage")}
                     </div>
                 )}
-                {space.category && (
-                    <div className="absolute top-2.5 left-2.5 bg-[#008080]/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm">
-                        {translateCategory(space.category)}
+                {(space.serviceCategory || space.category) && (
+                    <div className="absolute top-2.5 left-2.5 bg-[#008080]/90 text-white backdrop-blur-md px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                        {space.isService && <span>★</span>}
+                        {space.isService ? (space.serviceCategory || space.category || "Serviciu") : translateCategory(space.category)}
                     </div>
                 )}
                 {space.photos.length > 1 && (
@@ -90,16 +91,29 @@ export function SpaceCard({ space }: SpaceCardProps) {
                     <span className="truncate">{space.city}{space.district ? ` • ${space.district}` : ""}</span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
-                    <div className="flex items-center">
-                        <Users className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
-                        {space.capacity} {t("card.pers")}
+                {space.isService ? (
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                        <div className="flex items-center text-[#008080] font-medium truncate">
+                            <span className="mr-1">🕒</span>
+                            {space.availableHours || "09:00 - 18:00"}
+                        </div>
+                        <div className="flex items-center text-emerald-700 font-bold">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                            {t("service.availabilityNow") || "Disponibil"}
+                        </div>
                     </div>
-                    <div className="flex items-center">
-                        <Ruler className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
-                        {space.size} m²
+                ) : (
+                    <div className="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                        <div className="flex items-center">
+                            <Users className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
+                            {space.capacity} {t("card.pers")}
+                        </div>
+                        <div className="flex items-center">
+                            <Ruler className="w-3.5 h-3.5 mr-1.5 text-gray-400" />
+                            {space.size} m²
+                        </div>
                     </div>
-                </div>
+                )}
 
                 <p className="text-xs text-gray-500 line-clamp-2 h-8">
                     {space.description}
@@ -140,7 +154,7 @@ export function SpaceCard({ space }: SpaceCardProps) {
                 </div>
                 <Link href={`/spaces/${space.id}`}>
                     <Button size="sm" className="bg-[#1A2020] hover:bg-[#008080] text-white rounded-xl text-xs font-semibold h-8 px-3.5 transition-colors">
-                        {t("card.viewSpace")}
+                        {space.isService ? (t("card.viewService") || "Vezi Serviciul") : t("card.viewSpace")}
                     </Button>
                 </Link>
             </CardFooter>

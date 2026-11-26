@@ -39,7 +39,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
     const sessionEmail = session?.user?.email?.trim().toLowerCase();
     const sessionRole = (session?.user as any)?.role;
     const isAdmin = status === "authenticated" && sessionRole === "ADMIN";
-    const isOwnerProfile = status === "authenticated" && sessionRole === "OWNER";
+    const isOwnerProfile = status === "authenticated" && (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER");
 
     const todayUtcStart = new Date();
     todayUtcStart.setUTCHours(0, 0, 0, 0);
@@ -143,6 +143,11 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-gray-400">
                                             {t("owner.listings.noImage")}
+                                        </div>
+                                    )}
+                                    {space.isService && (
+                                        <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#008080] text-white shadow-md">
+                                            ★ {space.serviceCategory || "Serviciu"}
                                         </div>
                                     )}
                                     <div className={`absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${space.isClean

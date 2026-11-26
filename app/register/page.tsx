@@ -13,7 +13,7 @@ import { useLanguage } from "@/lib/i18n/language-context";
 import { scanQRCodeFromImageFile } from "@/lib/qr-scanner";
 import { extractReferralCode } from "@/lib/referral-utils";
 
-type UserRole = "OWNER" | "RENTER";
+type UserRole = "OWNER" | "RENTER" | "SERVICE_OWNER";
 
 function RegisterForm() {
     const router = useRouter();
@@ -24,7 +24,7 @@ function RegisterForm() {
     const paramCallbackUrl = searchParams.get("callbackUrl");
     const [resolvedCallbackUrl, setResolvedCallbackUrl] = useState<string | null>(null);
     const [role, setRole] = useState<UserRole>(
-        ["OWNER", "RENTER"].includes(initialRole) ? initialRole : "RENTER"
+        ["OWNER", "RENTER", "SERVICE_OWNER"].includes(initialRole) ? initialRole : "RENTER"
     );
     const [formData, setFormData] = useState({
         name: "",
@@ -140,8 +140,8 @@ function RegisterForm() {
                 return;
             }
             const userRole = (session.user as any).role;
-            if (userRole === "OWNER" || userRole === "ADMIN") {
-                router.replace("/owner/dashboard/listings/create");
+            if (userRole === "OWNER" || userRole === "ADMIN" || userRole === "SERVICE_OWNER") {
+                router.replace("/owner/dashboard/listings/create" + (userRole === "SERVICE_OWNER" ? "?type=SERVICE" : ""));
             }
         }
     }, [status, session, router, activeCallback]);
@@ -180,8 +180,8 @@ function RegisterForm() {
                             // ignore
                         }
                         router.push(activeCallback);
-                    } else if (role === "OWNER") {
-                        router.push("/owner/dashboard/listings/create");
+                    } else if (role === "OWNER" || role === "SERVICE_OWNER") {
+                        router.push("/owner/dashboard/listings/create" + (role === "SERVICE_OWNER" ? "?type=SERVICE" : ""));
                     } else {
                         router.push("/dashboard");
                     }
@@ -211,31 +211,44 @@ function RegisterForm() {
             {/* Role Selection */}
             <div>
                 <label className="block text-sm font-medium mb-3">{t("register.iWantTo")}</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <button
                         type="button"
                         onClick={() => setRole("RENTER")}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-3.5 sm:p-4 rounded-xl border-2 transition-all ${
                             role === "RENTER"
-                                ? "border-[#008080] bg-[#008080]/10"
+                                ? "border-[#008080] bg-[#008080]/10 shadow-sm"
                                 : "border-gray-200 hover:border-gray-300"
                         }`}
                     >
                         <Briefcase className="w-6 h-6 mx-auto mb-2 text-[#008080]" />
-                        <div className="text-sm font-medium">{t("register.rentSpace")}</div>
+                        <div className="text-sm font-semibold">{t("register.rentSpace")}</div>
                     </button>
 
                     <button
                         type="button"
                         onClick={() => setRole("OWNER")}
-                        className={`p-4 rounded-lg border-2 transition-all ${
+                        className={`p-3.5 sm:p-4 rounded-xl border-2 transition-all ${
                             role === "OWNER"
-                                ? "border-[#008080] bg-[#008080]/10"
+                                ? "border-[#008080] bg-[#008080]/10 shadow-sm"
                                 : "border-gray-200 hover:border-gray-300"
                         }`}
                     >
                         <User className="w-6 h-6 mx-auto mb-2 text-[#008080]" />
-                        <div className="text-sm font-medium">{t("register.listSpace")}</div>
+                        <div className="text-sm font-semibold">{t("register.listSpace")}</div>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => setRole("SERVICE_OWNER")}
+                        className={`p-3.5 sm:p-4 rounded-xl border-2 transition-all ${
+                            role === "SERVICE_OWNER"
+                                ? "border-[#008080] bg-[#008080]/10 shadow-sm"
+                                : "border-gray-200 hover:border-gray-300"
+                        }`}
+                    >
+                        <Sparkles className="w-6 h-6 mx-auto mb-2 text-[#008080]" />
+                        <div className="text-sm font-semibold">{t("register.serviceOwner") || "Service owner"}</div>
                     </button>
                 </div>
             </div>
