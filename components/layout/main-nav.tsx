@@ -194,13 +194,9 @@ export function MainNav() {
                                 className="flex items-center gap-1.5 text-sm font-bold text-[#008080] hover:text-[#006F6F] transition-colors"
                             >
                                 <LayoutDashboard className="w-4 h-4" />
-                                {t("nav.dashboard")}
+                                <span>{t("nav.dashboard")}</span>
                             </Link>
                         ) : (
-                            <Link href={loginNavHref} className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
-                                {t("nav.login")}
-                            </Link>
-                        )}
                             <Link href={loginNavHref} className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
                                 {t("nav.login")}
                             </Link>
@@ -208,12 +204,14 @@ export function MainNav() {
 
                         <LanguageSelector variant="dropdown" />
 
-                        <Button
-                            onClick={() => setListSpaceModalOpen(true)}
-                            className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-6 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
-                        >
-                            {t("nav.listSpace")}
-                        </Button>
+                        {!session && (
+                            <Button
+                                onClick={() => setListSpaceModalOpen(true)}
+                                className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-2xl px-6 h-11 font-bold shadow-md shadow-[#008080]/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
+                            >
+                                {t("nav.listSpace")}
+                            </Button>
+                        )}
                     </div>
 
                     <ListSpaceModal
