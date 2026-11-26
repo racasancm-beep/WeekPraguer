@@ -127,7 +127,7 @@ export function BottomLeftProfileGenie() {
                     <button
                         onClick={() => setIsMinimized(false)}
                         className="group relative flex items-center justify-center p-1 rounded-2xl bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-2 border-teal-300 dark:border-teal-700 shadow-xl hover:scale-105 transition-all"
-                        title={`Genie Nivel ${level} — Apasă pentru a extinde`}
+                        title={`${t("referral.genieLevel") || "Genie Level"} ${level} — ${t("referral.expand") || "Expand"}`}
                     >
                         <DarkerGenieBadge level={level} size="md" />
                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-teal-600 text-[9px] font-black text-white shadow-sm">
@@ -143,7 +143,7 @@ export function BottomLeftProfileGenie() {
                             role="button"
                             tabIndex={0}
                             className="relative cursor-pointer hover:scale-105 transition-transform shrink-0"
-                            title="Apasă pentru detalii cod QR și recomandări"
+                            title={t("referral.dialogTitle") || "QR Code"}
                         >
                             <DarkerGenieBadge level={level} size="md" />
                         </div>
@@ -156,15 +156,17 @@ export function BottomLeftProfileGenie() {
                             className="min-w-0 flex-1 cursor-pointer"
                         >
                             <div className="flex items-center gap-1 font-black text-xs text-gray-900 dark:text-gray-100 truncate">
-                                <span>Genie Nivel {level}</span>
+                                <span>{t("referral.genieLevel") || "Genie Level"} {level}</span>
                                 {level > 0 ? (
                                     <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
                                 ) : (
-                                    <span className="text-[9px] font-normal text-teal-600">({userRole === "OWNER" ? "Proprietar" : "Client"})</span>
+                                    <span className="text-[9px] font-normal text-teal-600">
+                                        ({userRole === "OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer")})
+                                    </span>
                                 )}
                             </div>
                             <div className="text-[10px] text-gray-500 truncate">
-                                {confirmedCount} {confirmedCount === 1 ? "recomandare" : "recomandări"} ({progressToNext}/10)
+                                {confirmedCount} {confirmedCount === 1 ? (t("referral.confirmedCountSingle") || "referral") : (t("referral.confirmedCount") || "referrals")} ({progressToNext}/10)
                             </div>
                         </div>
 
@@ -172,7 +174,7 @@ export function BottomLeftProfileGenie() {
                         <button
                             onClick={handleCopy}
                             className="p-1.5 rounded-lg text-teal-700 hover:text-teal-900 hover:bg-teal-50 dark:hover:bg-gray-800 transition-colors shrink-0"
-                            title="Copiază linkul tău unic de recomandare"
+                            title={t("referral.copyLink") || "Copy Link"}
                         >
                             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
@@ -181,7 +183,7 @@ export function BottomLeftProfileGenie() {
                         <button
                             onClick={() => setIsMinimized(true)}
                             className="p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors shrink-0"
-                            title="Minimizează"
+                            title={t("referral.minimize") || "Minimize"}
                         >
                             <ChevronDown className="w-3.5 h-3.5" />
                         </button>
@@ -197,11 +199,11 @@ export function BottomLeftProfileGenie() {
                             <DarkerGenieBadge level={level} size="lg" />
                         </div>
                         <DialogTitle className="text-xl font-black text-gray-900 dark:text-gray-100 flex items-center justify-center gap-2">
-                            <span>Genie Nivel {level}</span>
+                            <span>{t("referral.genieLevel") || "Genie Level"} {level}</span>
                             {level > 0 && <Sparkles className="w-5 h-5 text-amber-500" />}
                         </DialogTitle>
                         <DialogDescription className="text-xs text-gray-500">
-                            {userRole === "OWNER" ? "Profil Proprietar" : "Profil Client"} • {confirmedCount} recomandări confirmate
+                            {userRole === "OWNER" ? (t("referral.ownerProfile") || "Owner Profile") : (t("referral.customerProfile") || "Customer Profile")} • {confirmedCount} {confirmedCount === 1 ? (t("referral.confirmedCountSingle") || "referral") : (t("referral.confirmedCount") || "referrals")}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -210,7 +212,7 @@ export function BottomLeftProfileGenie() {
                         {data?.qrDataUrl ? (
                             <img
                                 src={data.qrDataUrl}
-                                alt="Cod QR Recomandare"
+                                alt="QR Code"
                                 className="w-48 h-48 object-contain rounded-xl bg-white p-2 border border-teal-100 shadow-md"
                             />
                         ) : (
@@ -226,7 +228,7 @@ export function BottomLeftProfileGenie() {
                         {/* Darker Genie Progress */}
                         <div className="w-full mt-4 space-y-1">
                             <div className="flex justify-between text-xs font-bold text-gray-600 dark:text-gray-300">
-                                <span>Progres spre Genie mai întunecat</span>
+                                <span>{t("referral.towardsDarker") || "towards darker Genie"}</span>
                                 <span className="text-teal-700">{progressToNext} / 10</span>
                             </div>
                             <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -236,7 +238,7 @@ export function BottomLeftProfileGenie() {
                                 />
                             </div>
                             <p className="text-[10px] text-gray-400 text-center pt-1">
-                                La fiecare 10 recomandări confirmate (rezervare finalizată), nuanța Genie devine mai închisă.
+                                {t("referral.darkerRule") || "For every 10 confirmed referrals, your Genie becomes darker."}
                             </p>
                         </div>
                     </div>
@@ -249,7 +251,7 @@ export function BottomLeftProfileGenie() {
                             className="font-bold border-teal-200 hover:bg-teal-50 text-teal-900"
                         >
                             {copied ? <Check className="w-4 h-4 mr-1.5 text-emerald-600" /> : <Copy className="w-4 h-4 mr-1.5" />}
-                            {copied ? "Link Copiat!" : "Copiază Link"}
+                            {copied ? (t("referral.copied") || "Copied!") : (t("referral.copyLink") || "Copy Link")}
                         </Button>
                         <Button
                             variant="outline"
@@ -257,7 +259,7 @@ export function BottomLeftProfileGenie() {
                             className="font-bold border-teal-200 hover:bg-teal-50 text-teal-900"
                         >
                             <Download className="w-4 h-4 mr-1.5" />
-                            Salvează QR
+                            {t("referral.saveQr") || "Save QR"}
                         </Button>
                     </div>
                 </DialogContent>

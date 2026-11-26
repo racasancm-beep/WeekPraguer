@@ -55,7 +55,7 @@ export function MainNav() {
                                 <Link
                                     href={isOwner ? "/owner/dashboard/earnings" : isAdmin ? "/admin/dashboard" : "/dashboard"}
                                     className="flex items-center gap-2.5 sm:gap-3 hover:opacity-85 transition-opacity min-w-0 cursor-pointer"
-                                    title={isOwner ? "Deschide Panou Proprietar" : "Panou Control"}
+                                    title={isOwner ? (t("nav.ownerDashboard") || "Owner Dashboard") : (t("nav.dashboard") || "Dashboard")}
                                 >
                                     <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-sm shrink-0">
                                         {userInitial}

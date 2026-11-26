@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 interface DarkerGenieBadgeProps {
     level: number; // 0 to 7
@@ -15,6 +16,7 @@ export function DarkerGenieBadge({
     showTooltip = true,
     className = "",
 }: DarkerGenieBadgeProps) {
+    const { t } = useLanguage();
     const safeLevel = Math.min(7, Math.max(0, level));
     const levelFraction = safeLevel / 7;
     const isGoldLevel = safeLevel === 7;
@@ -29,14 +31,14 @@ export function DarkerGenieBadge({
     const dimension = sizeClasses[size] || sizeClasses.md;
 
     const levelDescriptions = [
-        "Genie Nivel 0 (Alb Translucid)",
-        "Genie Nivel 1 (Întunecat)",
-        "Genie Nivel 2 (Safir)",
-        "Genie Nivel 3 (Oceanic)",
-        "Genie Nivel 4 (Indigo)",
-        "Genie Nivel 5 (Mistic)",
-        "Genie Nivel 6 (Obsidian)",
-        "Genie Nivel 7 (Suprem cu Aur)",
+        `${t("referral.genieLevel") || "Genie Level"} 0`,
+        `${t("referral.genieLevel") || "Genie Level"} 1`,
+        `${t("referral.genieLevel") || "Genie Level"} 2`,
+        `${t("referral.genieLevel") || "Genie Level"} 3`,
+        `${t("referral.genieLevel") || "Genie Level"} 4`,
+        `${t("referral.genieLevel") || "Genie Level"} 5`,
+        `${t("referral.genieLevel") || "Genie Level"} 6`,
+        `${t("referral.genieLevel") || "Genie Level"} 7`,
     ];
 
     return (

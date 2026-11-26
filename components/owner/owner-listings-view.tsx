@@ -284,7 +284,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                             <p className="text-xs text-red-700">{spaceToDelete.city} • {spaceToDelete.address}</p>
                             {spaceToDelete.owner?.email && (
                                 <p className="text-[11px] font-mono text-red-600">
-                                    Proprietar: {spaceToDelete.owner.email}
+                                    {t("space.ownerLabel") || "Owner:"} {spaceToDelete.owner.email}
                                 </p>
                             )}
                         </div>

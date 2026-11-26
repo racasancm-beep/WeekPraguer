@@ -367,7 +367,7 @@ function MessagesContent() {
                                                 {currentConversation.otherParty?.name || currentConversation.otherParty?.email}
                                             </h2>
                                             <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
-                                                {currentConversation.isUserOwner ? "Client / Chiriaș" : "Proprietar Spațiu"}
+                                                {currentConversation.isUserOwner ? (t("renter.roleBadge") || "Customer") : (t("owner.roleBadge") || "Owner")}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2 text-[11px] text-gray-500 truncate">
@@ -462,7 +462,9 @@ function MessagesContent() {
                                             >
                                                 <div className="flex items-center gap-1.5 mb-1 px-1">
                                                     <span className="text-[10px] font-bold text-gray-500">
-                                                        {isMine ? "Tu" : msg.sender?.name || (msg.senderRole === "OWNER" ? "Proprietar" : "Client")}
+                                                        {isMine
+                                                            ? (t("messages.you") || "You")
+                                                            : msg.sender?.name || (msg.senderRole === "OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer"))}
                                                     </span>
                                                     <span className="text-[9px] text-gray-400">
                                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

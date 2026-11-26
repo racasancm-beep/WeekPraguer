@@ -112,11 +112,11 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                         <DarkerGenieBadge level={level} size="md" />
                         <div className="min-w-0">
                             <div className="text-[10px] font-black text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
-                                <span>Genie Nivel {level}</span>
+                                <span>{t("referral.genieLevel") || "Genie Level"} {level}</span>
                                 {level > 0 && <Sparkles className="w-2.5 h-2.5 text-amber-500 shrink-0" />}
                             </div>
                             <div className="text-[8.5px] text-gray-500 truncate">
-                                {confirmedCount} {confirmedCount === 1 ? "recomandare" : "recomandări"}
+                                {confirmedCount} {confirmedCount === 1 ? (t("referral.confirmedCountSingle") || "referral") : (t("referral.confirmedCount") || "referrals")}
                             </div>
                         </div>
                     </div>
@@ -124,7 +124,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                         onClick={() => fetchCode(true)}
                         disabled={refreshing}
                         className="p-1 rounded-md text-gray-400 hover:text-teal-600 hover:bg-teal-50 transition-colors shrink-0"
-                        title={t("referral.refreshCode") || "Generează cod QR nou"}
+                        title={t("referral.refreshCode") || "Generate new QR code"}
                     >
                         <RefreshCw className={`w-3 h-3 ${refreshing ? "animate-spin text-teal-600" : ""}`} />
                     </button>
@@ -137,7 +137,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                         role="button"
                         tabIndex={0}
                         className="group relative bg-white p-1 rounded-lg border border-teal-200 shadow-sm flex items-center justify-center cursor-pointer hover:border-teal-500 transition-all shrink-0"
-                        title="Apasă pentru a mări codul QR"
+                        title={t("referral.viewLarge") || "Enlarge QR code"}
                     >
                         {data?.qrDataUrl ? (
                             <img
@@ -160,7 +160,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                             {code}
                         </span>
                         <div className="text-[8px] text-gray-400 leading-tight">
-                            {t("referral.singleUseNotice") || "Cod unic (1 utilizare)"}
+                            {t("referral.singleUseNotice") || "Unique per login session (1 use)"}
                         </div>
                         <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div
@@ -169,7 +169,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                             />
                         </div>
                         <div className="text-[7.5px] text-teal-700 font-bold">
-                            {progressToNext}/10 spre Genie întunecat
+                            {progressToNext}/10 {t("referral.towardsDarker") || "towards darker Genie"}
                         </div>
                     </div>
                 </div>
@@ -183,7 +183,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                         className="h-6 text-[9px] font-bold border-teal-200 hover:bg-teal-50 text-teal-900 px-1"
                     >
                         {copied ? <Check className="w-2.5 h-2.5 mr-0.5 text-emerald-600" /> : <Copy className="w-2.5 h-2.5 mr-0.5" />}
-                        {copied ? "Copiat" : "Link"}
+                        {copied ? (t("referral.copied") || "Copied") : (t("referral.copyLink") || "Link")}
                     </Button>
                     <Button
                         size="sm"
@@ -192,7 +192,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                         className="h-6 text-[9px] font-bold border-teal-200 hover:bg-teal-50 text-teal-900 px-1"
                     >
                         <Download className="w-2.5 h-2.5 mr-0.5" />
-                        {t("referral.saveImage") || "Imagine"}
+                        {t("referral.saveImage") || "Image"}
                     </Button>
                 </div>
             </div>
@@ -239,7 +239,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
                             className="font-bold text-xs"
                         >
                             {copied ? <Check className="w-4 h-4 mr-1 text-emerald-600" /> : <Copy className="w-4 h-4 mr-1" />}
-                            {copied ? "Link Copiat" : "Copiază Linkul"}
+                            {copied ? (t("referral.copied") || "Copied") : (t("referral.copyLink") || "Copy Link")}
                         </Button>
                         <Button
                             onClick={handleDownload}

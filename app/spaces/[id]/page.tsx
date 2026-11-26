@@ -1071,7 +1071,7 @@ export default function SpaceDetailsPage() {
                             <p className="text-xs text-red-700">{space.city} • {space.address}</p>
                             {space.owner?.email && (
                                 <p className="text-[11px] font-mono text-red-600">
-                                    Proprietar: {space.owner.email}
+                                    {t("space.ownerLabel") || "Owner:"} {space.owner.email}
                                 </p>
                             )}
                         </div>

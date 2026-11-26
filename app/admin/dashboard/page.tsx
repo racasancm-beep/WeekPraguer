@@ -392,13 +392,13 @@ export default function AdminDashboard() {
                         <div>
                             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-teal-900 text-[11px] font-black uppercase tracking-wider mb-1.5 border border-teal-300">
                                 <MessageSquare className="w-3.5 h-3.5 text-teal-700" />
-                                <span>Mesaje Suport & Raportări Fraudă (Exclusiv Admin)</span>
+                                <span>{t("admin.inquiriesBadge") || "Mesaje Suport & Raportări Fraudă (Exclusiv Admin)"}</span>
                             </div>
                             <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100">
-                                Căsuță Mesaje Vizitatori & Utilizatori
+                                {t("admin.inquiriesTitle") || "Căsuță Mesaje Vizitatori & Utilizatori"}
                             </h2>
                             <p className="text-xs text-gray-500 mt-0.5">
-                                Mesaje transmise din widget-ul public (max. 400 caractere). Răspunsul este trimis direct pe email.
+                                {t("admin.inquiriesSubtitle") || "Mesaje transmise din widget-ul public (max. 400 caractere). Răspunsul este trimis direct pe email."}
                             </p>
                         </div>
 
@@ -412,10 +412,10 @@ export default function AdminDashboard() {
                                 }`}
                             >
                                 <p className="text-[10px] uppercase tracking-wider">
-                                    {unseenInquiriesCount > 0 ? "Mesaje Necitite" : "Toate Văzute"}
+                                    {unseenInquiriesCount > 0 ? (t("admin.unseenInquiries") || "Mesaje Necitite") : (t("admin.allInquiriesSeen") || "Toate Văzute")}
                                 </p>
                                 <p className="text-xl">
-                                    {unseenInquiriesCount} <span className="text-xs font-bold">noi</span>
+                                    {unseenInquiriesCount} <span className="text-xs font-bold">{t("admin.newCount") || "noi"}</span>
                                 </p>
                             </div>
                             <Button
@@ -841,7 +841,7 @@ export default function AdminDashboard() {
                                                             }
                                                         }}
                                                         className="p-1 rounded text-red-400 hover:text-red-700 hover:bg-red-50 transition-colors"
-                                                        title="Șterge Spațiu (Admin)"
+                                                        title={t("space.deleteTitle") || "Delete Space"}
                                                     >
                                                         <Trash2 className="w-3.5 h-3.5 text-red-500" />
                                                     </button>
@@ -1211,7 +1211,7 @@ export default function AdminDashboard() {
                             disabled={sendingReply}
                             className="text-xs font-bold"
                         >
-                            Anulează
+                            {t("common.cancel") || "Cancel"}
                         </Button>
                         <Button
                             onClick={handleSendReply}
@@ -1221,12 +1221,12 @@ export default function AdminDashboard() {
                             {sendingReply ? (
                                 <>
                                     <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                    Se trimite răspunsul...
+                                    {t("common.sending") || "Sending..."}
                                 </>
                             ) : (
                                 <>
                                     <Send className="w-3.5 h-3.5 mr-1.5" />
-                                    Trimite pe Email
+                                    {t("inquiry.sendEmailReply") || "Send via Email"}
                                 </>
                             )}
                         </Button>

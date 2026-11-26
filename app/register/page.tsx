@@ -58,7 +58,7 @@ function RegisterForm() {
             if (json.valid) {
                 setVerifiedReferrer({
                     name: json.referrerName,
-                    role: json.referrerRole === "OWNER" ? "Proprietar" : "Client",
+                    role: json.referrerRole === "OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer"),
                 });
                 setReferralError(null);
             } else {
