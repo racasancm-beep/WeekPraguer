@@ -393,107 +393,11 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                         </div>
                     </div>
 
-                    <div className="relative pt-2 flex flex-col gap-2">
-                        <div className="relative">
-                            {/* Single-tail White Translucent Genie (no music): body sits on the far left beside Amenities, single long tail starts directly from the "Apply filters" box */}
-                            <div
-                                className="pointer-events-none select-none absolute bottom-[18px] -left-[200px] sm:-left-[220px] w-[320px] sm:w-[350px] z-25 transition-transform duration-700"
-                                style={{
-                                    transform: isGenieHovered ? "scale(1.05)" : "scale(1)",
-                                    transformOrigin: "93% 96%",
-                                }}
-                            >
-                                {/* Interactive hover zone strictly over the genie's body on the left (never overlaps Amenities) */}
-                                <div
-                                    onMouseEnter={handleGenieMouseEnter}
-                                    onMouseLeave={handleGenieMouseLeave}
-                                    title="Hover to awaken the Genie"
-                                    className="pointer-events-auto cursor-pointer absolute left-[8%] top-[4%] w-[44%] h-[68%] z-40"
-                                />
-
-                                {/* Dynamic ambient glow behind the genie's body on the left (turns warm gold on Level 7) */}
-                                {(() => {
-                                    const genieLevel = isGenieHovered
-                                        ? Math.min(7, Math.max(1, Math.ceil(solidProgress * 7)))
-                                        : 0;
-                                    const levelFraction = genieLevel / 7;
-                                    const isFinalGoldLevel = genieLevel === 7;
-
-                                    return (
-                                        <>
-                                            <div
-                                                className="pointer-events-none absolute left-[10%] top-[8%] w-[42%] h-[58%] rounded-full blur-2xl transition-all duration-200"
-                                                style={{
-                                                    background: isFinalGoldLevel
-                                                        ? "radial-gradient(circle, rgba(218,165,32,0.55) 0%, rgba(0,128,128,0.40) 55%, transparent 100%)"
-                                                        : "radial-gradient(circle, rgba(0,128,128,0.48) 0%, rgba(26,32,32,0.38) 60%, transparent 100%)",
-                                                    opacity: 0.25 + levelFraction * 0.75,
-                                                }}
-                                            />
-
-                                            {/* Level 0 Base Layer: Single Long-Tail White & Translucent Genie */}
-                                            <img
-                                                src="/genie-explore-translucent.png?v=7lvl"
-                                                alt="White Translucent Genie"
-                                                className="relative w-full h-auto object-contain transition-all duration-200"
-                                                style={{
-                                                    opacity: isGenieHovered ? Math.max(0.15, 1 - levelFraction * 0.85) : 0.72,
-                                                    filter: `drop-shadow(0 8px 20px rgba(0, 111, 111, ${0.28 + levelFraction * 0.42}))`,
-                                                }}
-                                            />
-
-                                            {/* Levels 1..6 Overlay Layer: Steps through 6 progressively darker charcoal levels */}
-                                            <img
-                                                src="/genie-explore-solid.png?v=7lvl"
-                                                alt="Darkening Awakened Genie (Levels 1-6)"
-                                                className="pointer-events-none absolute inset-0 w-full h-auto object-contain transition-all duration-150"
-                                                style={{
-                                                    opacity: isFinalGoldLevel ? 0 : levelFraction,
-                                                    filter: `brightness(${1.18 - levelFraction * 0.42}) contrast(${1 + levelFraction * 0.28}) drop-shadow(0 10px 26px rgba(15, 30, 30, ${levelFraction * 0.7}))`,
-                                                }}
-                                            />
-
-                                            {/* Level 7 Final Overlay Layer: Darkest level WITH Golden Hat & Golden Arm Jewelry */}
-                                            <img
-                                                src="/genie-explore-gold.png?v=7lvl"
-                                                alt="Level 7 Genie with Golden Hat and Arm Jewelry"
-                                                className="pointer-events-none absolute inset-0 w-full h-auto object-contain transition-opacity duration-200"
-                                                style={{
-                                                    opacity: isFinalGoldLevel ? 1 : 0,
-                                                    filter: "contrast(1.12) drop-shadow(0 12px 28px rgba(184, 134, 11, 0.55))",
-                                                }}
-                                            />
-                                        </>
-                                    );
-                                })()}
-
-                                {/* Speech text emerging from the genie's mouth to the left */}
-                                <div
-                                    className={`pointer-events-none absolute top-[18%] right-[73%] z-50 w-[195px] sm:w-[215px] origin-right transition-all duration-300 ${
-                                        isGenieHovered
-                                            ? "opacity-100 scale-100 translate-x-0"
-                                            : "opacity-0 scale-75 translate-x-4"
-                                    }`}
-                                >
-                                    <div
-                                        className="relative bg-white/95 backdrop-blur-md text-[#111A1A] px-3.5 py-2.5 rounded-2xl shadow-2xl border-2 border-[#008080] text-xs font-black leading-snug tracking-tight"
-                                        style={{
-                                            boxShadow: `0 10px 30px rgba(0, 128, 128, ${0.25 + solidProgress * 0.45})`,
-                                        }}
-                                    >
-                                        <div className="absolute top-3.5 -right-2 w-3.5 h-3.5 bg-white border-r-2 border-t-2 border-[#008080] rotate-45" />
-                                        <p className="relative z-10 text-[#006F6F]">
-                                            &ldquo;{t("hero.genieQuote")}&rdquo;
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <Button onClick={applyFilters} className="relative z-20 w-full bg-[#008080] hover:bg-[#006F6F] text-white">
-                                {t("filters.apply")}
-                            </Button>
-                        </div>
-                        <Button onClick={clearFilters} variant="outline" className="relative z-20 w-full text-xs">
+                    <div className="pt-2 flex flex-col gap-2">
+                        <Button onClick={applyFilters} className="w-full bg-[#008080] hover:bg-[#006F6F] text-white">
+                            {t("filters.apply")}
+                        </Button>
+                        <Button onClick={clearFilters} variant="outline" className="w-full text-xs">
                             {t("filters.reset")}
                         </Button>
                     </div>

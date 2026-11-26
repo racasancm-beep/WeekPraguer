@@ -39,7 +39,7 @@ export function BottomLeftProfileGenie() {
     // Immediate fallback generation to ensure the Genie level is always shown instantly
     const generateClientFallback = (role: string) => {
         try {
-            const prefix = role === "OWNER" ? "MG-OWN" : "MG-CUST";
+            const prefix = role === "SERVICE_OWNER" ? "MG-SERV" : role === "OWNER" ? "MG-OWN" : "MG-CUST";
             const randomCode = `${prefix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
             const origin = typeof window !== "undefined" ? window.location.origin : "https://www.mygenieurope.com";
             const registrationUrl = `${origin}/register?ref=${randomCode}`;
@@ -91,7 +91,13 @@ export function BottomLeftProfileGenie() {
     const level = data?.stats?.genieLevel || 0;
     const confirmedCount = data?.stats?.confirmedReferrals || 0;
     const progressToNext = data?.stats?.progressToNext || 0;
-    const code = data?.code || (userRole === "OWNER" ? "MG-OWN-XXXX" : "MG-CUST-XXXX");
+    const code = data?.code || (userRole === "SERVICE_OWNER" ? "MG-SERV-XXXX" : userRole === "OWNER" ? "MG-OWN-XXXX" : "MG-CUST-XXXX");
+    const roleLabel =
+        userRole === "SERVICE_OWNER"
+            ? (t("owner.serviceOwnerRoleBadge") || "Service Owner")
+            : userRole === "OWNER"
+            ? (t("owner.roleBadge") || "Owner")
+            : (t("renter.roleBadge") || "Customer");
 
     const handleCopy = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -157,12 +163,11 @@ export function BottomLeftProfileGenie() {
                         >
                             <div className="flex items-center gap-1 font-black text-xs text-gray-900 dark:text-gray-100 truncate">
                                 <span>{t("referral.genieLevel") || "Genie Level"} {level}</span>
-                                {level > 0 ? (
+                                <span className="text-[9px] font-bold text-teal-600 dark:text-teal-400">
+                                    ({roleLabel})
+                                </span>
+                                {level > 0 && (
                                     <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
-                                ) : (
-                                    <span className="text-[9px] font-normal text-teal-600">
-                                        ({userRole === "OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer")})
-                                    </span>
                                 )}
                             </div>
                             <div className="text-[10px] text-gray-500 truncate">
@@ -203,7 +208,7 @@ export function BottomLeftProfileGenie() {
                             {level > 0 && <Sparkles className="w-5 h-5 text-amber-500" />}
                         </DialogTitle>
                         <DialogDescription className="text-xs text-gray-500">
-                            {userRole === "OWNER" ? (t("referral.ownerProfile") || "Owner Profile") : (t("referral.customerProfile") || "Customer Profile")} • {confirmedCount} {confirmedCount === 1 ? (t("referral.confirmedCountSingle") || "referral") : (t("referral.confirmedCount") || "referrals")}
+                            {roleLabel} • {confirmedCount} {confirmedCount === 1 ? (t("referral.confirmedCountSingle") || "referral") : (t("referral.confirmedCount") || "referrals")}
                         </DialogDescription>
                     </DialogHeader>
 

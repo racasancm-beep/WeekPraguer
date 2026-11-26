@@ -127,22 +127,33 @@ function RegisterForm() {
 
     const activeCallback = paramCallbackUrl || resolvedCallbackUrl;
 
-    // If user is already logged in, take them either back to their space callbackUrl or to Add New Space (if OWNER/ADMIN)
+    // If user is already logged in, route Service Owner to Create Service, Owner to Create Space, or callback
     useEffect(() => {
         if (status === "authenticated" && session?.user) {
+            const userRole = (session.user as any).role;
+            try {
+                sessionStorage.removeItem("postAuthRedirectUrl");
+            } catch {
+                // ignore
+            }
+
+            if (userRole === "SERVICE_OWNER") {
+                router.replace("/owner/dashboard/listings/create?type=SERVICE");
+                return;
+            }
+            if (userRole === "OWNER") {
+                router.replace("/owner/dashboard/listings/create");
+                return;
+            }
             if (activeCallback && activeCallback.startsWith("/")) {
-                try {
-                    sessionStorage.removeItem("postAuthRedirectUrl");
-                } catch {
-                    // ignore
-                }
                 router.replace(activeCallback);
                 return;
             }
-            const userRole = (session.user as any).role;
-            if (userRole === "OWNER" || userRole === "ADMIN" || userRole === "SERVICE_OWNER") {
-                router.replace("/owner/dashboard/listings/create" + (userRole === "SERVICE_OWNER" ? "?type=SERVICE" : ""));
+            if (userRole === "ADMIN") {
+                router.replace("/admin/dashboard");
+                return;
             }
+            router.replace("/dashboard");
         }
     }, [status, session, router, activeCallback]);
 
@@ -173,15 +184,18 @@ function RegisterForm() {
                 });
 
                 if (signInResult?.ok) {
-                    if (activeCallback && activeCallback.startsWith("/")) {
-                        try {
-                            sessionStorage.removeItem("postAuthRedirectUrl");
-                        } catch {
-                            // ignore
-                        }
+                    try {
+                        sessionStorage.removeItem("postAuthRedirectUrl");
+                    } catch {
+                        // ignore
+                    }
+
+                    if (role === "SERVICE_OWNER") {
+                        router.push("/owner/dashboard/listings/create?type=SERVICE");
+                    } else if (role === "OWNER") {
+                        router.push("/owner/dashboard/listings/create");
+                    } else if (activeCallback && activeCallback.startsWith("/")) {
                         router.push(activeCallback);
-                    } else if (role === "OWNER" || role === "SERVICE_OWNER") {
-                        router.push("/owner/dashboard/listings/create" + (role === "SERVICE_OWNER" ? "?type=SERVICE" : ""));
                     } else {
                         router.push("/dashboard");
                     }

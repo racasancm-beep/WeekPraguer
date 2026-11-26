@@ -829,7 +829,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.availabilityUnavailable": "Momentan Indisponibil",
         "service.priceDisplay": "Tarif Serviciu",
         "service.bookService": "Rezervă Serviciu",
-        "card.viewService": "Vezi Serviciul",
+        "card.viewService": "Vezi Serviciul",        "service.addNewService": "Adaugă un Serviciu Nou",
+        "service.createSubtitle": "Completează detaliile serviciului tău, categoria, locația și tariful orar.",
+
 
     },
     en: {
@@ -1641,7 +1643,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.availabilityUnavailable": "Currently Unavailable",
         "service.priceDisplay": "Service Rate",
         "service.bookService": "Book Service",
-        "card.viewService": "View Service",
+        "card.viewService": "View Service",        "service.addNewService": "Add a New Service",
+        "service.createSubtitle": "Fill in your service details, category, location and hourly rate.",
+
 
     },
     hu: {
@@ -2453,7 +2457,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.availabilityUnavailable": "Jelenleg Nem Elérhető",
         "service.priceDisplay": "Szolgáltatás Ára",
         "service.bookService": "Szolgáltatás Foglalása",
-        "card.viewService": "Szolgáltatás Megtekintése",
+        "card.viewService": "Szolgáltatás Megtekintése",        "service.addNewService": "Új Szolgáltatás Hozzáadása",
+        "service.createSubtitle": "Add meg a szolgáltatásod adatait, a kategóriát, a helyszínt és az óradíjat.",
+
 
     },
     de: {
@@ -3265,7 +3271,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.availabilityUnavailable": "Derzeit Nicht Verfügbar",
         "service.priceDisplay": "Dienstleistungspreis",
         "service.bookService": "Service buchen",
-        "card.viewService": "Dienstleistung anzeigen",
+        "card.viewService": "Dienstleistung anzeigen",        "service.addNewService": "Neue Dienstleistung hinzufügen",
+        "service.createSubtitle": "Geben Sie Ihre Dienstleistungsdetails, Kategorie, Standort und Stundensatz an.",
+
 
     },
 };

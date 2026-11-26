@@ -114,7 +114,7 @@ export default function OwnerLayout({
 
                     {/* Bottom-Left Corner: Unique Referral QR Code with Darker Genie */}
                     <div className="mt-auto border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky bottom-0">
-                        <ProfileQrCard role="OWNER" />
+                        <ProfileQrCard role={isServiceOwner ? "SERVICE_OWNER" : "OWNER"} />
                     </div>
                 </div>
             </div>

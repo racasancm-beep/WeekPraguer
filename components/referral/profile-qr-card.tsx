@@ -24,7 +24,7 @@ interface ReferralData {
     stats: DarkerGenieStats;
 }
 
-export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
+export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" | "SERVICE_OWNER" }) {
     const { t } = useLanguage();
     const [data, setData] = useState<ReferralData | null>(null);
     const [refreshing, setRefreshing] = useState(false);
@@ -32,9 +32,9 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Immediate client-side fallback generation to ensure the QR code is NEVER blank
-    const generateClientFallback = (forcedRole: "OWNER" | "CUSTOMER") => {
+    const generateClientFallback = (forcedRole: "OWNER" | "CUSTOMER" | "SERVICE_OWNER") => {
         try {
-            const prefix = forcedRole === "OWNER" ? "MG-OWN" : "MG-CUST";
+            const prefix = forcedRole === "SERVICE_OWNER" ? "MG-SERV" : forcedRole === "OWNER" ? "MG-OWN" : "MG-CUST";
             const randomCode = `${prefix}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
             const origin = typeof window !== "undefined" ? window.location.origin : "https://www.mygenieurope.com";
             const registrationUrl = `${origin}/register?ref=${randomCode}`;
@@ -101,7 +101,7 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
     const level = data?.stats?.genieLevel || 0;
     const confirmedCount = data?.stats?.confirmedReferrals || 0;
     const progressToNext = data?.stats?.progressToNext || 0;
-    const code = data?.code || (role === "OWNER" ? "MG-OWN-XXXX" : "MG-CUST-XXXX");
+    const code = data?.code || (role === "SERVICE_OWNER" ? "MG-SERV-XXXX" : role === "OWNER" ? "MG-OWN-XXXX" : "MG-CUST-XXXX");
 
     return (
         <>
