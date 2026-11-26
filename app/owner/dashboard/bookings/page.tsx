@@ -374,6 +374,7 @@ export default function BookingsPage() {
 
 function OwnerBookingHistoryItem({ booking }: { booking: any }) {
     const { t } = useLanguage();
+    const isService = Boolean(booking.space?.isService);
     const isOwnerBlock = booking.accessCode === "OWNER_BLOCK";
     const isRejected = booking.status === "REJECTED" || booking.status === "CANCELLED";
     const hasProof = !isOwnerBlock && !isRejected && hasBookingProofOfPayment(booking);
@@ -386,6 +387,8 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
         ? `${t("card.occupied100")} • ${t("card.otherSources")}`
         : isRejected
         ? t("renter.status.rejected")
+        : isService && (booking.status === "CONFIRMED" || booking.status === "COMPLETED")
+        ? (t("service.statusConfirmed") || "SERVICIU CONFIRMAT")
         : hasProof
         ? t("renter.status.reserved")
         : booking.status === "CONFIRMED"
@@ -395,6 +398,8 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
     const badgeClassName = `px-3 py-1 text-xs font-bold rounded-full ${
         isOwnerBlock || isRejected
             ? "bg-red-100 text-red-800 border border-red-200"
+            : isService && (booking.status === "CONFIRMED" || booking.status === "COMPLETED")
+            ? "bg-teal-600 text-white"
             : hasProof
             ? "bg-emerald-600 text-white"
             : "bg-blue-100 text-blue-800 border border-blue-200"
@@ -414,7 +419,11 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
                     }
                 }}
                 className={`cursor-pointer transition-all hover:shadow-md hover:border-violet-300 group ${
-                    hasProof ? "bg-emerald-50/30 border-emerald-200" : "bg-white border-blue-200"
+                    isService && (booking.status === "CONFIRMED" || booking.status === "COMPLETED")
+                        ? "bg-teal-50/30 border-teal-200"
+                        : hasProof
+                        ? "bg-emerald-50/30 border-emerald-200"
+                        : "bg-white border-blue-200"
                 }`}
             >
                 <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -443,6 +452,8 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
             className={
                 isOwnerBlock || isRejected
                     ? "bg-red-50/40 border-red-200"
+                    : isService && (booking.status === "CONFIRMED" || booking.status === "COMPLETED")
+                    ? "bg-teal-50/30 border-teal-200"
                     : hasProof
                     ? "bg-emerald-50/30 border-emerald-200"
                     : "bg-white border-gray-200"

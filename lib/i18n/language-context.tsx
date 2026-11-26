@@ -853,6 +853,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.pendingServiceRequests": "Cereri de Servicii în Așteptare (Acțiune Necesară)",
         "service.confirmedServiceHistory": "Istoric Servicii Confirmate",
         "service.onlyServiceOwnerCanApprove": "Aprobare disponibilă exclusiv în profilul proprietarului serviciului",
+        "service.notificationApprovedTitle": "NOTIFICARE: CERERE DE SERVICIU APROBATĂ DE PRESTATOR!",
+        "service.notificationApprovedBody": "Prestatorul a aprobat cererea ta. Rezervarea serviciului este confirmată oficial! Plata se efectuează direct cu prestatorul (nu prin platformă), conform detaliilor stabilite pe chat.",
+        "service.statusConfirmed": "SERVICIU CONFIRMAT",
+        "service.confirmedNoticeTitle": "Rezervare Serviciu Confirmată",
+        "service.confirmedNoticeDesc": "Prestatorul a aprobat cererea de serviciu. Plata nu se face prin platformă, ci direct către prestator conform înțelegerii. Folosește chatul pentru a comunica liber orice detalii organizatorice.",
 
 
     },
@@ -1689,6 +1694,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.pendingServiceRequests": "Pending Service Requests (Action Required)",
         "service.confirmedServiceHistory": "Confirmed Services History",
         "service.onlyServiceOwnerCanApprove": "Approval available exclusively in the service owner's profile",
+        "service.notificationApprovedTitle": "NOTIFICATION: SERVICE REQUEST APPROVED BY PROVIDER!",
+        "service.notificationApprovedBody": "The provider approved your request. Your service reservation is officially confirmed! Payment is handled directly with the provider (not through the platform) as agreed in chat.",
+        "service.statusConfirmed": "SERVICE CONFIRMED",
+        "service.confirmedNoticeTitle": "Service Reservation Confirmed",
+        "service.confirmedNoticeDesc": "The provider approved the service request. Payment is not processed through the platform, but directly with the provider. Use the chat to communicate freely about any details.",
 
 
     },
@@ -2525,6 +2535,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.pendingServiceRequests": "Függőben Lévő Szolgáltatás Kérések (Művelet Szükséges)",
         "service.confirmedServiceHistory": "Megerősített Szolgáltatások Előzményei",
         "service.onlyServiceOwnerCanApprove": "A jóváhagyás kizárólag a szolgáltatás tulajdonosának profiljában érhető el",
+        "service.notificationApprovedTitle": "ÉRTESÍTÉS: A SZOLGÁLTATÁS KÉRÉST JÓVÁHAGYTA A SZOLGÁLTATÓ!",
+        "service.notificationApprovedBody": "A szolgáltató jóváhagyta kérésedet. A szolgáltatás foglalása hivatalosan megerősítve! A fizetés közvetlenül a szolgáltatóval történik (nem a platformon keresztül), a csevegésben megbeszéltek szerint.",
+        "service.statusConfirmed": "SZOLGÁLTATÁS MEGERŐSÍTVE",
+        "service.confirmedNoticeTitle": "Szolgáltatás Foglalás Megerősítve",
+        "service.confirmedNoticeDesc": "A szolgáltató jóváhagyta a szolgáltatási igényt. A fizetés nem a platformon keresztül zajlik, hanem közvetlenül a szolgáltatóval. Használd a csevegést a részletek egyeztetésére.",
 
 
     },
@@ -3361,6 +3376,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.pendingServiceRequests": "Ausstehende Serviceanfragen (Aktion erforderlich)",
         "service.confirmedServiceHistory": "Verlauf bestätigter Dienstleistungen",
         "service.onlyServiceOwnerCanApprove": "Genehmigung ausschließlich im Profil des Dienstleisters verfügbar",
+        "service.notificationApprovedTitle": "BENACHRICHTIGUNG: SERVICE-ANFRAGE VOM DIENSTLEISTER GENEHMIGT!",
+        "service.notificationApprovedBody": "Der Dienstleister hat Ihre Anfrage genehmigt. Ihre Service-Reservierung ist offiziell bestätigt! Die Zahlung erfolgt direkt beim Dienstleister (nicht über die Plattform) wie im Chat vereinbart.",
+        "service.statusConfirmed": "SERVICE BESTÄTIGT",
+        "service.confirmedNoticeTitle": "Service-Reservierung Bestätigt",
+        "service.confirmedNoticeDesc": "Der Dienstleister hat die Serviceanfrage genehmigt. Die Zahlung erfolgt nicht über die Plattform, sondern direkt mit dem Dienstleister. Nutzen Sie den Chat, um alle Details frei zu besprechen.",
 
 
     },

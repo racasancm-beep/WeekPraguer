@@ -85,17 +85,19 @@ function RenterDashboardContent() {
                 setBookings(list);
                 setInspectedUser(data.inspectedUser || null);
 
-                // Notify renter when a booking has been approved by owner and is awaiting payment
+                // Notify renter when a booking has been approved by owner
                 list.forEach((b) => {
-                    if (
-                        b.status === "CONFIRMED" &&
-                        !hasBookingProofOfPayment(b) &&
-                        !notifiedIdsRef.current.has(b.id)
-                    ) {
+                    if (b.status === "CONFIRMED" && !notifiedIdsRef.current.has(b.id)) {
                         notifiedIdsRef.current.add(b.id);
-                        toast.info(
-                            `${b.space?.name || "Space"}: ${t("renter.status.approved")}`
-                        );
+                        if (b.space?.isService) {
+                            toast.success(
+                                `${b.space?.name || "Service"}: ${t("service.statusConfirmed") || "CONFIRMED"}`
+                            );
+                        } else if (!hasBookingProofOfPayment(b)) {
+                            toast.info(
+                                `${b.space?.name || "Space"}: ${t("renter.status.approved")}`
+                            );
+                        }
                     }
                 });
             }
@@ -109,7 +111,10 @@ function RenterDashboardContent() {
     if (loading) return <div>{t("owner.bookings.loading")}</div>;
 
     const confirmedAwaitingPayment = bookings.filter(
-        (b) => b.status === "CONFIRMED" && !hasBookingProofOfPayment(b)
+        (b) => !b.space?.isService && b.status === "CONFIRMED" && !hasBookingProofOfPayment(b)
+    );
+    const confirmedServices = bookings.filter(
+        (b) => b.space?.isService && (b.status === "CONFIRMED" || b.status === "COMPLETED")
     );
 
     return (
@@ -135,7 +140,36 @@ function RenterDashboardContent() {
                 </div>
             )}
 
-            {/* Renter Notification Banner when Owner approves a reservation request */}
+            {/* Service Notification Banner when Service Owner approves a service request */}
+            {confirmedServices.length > 0 && (
+                <div className="p-5 rounded-2xl bg-teal-50 border-2 border-teal-300 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-[#008080] text-white flex items-center justify-center shrink-0 shadow-md">
+                            <CheckCircle2 className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-black text-teal-950 uppercase tracking-wide">
+                                {t("service.notificationApprovedTitle") || "NOTIFICARE: CERERE DE SERVICIU APROBATĂ DE PRESTATOR!"}
+                            </div>
+                            <p className="text-xs sm:text-sm text-teal-900 mt-1 font-medium">
+                                {t("service.notificationApprovedBody") || "Prestatorul a aprobat cererea ta. Rezervarea serviciului este confirmată oficial! Plata se efectuează direct cu prestatorul (nu prin platformă), conform detaliilor stabilite pe chat."}
+                            </p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {confirmedServices.map((b) => (
+                                    <Link key={b.id} href={`/messages?bookingId=${b.id}`}>
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-teal-200 text-xs font-extrabold text-teal-900 hover:bg-teal-50 transition-colors cursor-pointer shadow-xs">
+                                            <MessageSquare className="w-3.5 h-3.5 text-teal-600" />
+                                            {b.space?.name} — {b.totalPrice} RON ({t("service.statusConfirmed") || "SERVICIU CONFIRMAT"})
+                                        </span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Renter Notification Banner when Owner approves a space reservation request (Spaces only) */}
             {confirmedAwaitingPayment.length > 0 && (
                 <div className="p-5 rounded-2xl bg-blue-50 border-2 border-blue-300 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-3.5">
@@ -208,10 +242,12 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
     const [uploadedFileName, setUploadedFileName] = useState("");
     const [submittingProof, setSubmittingProof] = useState(false);
 
+    const isService = Boolean(booking.space?.isService);
     const hasProof = hasBookingProofOfPayment(booking);
-    const isReserved = (booking.status === "CONFIRMED" || booking.status === "COMPLETED") && hasProof;
-    const isConfirmedAwaitingPayment = booking.status === "CONFIRMED" && !hasProof;
-    const isConfirmed = isConfirmedAwaitingPayment || isReserved;
+    const isReserved = !isService && (booking.status === "CONFIRMED" || booking.status === "COMPLETED") && hasProof;
+    const isConfirmedAwaitingPayment = !isService && booking.status === "CONFIRMED" && !hasProof;
+    const isServiceConfirmed = isService && (booking.status === "CONFIRMED" || booking.status === "COMPLETED");
+    const isConfirmed = isConfirmedAwaitingPayment || isReserved || isServiceConfirmed;
     const [isExpanded, setIsExpanded] = useState(false);
     const isPending = booking.status === "PENDING";
     const isOwnerProposed = booking.status === "OWNER_PROPOSED";
@@ -275,13 +311,14 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
     let statusText = booking.status;
     if (isPending) statusText = t("renter.status.pending");
     else if (isOwnerProposed) statusText = t("renter.newProposedInterval");
+    else if (isServiceConfirmed) statusText = t("service.statusConfirmed") || "SERVICIU CONFIRMAT";
     else if (isConfirmedAwaitingPayment) statusText = t("renter.status.approved");
     else if (isReserved) statusText = t("renter.status.reserved");
     else if (isRejected) statusText = t("renter.status.rejected");
 
     const proofDisplay = booking.paymentId || booking.transaction?.stripePaymentId;
 
-    // Small collapsed view at beginning for confirmed rented spaces
+    // Small collapsed view at beginning for confirmed rented spaces / services
     if (isConfirmed && !isExpanded) {
         return (
             <Card
@@ -295,7 +332,9 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                     }
                 }}
                 className={`cursor-pointer transition-all hover:shadow-md hover:border-violet-400 group ${
-                    isReserved
+                    isServiceConfirmed
+                        ? "border-2 border-teal-300 bg-teal-50/20"
+                        : isReserved
                         ? "border-2 border-emerald-300 bg-emerald-50/20"
                         : "border-2 border-blue-300 bg-blue-50/20"
                 }`}
@@ -317,7 +356,9 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                     <div className="flex items-center gap-2.5 shrink-0">
                         <Badge
                             className={
-                                isReserved
+                                isServiceConfirmed
+                                    ? "bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 text-xs font-extrabold uppercase tracking-wide"
+                                    : isReserved
                                     ? "bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 text-xs font-extrabold uppercase tracking-wide"
                                     : "bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 text-xs font-extrabold uppercase tracking-wide"
                             }
@@ -336,7 +377,9 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
     return (
         <Card
             className={
-                isReserved
+                isServiceConfirmed
+                    ? "border-2 border-teal-300 bg-teal-50/15"
+                    : isReserved
                     ? "border-2 border-emerald-300 bg-emerald-50/15"
                     : isConfirmedAwaitingPayment
                     ? "border-2 border-blue-300 bg-blue-50/15"
@@ -357,7 +400,9 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                 <div className="flex items-center gap-2">
                     <Badge
                         className={
-                            isReserved
+                            isServiceConfirmed
+                                ? "bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
+                                : isReserved
                                 ? "bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
                                 : isConfirmedAwaitingPayment
                                 ? "bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-1 text-xs font-extrabold uppercase tracking-wide"
@@ -440,7 +485,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                     </div>
                     <div>
                         <p className="text-sm text-muted-foreground">
-                            {isReserved ? t("renter.totalPaid") : t("space.estimatedTotal")}
+                            {isServiceConfirmed || isReserved ? t("renter.totalPaid") : t("space.estimatedTotal")}
                         </p>
                         <p className="font-black text-lg">{booking.totalPrice} RON</p>
                         <p className="text-[11px] font-semibold text-amber-700">
@@ -451,6 +496,33 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
 
                 {(booking.status === "CONFIRMED" || booking.status === "COMPLETED") && (
                     <BookingPriceBreakdown booking={booking} />
+                )}
+
+                {/* SERVICE CONFIRMED (Direct payment off-platform, free chat) */}
+                {isServiceConfirmed && (
+                    <div className="p-4 sm:p-5 rounded-2xl bg-teal-50 border-2 border-teal-300 space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                                    <CheckCircle2 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className="text-xs sm:text-sm font-black text-teal-950 uppercase tracking-wide">
+                                        {t("service.confirmedNoticeTitle") || "Rezervare Serviciu Confirmată"}
+                                    </div>
+                                    <p className="text-xs text-teal-900 mt-0.5 font-medium">
+                                        {t("service.confirmedNoticeDesc") || "Prestatorul a aprobat cererea de serviciu. Plata nu se face prin platformă, ci direct către prestator conform înțelegerii. Folosește chatul pentru a comunica liber orice detalii organizatorice."}
+                                    </p>
+                                </div>
+                            </div>
+                            <Link href={`/messages?bookingId=${booking.id}`}>
+                                <Button size="sm" className="h-9 px-4 text-xs font-bold bg-[#008080] hover:bg-[#006F6F] text-white shadow-sm shrink-0">
+                                    <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
+                                    {t("chat.openChatBtn") || "Chat Rezervare"}
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
                 )}
 
                 {/* STAGE 1: PENDING FOR CONFIRMATION (Waiting for Owner Approval) */}
@@ -578,7 +650,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                         </div>
 
                         <div className="flex items-center gap-2 flex-wrap">
-                            {Boolean(booking.space?.accessCode || (booking.accessCode && booking.accessCode !== "OWNER_BLOCK")) && (
+                            {Boolean(!isService && (booking.space?.accessCode || (booking.accessCode && booking.accessCode !== "OWNER_BLOCK"))) && (
                                 <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-black text-emerald-900 shadow-sm">
                                     <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
                                     {t("renter.accessCodeLabel")} {booking.space?.accessCode || booking.accessCode}
