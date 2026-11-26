@@ -56,7 +56,7 @@ export function MainNav() {
                         {status === "authenticated" && session?.user && (
                             <div className="flex items-center gap-2.5 sm:gap-3 bg-gray-50/90 border border-gray-200/90 rounded-2xl px-2.5 sm:px-3.5 py-1.5 shadow-sm">
                                 <Link
-                                    href={isOwner ? "/owner/dashboard/earnings" : isAdmin ? "/admin/dashboard" : "/dashboard"}
+                                    href={isOwner ? "/owner/dashboard" : isAdmin ? "/admin/dashboard" : "/dashboard"}
                                     className="flex items-center gap-2.5 sm:gap-3 hover:opacity-85 transition-opacity min-w-0 cursor-pointer"
                                     title={isOwner ? (t("nav.ownerDashboard") || "Owner Dashboard") : (t("nav.dashboard") || "Dashboard")}
                                 >
@@ -110,16 +110,18 @@ export function MainNav() {
                     </div>
 
                     <div className="hidden lg:flex items-center gap-6">
-                        <Link
-                            href="/explore"
-                            className={`text-sm tracking-wide transition-all ${
-                                isOwner
-                                    ? "opacity-35 hover:opacity-100 font-medium text-gray-400 hover:text-gray-700"
-                                    : "font-bold text-gray-600 hover:text-[#008080]"
-                            }`}
-                        >
-                            {t("nav.explore")}
-                        </Link>
+                        {!isServiceOwner && (
+                            <Link
+                                href="/explore"
+                                className={`text-sm tracking-wide transition-all ${
+                                    isOwner
+                                        ? "opacity-35 hover:opacity-100 font-medium text-gray-400 hover:text-gray-700"
+                                        : "font-bold text-gray-600 hover:text-[#008080]"
+                                }`}
+                            >
+                                {t("nav.explore")}
+                            </Link>
+                        )}
                         
                         <div className={`relative group ${isOwner ? "opacity-35 hover:opacity-100 transition-opacity" : ""}`}>
                             <div className={`flex items-center gap-1 text-sm tracking-wide outline-none cursor-pointer py-4 ${
@@ -187,7 +189,7 @@ export function MainNav() {
                             </Link>
                         ) : isOwner ? (
                             <Link
-                                href="/owner/dashboard/earnings"
+                                href="/owner/dashboard"
                                 className="flex items-center gap-1.5 text-sm font-black text-white bg-[#008080] hover:bg-[#006F6F] px-4 py-2 rounded-xl shadow-md shadow-[#008080]/30 border border-[#006F6F] hover:scale-105 transition-all"
                             >
                                 <LayoutDashboard className="w-4 h-4 text-white" />
@@ -226,9 +228,11 @@ export function MainNav() {
 
                     <div className="flex lg:hidden items-center gap-2">
                         <LanguageSelector variant="dropdown" />
-                        <Link href="/explore" className="p-2 text-[#008080]">
-                            <Search className="w-6 h-6" />
-                        </Link>
+                        {!isServiceOwner && (
+                            <Link href="/explore" className="p-2 text-[#008080]">
+                                <Search className="w-6 h-6" />
+                            </Link>
+                        )}
                     </div>
                 </div>
             </nav>

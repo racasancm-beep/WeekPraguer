@@ -66,7 +66,7 @@ export async function POST(req: Request) {
         const userRole = (session.user as any)?.role;
         const sessionEmail = session.user?.email?.trim().toLowerCase();
         const isOwnerUser =
-            userRole === "OWNER" &&
+            (userRole === "OWNER" || userRole === "SERVICE_OWNER") &&
             (userId === space.ownerId ||
                 (Boolean(sessionEmail) && space.owner?.email?.trim().toLowerCase() === sessionEmail));
 
@@ -255,7 +255,7 @@ export async function DELETE(req: Request) {
         const role = (session.user as any)?.role;
         const sessionEmail = session.user?.email?.trim().toLowerCase();
         const isAuthorized =
-            role === "OWNER" &&
+            (role === "OWNER" || role === "SERVICE_OWNER") &&
             Boolean(
                 (userId && booking.space.ownerId === userId) ||
                 (sessionEmail && booking.space.owner?.email?.trim().toLowerCase() === sessionEmail)

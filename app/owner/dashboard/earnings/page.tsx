@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
-import { ChevronDown, ChevronUp, Calendar } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, Sparkles, MapPin, Clock, Pencil, ExternalLink } from "lucide-react";
 
 interface StatItem {
     name: string;
@@ -31,7 +31,9 @@ function EarningsPageContent() {
     const userId = searchParams?.get("userId");
     const { t } = useLanguage();
     const { data: session } = useSession();
-    const isOwnerRole = (session?.user as any)?.role === "OWNER";
+    const role = (session?.user as any)?.role;
+    const isServiceOwner = role === "SERVICE_OWNER";
+    const isOwnerRole = role === "OWNER" || isServiceOwner;
 
     const [stats, setStats] = useState({
         revenue: 0,
@@ -43,6 +45,7 @@ function EarningsPageContent() {
     const [inspectedUser, setInspectedUser] = useState<any>(null);
     const [recentBookings, setRecentBookings] = useState<any[]>([]);
     const [chartData, setChartData] = useState<StatItem[]>([]);
+    const [spaces, setSpaces] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -65,6 +68,7 @@ function EarningsPageContent() {
                 setInspectedUser(data.inspectedUser || null);
                 setRecentBookings(data.bookings || []);
                 setChartData(data.chartData || []);
+                setSpaces(data.spaces || []);
             }
         } catch (e) {
             console.error(e);
@@ -99,11 +103,14 @@ function EarningsPageContent() {
             )}
 
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{t("owner.earnings.title")}</h1>
+                <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+                    {isServiceOwner ? (t("service.dashboardTitle") || "Panou Servicii & Rezervări") : t("owner.earnings.title")}
+                </h1>
                 {isOwnerRole && (
-                    <Link href="/owner/dashboard/listings/create">
-                        <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-600/20 font-bold">
-                            {t("owner.earnings.listNewSpace")}
+                    <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
+                        <Button className={`${isServiceOwner ? "bg-[#008080] hover:bg-[#006F6F]" : "bg-violet-600 hover:bg-violet-700"} text-white rounded-xl shadow-lg font-bold flex items-center gap-1.5`}>
+                            {isServiceOwner && <Sparkles className="w-4 h-4" />}
+                            {isServiceOwner ? (t("service.addNewService") || "Adaugă Serviciu Nou") : t("owner.earnings.listNewSpace")}
                         </Button>
                     </Link>
                 )}
@@ -232,6 +239,105 @@ function EarningsPageContent() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Prominent Services & Spaces Added on the Platform */}
+            <div className="space-y-4 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#008080] flex items-center justify-center font-bold shrink-0">
+                            <Sparkles className="w-5 h-5 text-[#008080]" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
+                                {isServiceOwner
+                                    ? (t("service.myServicesOnPlatform") || "Serviciile Mele Adăugate pe Platformă")
+                                    : (t("owner.mySpacesOnPlatform") || "Spațiile & Serviciile Mele")}
+                            </h2>
+                            <p className="text-xs text-gray-500">
+                                {spaces.length} {spaces.length === 1 ? "listare activă" : "listări active"} pe platformă
+                            </p>
+                        </div>
+                    </div>
+                    <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
+                        <Button size="sm" className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl text-xs h-9 px-4 flex items-center gap-1.5 shadow-sm">
+                            <Sparkles className="w-3.5 h-3.5" />
+                            {isServiceOwner ? (t("service.addNewService") || "Adaugă Serviciu Nou") : t("owner.earnings.listNewSpace")}
+                        </Button>
+                    </Link>
+                </div>
+
+                {spaces.length === 0 ? (
+                    <Card className="p-8 text-center rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white/50">
+                        <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                        <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                            {t("service.noServicesYet") || "Nu ai adăugat încă niciun serviciu."}
+                        </p>
+                        <p className="text-xs text-gray-500 mb-4 mt-1">
+                            Adaugă primul tău serviciu pentru a începe să primești rezervări de la clienți.
+                        </p>
+                        <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
+                            <Button className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl text-xs">
+                                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                {isServiceOwner ? (t("service.addNewService") || "Adaugă Serviciu Nou") : t("owner.earnings.listNewSpace")}
+                            </Button>
+                        </Link>
+                    </Card>
+                ) : (
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {spaces.map((space: any) => (
+                            <Card key={space.id} className="rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden hover:shadow-md transition-shadow bg-white dark:bg-gray-800">
+                                <div className="h-36 bg-gray-100 dark:bg-gray-900 relative overflow-hidden">
+                                    {space.photos?.[0]?.url ? (
+                                        <img src={space.photos[0].url} alt={space.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-teal-50 dark:bg-teal-950/20 text-[#008080]">
+                                            <Sparkles className="w-8 h-8 opacity-40" />
+                                        </div>
+                                    )}
+                                    <span className="absolute top-2.5 left-2.5 bg-[#008080] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                                        {space.serviceCategory || space.category || "Serviciu"}
+                                    </span>
+                                    <span className={`absolute top-2.5 right-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${
+                                        space.active !== false ? "bg-emerald-500 text-white" : "bg-gray-500 text-white"
+                                    }`}>
+                                        {space.active !== false ? "Activ" : "Inactiv"}
+                                    </span>
+                                </div>
+                                <CardContent className="p-4 space-y-2.5">
+                                    <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate" title={space.name}>
+                                        {space.name}
+                                    </h3>
+                                    <div className="flex items-center text-xs text-gray-500">
+                                        <MapPin className="w-3.5 h-3.5 mr-1 text-[#008080] shrink-0" />
+                                        <span className="truncate">{space.city}{space.district ? ` • ${space.district}` : ""}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-xs pt-1.5 border-t border-gray-100 dark:border-gray-700">
+                                        <div className="font-extrabold text-[#008080] text-sm">
+                                            {space.hourlyRate} RON <span className="text-[10px] text-gray-400 font-normal">/ h</span>
+                                        </div>
+                                        <div className="flex items-center text-[11px] text-gray-600 dark:text-gray-300 font-bold bg-gray-50 dark:bg-gray-700/60 px-2 py-0.5 rounded-md border border-gray-200 dark:border-gray-600">
+                                            <Clock className="w-3 h-3 mr-1 text-[#008080]" />
+                                            {space.availableHours || "09:00 - 18:00"}
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 pt-1.5">
+                                        <Link href={`/owner/dashboard/listings/${space.id}/edit`} className="flex-1">
+                                            <Button variant="outline" size="sm" className="w-full text-xs font-semibold h-8 rounded-lg">
+                                                <Pencil className="w-3 h-3 mr-1" /> Modifică
+                                            </Button>
+                                        </Link>
+                                        <Link href={`/spaces/${space.id}`} className="flex-1">
+                                            <Button size="sm" className="w-full bg-[#1A2020] hover:bg-[#008080] text-white text-xs font-semibold h-8 rounded-lg transition-colors">
+                                                <ExternalLink className="w-3 h-3 mr-1" /> Vezi
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
@@ -240,7 +346,13 @@ function RecentConfirmedBookingItem({ booking }: { booking: any }) {
     const { t } = useLanguage();
     const [isExpanded, setIsExpanded] = useState(false);
 
-    // Initial small / collapsed view displaying ONLY: Space name, Dates when rented, Status Confirmed
+    const startDate = new Date(booking.startTime);
+    const endDate = new Date(booking.endTime);
+    const startTimeStr = startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const endTimeStr = endDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const timeIntervalStr = `${startTimeStr} - ${endTimeStr}`;
+
+    // Initial small / collapsed view displaying Space name, Date + Time Interval, Status
     if (!isExpanded) {
         return (
             <div
@@ -257,10 +369,15 @@ function RecentConfirmedBookingItem({ booking }: { booking: any }) {
                         <p className="font-bold text-xs text-gray-900 group-hover:text-[#008080] transition-colors truncate">
                             {booking.space?.name}
                         </p>
-                        <p className="text-[11px] text-gray-500 flex items-center gap-1">
-                            <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
-                            <span>
-                                {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
+                        <p className="text-[11px] text-gray-500 flex items-center gap-1.5 flex-wrap">
+                            <span className="flex items-center gap-1">
+                                <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
+                                {startDate.toLocaleDateString()}
+                            </span>
+                            <span>•</span>
+                            <span className="flex items-center gap-1 font-bold text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                                <Clock className="w-3 h-3 text-[#008080] shrink-0" />
+                                {timeIntervalStr}
                             </span>
                         </p>
                     </div>
@@ -278,15 +395,23 @@ function RecentConfirmedBookingItem({ booking }: { booking: any }) {
         );
     }
 
-    // Expanded view showing all details (Customer contact, Total, Platform fee, Owner price)
+    // Expanded view showing all details (Customer contact, Time interval, Total, Platform fee, Owner price)
     return (
         <div className="p-3.5 rounded-2xl bg-white border-2 border-teal-200 shadow-sm transition-all space-y-3">
             <div className="flex items-start justify-between gap-2 pb-2 border-b border-gray-100">
                 <div>
                     <p className="font-black text-sm text-gray-900">{booking.space?.name}</p>
-                    <p className="text-xs text-gray-500">
-                        {new Date(booking.startTime).toLocaleDateString()} - {new Date(booking.endTime).toLocaleDateString()}
-                    </p>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600 mt-1">
+                        <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                            {startDate.toLocaleDateString()}
+                        </span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1 font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                            <Clock className="w-3.5 h-3.5 text-[#008080]" />
+                            {timeIntervalStr}
+                        </span>
+                    </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-800 border border-emerald-200">

@@ -13,7 +13,19 @@ export default async function OwnerDashboardIndex() {
 
     const userId = (session.user as any).id;
     const email = session.user.email?.trim().toLowerCase();
-    const role = (session.user as any).role;
+    let role = (session.user as any).role;
+    if (!role && (userId || email)) {
+        const dbUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    ...(userId ? [{ id: userId }] : []),
+                    ...(email ? [{ email: { equals: email, mode: "insensitive" as const } }] : []),
+                ],
+            },
+            select: { role: true },
+        });
+        if (dbUser) role = dbUser.role;
+    }
 
     // Check how many spaces / services this owner has created
     const count = await prisma.space.count({

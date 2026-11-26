@@ -9,7 +9,7 @@ export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
     const role = (session?.user as any)?.role;
 
-    if (!session || (role !== "OWNER" && role !== "ADMIN")) {
+    if (!session || (role !== "OWNER" && role !== "ADMIN" && role !== "SERVICE_OWNER")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -34,7 +34,11 @@ export async function GET(req: Request) {
                     : {}
                 : { ownerId: resolvedOwnerId };
 
-        const spaces = await (prisma as any).space.findMany({ where: spaceFilter, select: { id: true } });
+        const spaces = await (prisma as any).space.findMany({
+            where: spaceFilter,
+            include: { photos: true },
+            orderBy: { createdAt: "desc" },
+        });
         const spaceIds = spaces.map((s: any) => s.id);
 
         let inspectedUser = null;
@@ -158,7 +162,8 @@ export async function GET(req: Request) {
             bookings: [...normalizedRawBookings].sort((a: any, b: any) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             ),
-            chartData
+            chartData,
+            spaces
         });
     } catch (error) {
         console.error("Owner stats error:", error);

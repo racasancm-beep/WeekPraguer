@@ -28,8 +28,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const session = await getServerSession(authOptions);
     const role = (session?.user as any)?.role;
 
-    // Strictly only OWNER profiles are allowed to approve or propose alternatives (ADMIN is never allowed)
-    if (!session || !session.user || role !== "OWNER") {
+    // Strictly only OWNER and SERVICE_OWNER profiles are allowed to approve or propose alternatives (ADMIN is never allowed)
+    if (!session || !session.user || (role !== "OWNER" && role !== "SERVICE_OWNER")) {
         return NextResponse.json(
             { error: "Only the owner profile of this space can approve booking requests." },
             { status: 403 }

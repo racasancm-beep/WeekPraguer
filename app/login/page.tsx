@@ -54,6 +54,9 @@ function LoginFormContent() {
             } catch {
                 // ignore
             }
+            if (candidate === "/dashboard" || candidate === "/") {
+                return "/portal";
+            }
             return candidate;
         }
         return fallback;

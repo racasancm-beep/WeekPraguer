@@ -21,19 +21,24 @@ export default function RenterLayout({
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const { t } = useLanguage();
-    const isAdmin = (session?.user as any)?.role === "ADMIN";
+    const userRole = (session?.user as any)?.role;
+    const isAdmin = userRole === "ADMIN";
+    const isOwnerOrService = userRole === "OWNER" || userRole === "SERVICE_OWNER";
 
     useEffect(() => {
-        const userRole = (session?.user as any)?.role;
         if (status === "unauthenticated") {
             router.push("/login");
-        } else if (status === "authenticated" && (userRole === "OWNER" || userRole === "SERVICE_OWNER")) {
-            router.push("/owner/dashboard/earnings");
+        } else if (status === "authenticated" && isOwnerOrService) {
+            router.replace("/owner/dashboard");
         }
-    }, [status, session, router]);
+    }, [status, isOwnerOrService, router]);
 
-    if (status === "loading") {
-        return <div className="min-h-screen flex items-center justify-center">{t("common.loading")}</div>;
+    if (status === "loading" || (status === "authenticated" && isOwnerOrService)) {
+        return (
+            <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">
+                {t("common.redirecting") || "Redirecționare către panoul tău..."}
+            </div>
+        );
     }
 
     if (!session) {

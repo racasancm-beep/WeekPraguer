@@ -116,7 +116,7 @@ const PRESET_SERVICE_CATEGORIES = [
 
 const formSchema = z.object({
     name: z.string().min(2, "Required"),
-    description: z.string().min(3, "Required").max(500, "Maximum 500 characters"),
+    description: z.string().min(3, "Required").max(3000, "Maximum characters exceeded"),
     category: z.string().optional().default("coworking"),
     address: z.string().min(2, "Required"),
     city: z.string().default("București"),
@@ -446,7 +446,7 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                     router.push(`/spaces/${targetSpaceId}`);
                     router.refresh();
                 } else {
-                    router.push("/owner/dashboard/listings");
+                    router.push("/owner/dashboard/earnings");
                     router.refresh();
                 }
             } else {
@@ -557,8 +557,12 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                                 <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
                                     {t("service.descriptionLabel") || "Descrierea Serviciului (max. 500 caractere)"}
                                 </label>
-                                <span className="text-xs font-mono font-bold text-gray-500">
-                                    {Math.max(0, 500 - (form.watch("description")?.length || 0))} {t("service.charactersRemaining") || "caractere rămase"}
+                                <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                                    (form.watch("description")?.length || 0) >= 480
+                                        ? "text-red-600 bg-red-50 border-red-200"
+                                        : "text-teal-700 bg-teal-50 border-teal-200"
+                                }`}>
+                                    {form.watch("description")?.length || 0} / 500 {t("service.charactersRemaining") || "caractere"}
                                 </span>
                             </div>
                             <Textarea
@@ -783,6 +787,25 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                                 onChange={(e) => setAvailableHours(e.target.value)}
                                 placeholder={t("service.availableHoursPlaceholder") || "09:00 - 18:00"}
                             />
+                            <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                                <span className="text-[10px] text-gray-500 font-semibold mr-0.5">
+                                    {t("service.quickHours") || "Preseturi rapide"}:
+                                </span>
+                                {["09:00 - 18:00", "08:00 - 20:00", "10:00 - 22:00", "Flexibil / La cerere"].map((preset) => (
+                                    <button
+                                        type="button"
+                                        key={preset}
+                                        onClick={() => setAvailableHours(preset)}
+                                        className={`text-[11px] px-2 py-0.5 rounded-full border transition-all ${
+                                            availableHours === preset
+                                                ? "bg-[#008080] text-white border-[#008080] font-bold"
+                                                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-teal-400"
+                                        }`}
+                                    >
+                                        {preset}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
 

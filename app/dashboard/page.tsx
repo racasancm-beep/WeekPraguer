@@ -20,7 +20,8 @@ import {
     Calendar,
     MessageSquare,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { toast } from "sonner";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
@@ -42,9 +43,14 @@ export default function RenterDashboard() {
 }
 
 function RenterDashboardContent() {
+    const router = useRouter();
     const searchParams = useSearchParams();
+    const { data: session, status } = useSession();
     const userId = searchParams?.get("userId");
     const { t } = useLanguage();
+
+    const userRole = (session?.user as any)?.role;
+    const isOwnerOrService = userRole === "OWNER" || userRole === "SERVICE_OWNER";
 
     const [bookings, setBookings] = useState<any[]>([]);
     const [inspectedUser, setInspectedUser] = useState<any>(null);
@@ -52,8 +58,18 @@ function RenterDashboardContent() {
     const notifiedIdsRef = useRef<Set<string>>(new Set());
 
     useEffect(() => {
-        fetchBookings();
-    }, [userId]);
+        if (status === "authenticated" && isOwnerOrService) {
+            router.replace("/owner/dashboard");
+            return;
+        }
+        if (status !== "loading") {
+            fetchBookings();
+        }
+    }, [userId, status, isOwnerOrService, router]);
+
+    if (isOwnerOrService) {
+        return null;
+    }
 
     const fetchBookings = async () => {
         try {
