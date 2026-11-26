@@ -18,6 +18,7 @@ const spaceSchema = z.object({
     size: z.coerce.number().positive(),
     capacity: z.coerce.number().int().positive(),
     officeCount: z.coerce.number().int().optional().default(1),
+    accessCode: z.string().optional(),
     // Pricing
     hourlyRate: z.coerce.number().positive(),
     dailyRate: z.coerce.number().optional(),
@@ -100,6 +101,7 @@ export async function POST(req: Request) {
                 size: Math.round(data.size),
                 capacity: Math.round(data.capacity),
                 officeCount: data.officeCount || 1,
+                accessCode: data.accessCode?.trim() || null,
                 hourlyRate: data.hourlyRate,
                 dailyRate,
                 weekendRate,

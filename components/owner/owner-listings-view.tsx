@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, ChevronDown, ChevronUp, KeyRound } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
@@ -132,6 +132,21 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                             <Ruler className="w-4 h-4 mr-2 text-gray-400" />
                                             {space.size} m²
                                         </div>
+                                    </div>
+
+                                    {/* Space Access Code (Visible and editable for Owner) */}
+                                    <div className="mb-3 px-2.5 py-1.5 rounded-lg bg-teal-50/80 border border-teal-200 flex items-center justify-between text-xs">
+                                        <span className="flex items-center text-teal-800 font-bold">
+                                            <KeyRound className="w-3.5 h-3.5 mr-1.5 text-teal-600 shrink-0" />
+                                            {t("owner.listings.accessCodeLabel") || "Cod Acces:"}
+                                        </span>
+                                        <span className={`font-mono font-bold px-2 py-0.5 rounded border text-[11px] ${
+                                            space.accessCode
+                                                ? "bg-white text-teal-950 border-teal-300"
+                                                : "bg-gray-100 text-gray-500 border-gray-200 font-sans"
+                                        }`}>
+                                            {space.accessCode || t("owner.listings.noAccessCode") || "Nespecificat"}
+                                        </span>
                                     </div>
 
                                     {hasOwnerBlock && (

@@ -98,6 +98,7 @@ model Space {
   capacity      Int
   category      String?
   officeCount   Int?
+  accessCode    String?
   hasWifi       Boolean      @default(true)
   hasProjector  Boolean      @default(false)
   hasKitchen    Boolean      @default(false)

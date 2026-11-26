@@ -7,6 +7,7 @@ export const spaceSchema = z.object({
     city: z.string().default("București"),
     size: z.number().min(1, "Size is required"),
     capacity: z.number().min(1, "Capacity is required"),
+    accessCode: z.string().optional(),
     hourlyRate: z.number().min(0, "Price cannot be negative"),
     dailyRate: z.number().min(0, "Price cannot be negative"),
     weekendRate: z.number().min(0, "Price cannot be negative"), // Special full weekend deal

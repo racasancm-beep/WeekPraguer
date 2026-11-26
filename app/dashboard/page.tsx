@@ -542,10 +542,10 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                             </div>
                         </div>
 
-                        {booking.accessCode && booking.accessCode !== "OWNER_BLOCK" && (
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-black text-emerald-900">
+                        {Boolean(booking.space?.accessCode || (booking.accessCode && booking.accessCode !== "OWNER_BLOCK")) && (
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-black text-emerald-900 shadow-sm">
                                 <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
-                                {t("renter.accessCodeLabel")} {booking.accessCode}
+                                {t("renter.accessCodeLabel")} {booking.space?.accessCode || booking.accessCode}
                             </div>
                         )}
                     </div>

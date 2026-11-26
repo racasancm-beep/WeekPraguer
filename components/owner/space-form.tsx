@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, MapPin, Plus, X } from "lucide-react";
+import { Loader2, MapPin, Plus, X, KeyRound, ShieldCheck } from "lucide-react";
 import MapComponent from "@/components/ui/map-component";
 import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -112,6 +112,7 @@ const formSchema = z.object({
     size: z.coerce.number().positive(),
     capacity: z.coerce.number().int().positive(),
     officeCount: z.coerce.number().int().optional(),
+    accessCode: z.string().optional().default(""),
     hourlyRate: z.coerce.number().positive(),
     dailyRate: z.coerce.number().optional(),
     weekendRate: z.coerce.number().optional(),
@@ -188,6 +189,7 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
             size: initialData?.size ?? 50,
             capacity: initialData?.capacity ?? 10,
             officeCount: initialData?.officeCount ?? 1,
+            accessCode: initialData?.accessCode || "",
             hourlyRate: initialData?.hourlyRate ?? 100,
             dailyRate: initialData?.dailyRate ?? 600,
             weekendRate: initialData?.weekendRate ?? 1100,
@@ -449,6 +451,33 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                         <Textarea {...form.register("description")} rows={4} />
                         {form.formState.errors.description && <p className="text-red-500 text-xs mt-1">{form.formState.errors.description.message}</p>}
                     </div>
+                </div>
+            </div>
+
+            {/* Space Access Code (Cod Acces Spațiu) - Visible & Editable anytime by Owner */}
+            <div className="space-y-3 p-4 rounded-xl border border-teal-200 bg-teal-50/50 dark:bg-gray-800 dark:border-teal-900/60 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#008080] text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <KeyRound className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {t("owner.form.accessCodeTitle") || "Cod Acces Spațiu (pentru clienți)"}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t("owner.form.accessCodeDesc") || "Codul de acces pe care clientul îl va vedea în panoul său după confirmarea rezervării (ex. cod cutie chei, PIN smart lock, interfon). Poate fi modificat oricând."}
+                        </p>
+                    </div>
+                </div>
+                <div>
+                    <Input
+                        {...form.register("accessCode")}
+                        placeholder={t("owner.form.accessCodePlaceholder") || "ex. 482910 sau KEY-1234"}
+                        className="font-mono text-base font-bold tracking-wider bg-white dark:bg-gray-900 border-teal-300 dark:border-teal-800"
+                    />
+                    <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-1.5 font-medium">
+                        {t("owner.form.accessCodeHint") || "Acest cod este vizibil clienților cu rezervare confirmată și poate fi actualizat oricând de proprietar."}
+                    </p>
                 </div>
             </div>
 

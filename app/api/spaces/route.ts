@@ -25,6 +25,7 @@ export async function POST(req: Request) {
                 city: body.city,
                 size: body.size,
                 capacity: body.capacity,
+                accessCode: body.accessCode ? body.accessCode.trim() : null,
                 hourlyRate: body.hourlyRate,
                 dailyRate: body.dailyRate,
                 weekendRate: body.weekendRate,

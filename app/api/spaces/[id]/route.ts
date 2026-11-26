@@ -142,6 +142,10 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
                     body.officeCount !== undefined
                         ? Math.max(1, Math.round(Number(body.officeCount)))
                         : existingSpace.officeCount,
+                accessCode:
+                    body.accessCode !== undefined
+                        ? (body.accessCode && String(body.accessCode).trim() ? String(body.accessCode).trim() : null)
+                        : existingSpace.accessCode,
                 hourlyRate,
                 dailyRate,
                 weekendRate,
