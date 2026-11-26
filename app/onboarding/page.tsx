@@ -36,7 +36,7 @@ export default function OnboardingPage() {
         formState: { errors },
     } = useForm({
         resolver: zodResolver(
-            role === "OWNER" ? ownerSchema : baseSchema
+            (role === "OWNER" || role === "SERVICE_OWNER") ? ownerSchema : baseSchema
         ),
     });
 
@@ -76,7 +76,7 @@ export default function OnboardingPage() {
                     {errors.phone && <p className="text-red-500 text-sm">{(errors.phone as any).message}</p>}
                 </div>
 
-                {role === "OWNER" && (
+                {(role === "OWNER" || role === "SERVICE_OWNER") && (
                     <>
                         <div>
                             <Label htmlFor="companyName">Company Name (Optional)</Label>

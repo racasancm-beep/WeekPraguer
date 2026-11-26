@@ -118,20 +118,26 @@ export default function BookingsPage() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-                    {t("owner.bookings.title")}
+                    {sessionRole === "SERVICE_OWNER"
+                        ? (t("service.serviceRequests") || "Cereri Servicii")
+                        : t("owner.bookings.title")}
                 </h1>
             </div>
 
             {/* Pending Requests */}
             {pendingBookings.length > 0 ? (
                 <div className="mb-8">
-                    <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.pendingTitle")}</h2>
+                    <h2 className="text-lg font-bold text-gray-900 mb-4">
+                        {sessionRole === "SERVICE_OWNER"
+                            ? (t("service.pendingServiceRequests") || t("owner.bookings.pendingTitle"))
+                            : t("owner.bookings.pendingTitle")}
+                    </h2>
                     <div className="grid gap-4">
                         {pendingBookings.map((booking) => {
-                            // Strictly only the OWNER profile of this specific space can approve, reject, or propose alternatives (never ADMIN)
+                            // Strictly only the OWNER or SERVICE_OWNER profile of this specific space/service can approve, reject, or propose alternatives (never ADMIN)
                             const canApproveThisBooking =
                                 status === "authenticated" &&
-                                sessionRole === "OWNER" &&
+                                (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER") &&
                                 Boolean(
                                     (sessionUserId && booking.space?.ownerId === sessionUserId) ||
                                     (sessionEmail &&
@@ -270,7 +276,9 @@ export default function BookingsPage() {
                                             ) : (
                                                 <div>
                                                     <span className="px-3 py-1 bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold rounded-full">
-                                                        {t("owner.bookings.onlyOwnerCanApprove")}
+                                                        {booking.space?.isService
+                                                            ? (t("service.onlyServiceOwnerCanApprove") || "Aprobare disponibilă exclusiv în profilul proprietarului serviciului")
+                                                            : t("owner.bookings.onlyOwnerCanApprove")}
                                                     </span>
                                                 </div>
                                             )}
@@ -339,7 +347,11 @@ export default function BookingsPage() {
             )}
 
             <div className="mt-8">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">{t("owner.bookings.historyTitle")}</h2>
+                <h2 className="text-lg font-bold text-gray-900 mb-4">
+                    {sessionRole === "SERVICE_OWNER"
+                        ? (t("service.confirmedServiceHistory") || t("owner.bookings.historyTitle"))
+                        : t("owner.bookings.historyTitle")}
+                </h2>
                 <div className="grid gap-4">
                     {recentBookings.map((booking) => (
                         <OwnerBookingHistoryItem key={booking.id} booking={booking} />

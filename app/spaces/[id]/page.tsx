@@ -280,7 +280,7 @@ export default function SpaceDetailsPage() {
     const isOwnerOfThisSpace =
         status === "authenticated" &&
         Boolean(session?.user) &&
-        sessionRole === "OWNER" &&
+        (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER") &&
         Boolean(
             (sessionUserId && space?.ownerId === sessionUserId) ||
             (sessionEmail && space?.owner?.email?.trim().toLowerCase() === sessionEmail)

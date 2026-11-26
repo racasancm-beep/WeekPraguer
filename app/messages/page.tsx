@@ -253,7 +253,8 @@ function MessagesContent() {
     }
 
     const currentUserId = (session?.user as any)?.id;
-    const isOwnerRole = (session?.user as any)?.role === "OWNER";
+    const role = (session?.user as any)?.role;
+    const isOwnerRole = role === "OWNER" || role === "SERVICE_OWNER";
 
     return (
         <div className="max-w-6xl mx-auto py-6 px-4 sm:px-6">
@@ -464,7 +465,7 @@ function MessagesContent() {
                                                     <span className="text-[10px] font-bold text-gray-500">
                                                         {isMine
                                                             ? (t("messages.you") || "You")
-                                                            : msg.sender?.name || (msg.senderRole === "OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer"))}
+                                                            : msg.sender?.name || (msg.senderRole === "OWNER" || msg.senderRole === "SERVICE_OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer"))}
                                                     </span>
                                                     <span className="text-[9px] text-gray-400">
                                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

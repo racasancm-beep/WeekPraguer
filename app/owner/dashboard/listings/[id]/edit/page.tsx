@@ -33,7 +33,7 @@ export default function EditListingPage() {
                     const sessionEmail = session?.user?.email?.trim().toLowerCase();
                     const sessionRole = (session?.user as any)?.role;
                     const isOwnerOfThisSpace =
-                        sessionRole === "OWNER" &&
+                        (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER") &&
                         Boolean(
                             (sessionUserId && data?.ownerId === sessionUserId) ||
                             (sessionEmail && data?.owner?.email?.trim().toLowerCase() === sessionEmail)

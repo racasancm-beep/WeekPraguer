@@ -847,6 +847,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.editService": "Editează Serviciul",
         "service.unitSingular": "serviciu",
         "service.unitPlural": "servicii",
+        "service.pendingServiceRequests": "Cereri de Servicii în Așteptare (Acțiune Necesară)",
+        "service.confirmedServiceHistory": "Istoric Servicii Confirmate",
+        "service.onlyServiceOwnerCanApprove": "Aprobare disponibilă exclusiv în profilul proprietarului serviciului",
 
 
     },
@@ -1677,6 +1680,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.editService": "Edit Service",
         "service.unitSingular": "service",
         "service.unitPlural": "services",
+        "service.pendingServiceRequests": "Pending Service Requests (Action Required)",
+        "service.confirmedServiceHistory": "Confirmed Services History",
+        "service.onlyServiceOwnerCanApprove": "Approval available exclusively in the service owner's profile",
 
 
     },
@@ -2507,6 +2513,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.editService": "Szolgáltatás szerkesztése",
         "service.unitSingular": "szolgáltatás",
         "service.unitPlural": "szolgáltatás",
+        "service.pendingServiceRequests": "Függőben Lévő Szolgáltatás Kérések (Művelet Szükséges)",
+        "service.confirmedServiceHistory": "Megerősített Szolgáltatások Előzményei",
+        "service.onlyServiceOwnerCanApprove": "A jóváhagyás kizárólag a szolgáltatás tulajdonosának profiljában érhető el",
 
 
     },
@@ -3337,6 +3346,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.editService": "Dienstleistung bearbeiten",
         "service.unitSingular": "Dienstleistung",
         "service.unitPlural": "Dienstleistungen",
+        "service.pendingServiceRequests": "Ausstehende Serviceanfragen (Aktion erforderlich)",
+        "service.confirmedServiceHistory": "Verlauf bestätigter Dienstleistungen",
+        "service.onlyServiceOwnerCanApprove": "Genehmigung ausschließlich im Profil des Dienstleisters verfügbar",
 
 
     },
