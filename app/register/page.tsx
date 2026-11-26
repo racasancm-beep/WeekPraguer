@@ -138,22 +138,22 @@ function RegisterForm() {
             }
 
             if (userRole === "SERVICE_OWNER") {
-                router.replace("/owner/dashboard/listings/create?type=SERVICE");
+                window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
                 return;
             }
             if (userRole === "OWNER") {
-                router.replace("/owner/dashboard/listings/create");
-                return;
-            }
-            if (activeCallback && activeCallback.startsWith("/")) {
-                router.replace(activeCallback);
+                window.location.href = "/owner/dashboard/listings/create";
                 return;
             }
             if (userRole === "ADMIN") {
-                router.replace("/admin/dashboard");
+                window.location.href = "/admin/dashboard";
                 return;
             }
-            router.replace("/dashboard");
+            if (activeCallback && activeCallback.startsWith("/") && activeCallback !== "/dashboard") {
+                window.location.href = activeCallback;
+                return;
+            }
+            window.location.href = "/dashboard";
         }
     }, [status, session, router, activeCallback]);
 
@@ -191,15 +191,14 @@ function RegisterForm() {
                     }
 
                     if (role === "SERVICE_OWNER") {
-                        router.push("/owner/dashboard/listings/create?type=SERVICE");
+                        window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
                     } else if (role === "OWNER") {
-                        router.push("/owner/dashboard/listings/create");
-                    } else if (activeCallback && activeCallback.startsWith("/")) {
-                        router.push(activeCallback);
+                        window.location.href = "/owner/dashboard/listings/create";
+                    } else if (activeCallback && activeCallback.startsWith("/") && activeCallback !== "/dashboard") {
+                        window.location.href = activeCallback;
                     } else {
-                        router.push("/dashboard");
+                        window.location.href = "/dashboard";
                     }
-                    router.refresh();
                 } else {
                     const loginUrl = activeCallback
                         ? `/login?registered=true&callbackUrl=${encodeURIComponent(activeCallback)}`

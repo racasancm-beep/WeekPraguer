@@ -56,7 +56,7 @@ export function MainNav() {
                         {status === "authenticated" && session?.user && (
                             <div className="flex items-center gap-2.5 sm:gap-3 bg-gray-50/90 border border-gray-200/90 rounded-2xl px-2.5 sm:px-3.5 py-1.5 shadow-sm">
                                 <Link
-                                    href={isOwner ? "/owner/dashboard" : isAdmin ? "/admin/dashboard" : "/dashboard"}
+                                    href={isOwner ? "/owner/dashboard/earnings" : isAdmin ? "/admin/dashboard" : "/dashboard"}
                                     className="flex items-center gap-2.5 sm:gap-3 hover:opacity-85 transition-opacity min-w-0 cursor-pointer"
                                     title={isOwner ? (t("nav.ownerDashboard") || "Owner Dashboard") : (t("nav.dashboard") || "Dashboard")}
                                 >
@@ -189,7 +189,7 @@ export function MainNav() {
                             </Link>
                         ) : isOwner ? (
                             <Link
-                                href="/owner/dashboard"
+                                href="/owner/dashboard/earnings"
                                 className="flex items-center gap-1.5 text-sm font-black text-white bg-[#008080] hover:bg-[#006F6F] px-4 py-2 rounded-xl shadow-md shadow-[#008080]/30 border border-[#006F6F] hover:scale-105 transition-all"
                             >
                                 <LayoutDashboard className="w-4 h-4 text-white" />

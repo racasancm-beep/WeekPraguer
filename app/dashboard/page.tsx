@@ -59,7 +59,9 @@ function RenterDashboardContent() {
 
     useEffect(() => {
         if (status === "authenticated" && isOwnerOrService) {
-            router.replace("/owner/dashboard");
+            window.location.href = userRole === "SERVICE_OWNER"
+                ? "/owner/dashboard/listings/create?type=SERVICE"
+                : "/owner/dashboard/earnings";
             return;
         }
         if (status !== "loading") {

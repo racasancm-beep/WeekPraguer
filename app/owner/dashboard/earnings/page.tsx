@@ -69,6 +69,12 @@ function EarningsPageContent() {
                 setRecentBookings(data.bookings || []);
                 setChartData(data.chartData || []);
                 setSpaces(data.spaces || []);
+
+                // If this is a Service Owner without any services created yet, route them directly to create their first service!
+                if (isServiceOwner && !userId && (!data.spaces || data.spaces.length === 0)) {
+                    window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
+                    return;
+                }
             }
         } catch (e) {
             console.error(e);
