@@ -15,7 +15,16 @@ function renderTemplate(template: string, vars: Record<string, string>): string 
     return result;
 }
 
-export function isChatActive(endTime: Date | string): { isActive: boolean; expiresAt: Date; isExpired: boolean } {
+export function isChatActive(endTime: Date | string, isService = false): { isActive: boolean; expiresAt: Date; isExpired: boolean } {
+    // For services, profiles communicate freely without expiration lockout
+    if (isService) {
+        return {
+            isActive: true,
+            expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+            isExpired: false,
+        };
+    }
+
     const end = new Date(endTime);
     if (isNaN(end.getTime())) {
         return {
@@ -24,7 +33,7 @@ export function isChatActive(endTime: Date | string): { isActive: boolean; expir
             isExpired: false,
         };
     }
-    // Active from reservation until 48 hours after checkout
+    // Active from reservation until 48 hours after checkout (for space rentals)
     const expiresAt = new Date(end.getTime() + 48 * 60 * 60 * 1000);
     const isExpired = Date.now() > expiresAt.getTime();
     return {
@@ -50,6 +59,10 @@ export async function checkAndSendBookingReminders(targetBookingId?: string): Pr
                     { accessCode: null },
                     { accessCode: { not: "OWNER_BLOCK" } },
                 ],
+                // Automated messages are strictly for space rentals, NEVER for services
+                space: {
+                    isService: false,
+                },
                 ...(targetBookingId ? { id: targetBookingId } : {}),
             },
             include: {
@@ -60,6 +73,7 @@ export async function checkAndSendBookingReminders(targetBookingId?: string): Pr
                         address: true,
                         city: true,
                         accessCode: true,
+                        isService: true,
                         reminder24hTemplate: true,
                         reminder12hTemplate: true,
                         ownerId: true,
@@ -78,6 +92,9 @@ export async function checkAndSendBookingReminders(targetBookingId?: string): Pr
         });
 
         for (const booking of bookings) {
+            // Strictly guard against services
+            if (booking.space.isService) continue;
+
             result.processedBookings++;
             const start = new Date(booking.startTime);
             const diffHours = (start.getTime() - now.getTime()) / (1000 * 60 * 60);

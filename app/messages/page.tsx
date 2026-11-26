@@ -323,17 +323,26 @@ function MessagesContent() {
                                                 </p>
                                                 <span
                                                     className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full ${
-                                                        isExpired
+                                                        conv.space?.isService
+                                                            ? "bg-teal-100 text-teal-800"
+                                                            : isExpired
                                                             ? "bg-gray-200 text-gray-600"
                                                             : "bg-emerald-100 text-emerald-800"
                                                     }`}
                                                 >
-                                                    {isExpired ? "Arhivat" : "Activ"}
+                                                    {conv.space?.isService ? "Liber" : isExpired ? "Arhivat" : "Activ"}
                                                 </span>
                                             </div>
-                                            <p className="text-[11px] font-semibold text-[#008080] truncate">
-                                                {conv.space.name}
-                                            </p>
+                                            <div className="flex items-center gap-1.5 mb-0.5">
+                                                {conv.space?.isService && (
+                                                    <span className="text-[8px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                                                        Serviciu
+                                                    </span>
+                                                )}
+                                                <p className="text-[11px] font-semibold text-[#008080] truncate">
+                                                    {conv.space.name}
+                                                </p>
+                                            </div>
                                             <p className="text-[10px] text-gray-400 truncate mt-0.5">
                                                 {conv.lastMessage?.content || "Niciun mesaj încă"}
                                             </p>
@@ -389,7 +398,12 @@ function MessagesContent() {
                                 </div>
 
                                 <div className="shrink-0 text-right">
-                                    {currentConversation.activeStatus?.isExpired ? (
+                                    {currentConversation.space?.isService ? (
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
+                                            <CheckCircle2 className="w-3 h-3 text-teal-600" />
+                                            {t("chat.serviceChatActive") || "Chat Activ • Comunicare Liberă"}
+                                        </span>
+                                    ) : currentConversation.activeStatus?.isExpired ? (
                                         <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
                                             <Lock className="w-3 h-3" />
                                             Închis (+48h după check-out)
@@ -403,8 +417,8 @@ function MessagesContent() {
                                 </div>
                             </div>
 
-                            {/* Access code reminder banner inside chat */}
-                            {(currentConversation.space.accessCode || currentConversation.booking.accessCode) && (
+                            {/* Access code reminder banner inside chat - Only for spaces, NEVER for services */}
+                            {!currentConversation.space?.isService && (currentConversation.space.accessCode || currentConversation.booking.accessCode) && (
                                 <div className="bg-teal-50 px-4 py-2 border-b border-teal-200 flex items-center justify-between text-xs text-teal-900">
                                     <span className="flex items-center gap-1.5 font-bold">
                                         <KeyRound className="w-3.5 h-3.5 text-teal-700" />
@@ -418,12 +432,16 @@ function MessagesContent() {
 
                             {/* Messages Stream */}
                             <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
-                                {messages.length === 0 ? (
+                                {messages.filter((msg) => !(currentConversation.space?.isService && msg.isAutomated)).length === 0 ? (
                                     <div className="text-center py-12 text-gray-400 text-xs font-semibold">
-                                        Niciun mesaj schimbat încă. Scrie primul mesaj mai jos!
+                                        {currentConversation.space?.isService
+                                            ? (t("chat.serviceChatEmpty") || "Canal direct de comunicare liberă pentru servicii. Scrie un mesaj mai jos!")
+                                            : "Niciun mesaj schimbat încă. Scrie primul mesaj mai jos!"}
                                     </div>
                                 ) : (
-                                    messages.map((msg) => {
+                                    messages
+                                        .filter((msg) => !(currentConversation.space?.isService && msg.isAutomated))
+                                        .map((msg) => {
                                         // Automated system reminder (24h or 12h)
                                         if (msg.isAutomated && (msg.automatedType === "REMINDER_24H" || msg.automatedType === "REMINDER_12H")) {
                                             return (
@@ -494,7 +512,7 @@ function MessagesContent() {
                             </div>
 
                             {/* Chat Input or Expired notice */}
-                            {currentConversation.activeStatus?.isExpired ? (
+                            {!currentConversation.space?.isService && currentConversation.activeStatus?.isExpired ? (
                                 <div className="p-3 bg-gray-100 dark:bg-gray-900 border-t text-center text-xs text-gray-500 font-semibold flex items-center justify-center gap-2">
                                     <Lock className="w-4 h-4 text-gray-400" />
                                     <span>
@@ -507,7 +525,11 @@ function MessagesContent() {
                                     <Input
                                         value={newMessage}
                                         onChange={(e) => setNewMessage(e.target.value)}
-                                        placeholder={t("chat.inputPlaceholder") || "Scrie un mesaj către proprietar sau client..."}
+                                        placeholder={
+                                            currentConversation.space?.isService
+                                                ? (t("chat.serviceInputPlaceholder") || "Scrie liber orice detaliu sau întrebare despre acest serviciu...")
+                                                : (t("chat.inputPlaceholder") || "Scrie un mesaj către proprietar sau client...")
+                                        }
                                         className="text-xs h-10 rounded-xl"
                                         disabled={sending}
                                     />

@@ -90,8 +90,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             return NextResponse.json({ message: "Nu aveți permisiunea de a vizualiza această conversație" }, { status: 403 });
         }
 
-        // Trigger reminder check for this booking
-        checkAndSendBookingReminders(conversation.bookingId).catch((e) => console.error("Reminder check error:", e));
+        // Trigger reminder check for this booking only for spaces, NEVER for services
+        if (!conversation.space?.isService) {
+            checkAndSendBookingReminders(conversation.bookingId).catch((e) => console.error("Reminder check error:", e));
+        }
 
         // Mark messages as read
         if (isOwner) {
@@ -106,11 +108,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             });
         }
 
-        const activeStatus = isChatActive(conversation.booking.endTime);
+        const isService = Boolean(conversation.space?.isService);
+        const activeStatus = isChatActive(conversation.booking.endTime, isService);
+
+        // For services, ensure all automated messages are removed so communication is strictly free between profiles
+        const filteredMessages = isService
+            ? conversation.messages.filter((m) => !m.isAutomated)
+            : conversation.messages;
 
         return NextResponse.json({
             conversation: {
                 ...conversation,
+                messages: filteredMessages,
                 activeStatus,
                 isUserOwner: isOwner,
                 otherParty: isOwner ? conversation.customer : conversation.owner,
@@ -150,6 +159,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             where: { id },
             include: {
                 booking: { select: { endTime: true } },
+                space: { select: { isService: true } },
             },
         });
 
@@ -165,9 +175,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ message: "Nu aveți permisiunea de a trimite mesaje în această conversație" }, { status: 403 });
         }
 
-        // Check active chat window (must not be more than 48 hours after checkout)
-        const activeStatus = isChatActive(conversation.booking.endTime);
-        if (activeStatus.isExpired) {
+        const isService = Boolean(conversation.space?.isService);
+        const activeStatus = isChatActive(conversation.booking.endTime, isService);
+
+        // Check active chat window for spaces (must not be more than 48 hours after checkout)
+        // For services, profiles are allowed to communicate freely without expiration lockout
+        if (!isService && activeStatus.isExpired) {
             return NextResponse.json(
                 { message: "Acest chat a fost închis automat la 48 de ore după check-out." },
                 { status: 400 }

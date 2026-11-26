@@ -117,16 +117,20 @@ export async function GET(req: Request) {
                 },
                 messages: {
                     orderBy: { createdAt: "desc" },
-                    take: 1,
+                    take: 5,
                 },
             },
             orderBy: { lastMessageAt: "desc" },
         });
 
         const mapped = conversations.map((conv) => {
-            const activeStatus = isChatActive(conv.booking.endTime);
+            const isService = Boolean(conv.space?.isService);
+            const activeStatus = isChatActive(conv.booking.endTime, isService);
             const isUserOwner = conv.ownerId === activeUserId;
             const otherParty = isUserOwner ? conv.customer : conv.owner;
+            const validMessages = isService
+                ? conv.messages.filter((m) => !m.isAutomated)
+                : conv.messages;
 
             return {
                 id: conv.id,
@@ -135,7 +139,7 @@ export async function GET(req: Request) {
                 booking: conv.booking,
                 otherParty,
                 isUserOwner,
-                lastMessage: conv.messages[0] || null,
+                lastMessage: validMessages[0] || null,
                 activeStatus,
                 status: activeStatus.isExpired ? "CLOSED" : conv.status,
             };
