@@ -34,6 +34,8 @@ interface ConversationItem {
         address: string;
         city: string;
         accessCode?: string | null;
+        isService?: boolean;
+        serviceCategory?: string | null;
         photos?: { url: string }[];
     };
     booking: {
@@ -368,7 +370,11 @@ function MessagesContent() {
                                                 {currentConversation.otherParty?.name || currentConversation.otherParty?.email}
                                             </h2>
                                             <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">
-                                                {currentConversation.isUserOwner ? (t("renter.roleBadge") || "Customer") : (t("owner.roleBadge") || "Owner")}
+                                                {currentConversation.isUserOwner
+                                                    ? (t("renter.roleBadge") || "Customer")
+                                                    : currentConversation.space?.isService
+                                                    ? (t("service.serviceOwner") || "Service Owner")
+                                                    : (t("owner.roleBadge") || "Owner")}
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-2 text-[11px] text-gray-500 truncate">
@@ -465,7 +471,7 @@ function MessagesContent() {
                                                     <span className="text-[10px] font-bold text-gray-500">
                                                         {isMine
                                                             ? (t("messages.you") || "You")
-                                                            : msg.sender?.name || (msg.senderRole === "OWNER" || msg.senderRole === "SERVICE_OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer"))}
+                                                            : msg.sender?.name || (msg.senderRole === "SERVICE_OWNER" ? (t("service.serviceOwner") || "Service Owner") : msg.senderRole === "OWNER" ? (t("owner.roleBadge") || "Owner") : (t("renter.roleBadge") || "Customer"))}
                                                     </span>
                                                     <span className="text-[9px] text-gray-400">
                                                         {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

@@ -213,6 +213,19 @@ export async function POST(req: Request) {
                     },
                 });
 
+                // Auto-create conversation so customer and space/service owner can immediately message each other
+                await tx.conversation.upsert({
+                    where: { bookingId: booking.id },
+                    create: {
+                        bookingId: booking.id,
+                        spaceId: booking.spaceId,
+                        ownerId: space.ownerId,
+                        customerId: booking.renterId,
+                        status: "ACTIVE",
+                    },
+                    update: {},
+                });
+
                 bookings.push(booking);
             }
 

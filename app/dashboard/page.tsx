@@ -455,9 +455,17 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
 
                 {/* STAGE 1: PENDING FOR CONFIRMATION (Waiting for Owner Approval) */}
                 {isPending && (
-                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex items-center gap-3 text-xs sm:text-sm text-amber-900 font-semibold">
-                        <Clock className="w-5 h-5 text-amber-600 shrink-0" />
-                        <span>{t("renter.pendingDesc")}</span>
+                    <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm text-amber-900 font-semibold">
+                        <div className="flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-amber-600 shrink-0" />
+                            <span>{t("renter.pendingDesc")}</span>
+                        </div>
+                        <Link href={`/messages?bookingId=${booking.id}`}>
+                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold text-amber-900 border-amber-300 bg-white hover:bg-amber-100 shadow-sm shrink-0">
+                                <MessageSquare className="w-3.5 h-3.5 mr-1.5 text-amber-700" />
+                                {t("chat.openChatBtn") || "Chat Rezervare"}
+                            </Button>
+                        </Link>
                     </div>
                 )}
 
@@ -469,9 +477,17 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                                 <CreditCard className="w-4 h-4 text-blue-700" />
                                 {t("renter.proceedPaymentTitle")}
                             </div>
-                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white text-blue-800 border border-blue-200">
-                                {t("renter.paymentGatewayReady")}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white text-blue-800 border border-blue-200">
+                                    {t("renter.paymentGatewayReady")}
+                                </span>
+                                <Link href={`/messages?bookingId=${booking.id}`}>
+                                    <Button size="sm" variant="outline" className="h-7 text-xs font-bold text-blue-900 border-blue-300 bg-white hover:bg-blue-100 shadow-sm">
+                                        <MessageSquare className="w-3.5 h-3.5 mr-1 text-blue-700" />
+                                        {t("chat.openChatBtn") || "Chat"}
+                                    </Button>
+                                </Link>
+                            </div>
                         </div>
 
                         {/* Payment Method Connection Selector (Ready for Gateway Integration) */}
@@ -593,7 +609,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                                 minute: "2-digit",
                             })}
                         </p>
-                        <div className="flex gap-2 mt-2">
+                        <div className="flex flex-wrap gap-2 mt-2">
                             <Button
                                 size="sm"
                                 onClick={() => handleAction("approve")}
@@ -604,6 +620,12 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                             <Button size="sm" variant="destructive" onClick={() => handleAction("reject")}>
                                 {t("renter.reject")}
                             </Button>
+                            <Link href={`/messages?bookingId=${booking.id}`}>
+                                <Button size="sm" variant="outline" className="h-8 text-xs font-bold text-teal-800 border-teal-300 bg-white hover:bg-teal-50">
+                                    <MessageSquare className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                                    {t("chat.openChatBtn") || "Chat"}
+                                </Button>
+                            </Link>
                         </div>
                     </div>
                 )}

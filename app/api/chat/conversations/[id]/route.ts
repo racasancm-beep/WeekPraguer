@@ -17,15 +17,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
         const userEmail = session.user?.email?.trim().toLowerCase();
         const userRole = (session.user as any)?.role;
 
-        const dbUser = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    userId ? { id: userId } : {},
-                    userEmail ? { email: { equals: userEmail, mode: "insensitive" } } : {},
-                ],
-            },
+        const orClauses: any[] = [];
+        if (userId) orClauses.push({ id: userId });
+        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
+
+        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
+            where: { OR: orClauses },
             select: { id: true },
-        });
+        }) : null;
 
         const activeUserId = dbUser?.id || userId;
 
@@ -39,6 +38,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                         address: true,
                         city: true,
                         accessCode: true,
+                        isService: true,
+                        serviceCategory: true,
                         reminder24hTemplate: true,
                         reminder12hTemplate: true,
                         photos: { take: 1, select: { url: true } },
@@ -134,15 +135,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         const userEmail = session.user?.email?.trim().toLowerCase();
         const userRole = (session.user as any)?.role;
 
-        const dbUser = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    userId ? { id: userId } : {},
-                    userEmail ? { email: { equals: userEmail, mode: "insensitive" } } : {},
-                ],
-            },
+        const orClauses: any[] = [];
+        if (userId) orClauses.push({ id: userId });
+        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
+
+        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
+            where: { OR: orClauses },
             select: { id: true },
-        });
+        }) : null;
 
         const activeUserId = dbUser?.id || userId;
 
@@ -181,7 +181,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ message: "Mesajul nu poate fi gol" }, { status: 400 });
         }
 
-        const senderRole = isOwner ? "OWNER" : isCustomer ? "CUSTOMER" : "ADMIN";
+        const senderRole = isOwner ? (userRole === "SERVICE_OWNER" ? "SERVICE_OWNER" : "OWNER") : isCustomer ? "CUSTOMER" : "ADMIN";
 
         const message = await prisma.chatMessage.create({
             data: {

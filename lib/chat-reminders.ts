@@ -17,6 +17,13 @@ function renderTemplate(template: string, vars: Record<string, string>): string 
 
 export function isChatActive(endTime: Date | string): { isActive: boolean; expiresAt: Date; isExpired: boolean } {
     const end = new Date(endTime);
+    if (isNaN(end.getTime())) {
+        return {
+            isActive: true,
+            expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+            isExpired: false,
+        };
+    }
     // Active from reservation until 48 hours after checkout
     const expiresAt = new Date(end.getTime() + 48 * 60 * 60 * 1000);
     const isExpired = Date.now() > expiresAt.getTime();
@@ -39,7 +46,10 @@ export async function checkAndSendBookingReminders(targetBookingId?: string): Pr
         const bookings = await prisma.booking.findMany({
             where: {
                 status: { in: ["CONFIRMED", "COMPLETED"] },
-                accessCode: { not: "OWNER_BLOCK" },
+                OR: [
+                    { accessCode: null },
+                    { accessCode: { not: "OWNER_BLOCK" } },
+                ],
                 ...(targetBookingId ? { id: targetBookingId } : {}),
             },
             include: {

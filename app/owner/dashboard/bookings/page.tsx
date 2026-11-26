@@ -272,6 +272,16 @@ export default function BookingsPage() {
                                                         <X className="w-3.5 h-3.5 mr-1" />
                                                         {t("common.reject")}
                                                     </Button>
+
+                                                    <Link href={`/messages?bookingId=${booking.id}`}>
+                                                        <Button
+                                                            variant="outline"
+                                                            className="text-xs h-8 border-teal-300 text-teal-800 hover:bg-teal-50 font-bold"
+                                                        >
+                                                            <MessageSquare className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                                                            {t("chat.openChatBtn") || "Chat"}
+                                                        </Button>
+                                                    </Link>
                                                 </div>
                                             ) : (
                                                 <div>

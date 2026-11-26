@@ -19,28 +19,38 @@ export async function GET(req: Request) {
         checkAndSendBookingReminders().catch((e) => console.error("Reminder check error:", e));
 
         // Find user by id or email to resolve DB user
-        const dbUser = await prisma.user.findFirst({
-            where: {
-                OR: [
-                    userId ? { id: userId } : {},
-                    userEmail ? { email: { equals: userEmail, mode: "insensitive" } } : {},
-                ],
-            },
+        const orClauses: any[] = [];
+        if (userId) orClauses.push({ id: userId });
+        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
+
+        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
+            where: { OR: orClauses },
             select: { id: true },
-        });
+        }) : null;
 
         const activeUserId = dbUser?.id || userId;
 
-        // Auto-create conversations for any confirmed bookings that don't have one yet
+        // Auto-create conversations for any bookings (PENDING, OWNER_PROPOSED, CONFIRMED, COMPLETED)
+        // that don't have a conversation yet, excluding owner blocks.
+        // In SQL/Prisma, accessCode != 'OWNER_BLOCK' excludes NULL, so we use OR: [{ accessCode: null }, { accessCode: { not: "OWNER_BLOCK" } }]
         const pendingBookings = await prisma.booking.findMany({
             where: {
-                status: { in: ["CONFIRMED", "COMPLETED"] },
-                accessCode: { not: "OWNER_BLOCK" },
-                conversation: null,
-                OR: [
-                    { renterId: activeUserId },
-                    { space: { ownerId: activeUserId } },
+                status: { in: ["PENDING", "OWNER_PROPOSED", "CONFIRMED", "COMPLETED"] },
+                AND: [
+                    {
+                        OR: [
+                            { accessCode: null },
+                            { accessCode: { not: "OWNER_BLOCK" } },
+                        ],
+                    },
+                    {
+                        OR: [
+                            { renterId: activeUserId },
+                            { space: { ownerId: activeUserId } },
+                        ],
+                    },
                 ],
+                conversation: null,
             },
             include: {
                 space: { select: { ownerId: true } },
@@ -76,6 +86,8 @@ export async function GET(req: Request) {
                         address: true,
                         city: true,
                         accessCode: true,
+                        isService: true,
+                        serviceCategory: true,
                         photos: { take: 1, select: { url: true } },
                     },
                 },
@@ -148,6 +160,21 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "bookingId este obligatoriu" }, { status: 400 });
         }
 
+        const userId = (session.user as any)?.id;
+        const userEmail = session.user?.email?.trim().toLowerCase();
+        const userRole = (session.user as any)?.role;
+
+        const orClauses: any[] = [];
+        if (userId) orClauses.push({ id: userId });
+        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
+
+        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
+            where: { OR: orClauses },
+            select: { id: true },
+        }) : null;
+
+        const activeUserId = dbUser?.id || userId;
+
         const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
             include: {
@@ -157,6 +184,14 @@ export async function POST(req: Request) {
 
         if (!booking) {
             return NextResponse.json({ message: "Rezervarea nu a fost găsită" }, { status: 404 });
+        }
+
+        const isOwner = booking.space.ownerId === activeUserId;
+        const isCustomer = booking.renterId === activeUserId;
+        const isAdmin = userRole === "ADMIN";
+
+        if (!isOwner && !isCustomer && !isAdmin) {
+            return NextResponse.json({ message: "Nu aveți permisiunea de a accesa această conversație" }, { status: 403 });
         }
 
         const conversation = await prisma.conversation.upsert({
