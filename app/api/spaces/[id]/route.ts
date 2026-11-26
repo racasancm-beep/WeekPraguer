@@ -193,3 +193,78 @@ export async function PUT(req: Request, context: { params: Promise<{ id: string 
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
     return handleUpdateSpace(req, context);
 }
+
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ message: "Unauthorized: Please log in" }, { status: 401 });
+        }
+
+        const existingSpace = await prisma.space.findUnique({
+            where: { id },
+            include: {
+                owner: { select: { id: true, email: true } },
+            },
+        });
+
+        if (!existingSpace) {
+            return NextResponse.json({ message: "Space not found" }, { status: 404 });
+        }
+
+        const sessionUserId = (session.user as any)?.id;
+        const sessionEmail = session.user?.email?.trim().toLowerCase();
+        const sessionRole = (session.user as any)?.role;
+
+        const isAdmin = sessionRole === "ADMIN";
+        const isOwnerOfSpace =
+            sessionRole === "OWNER" &&
+            Boolean(
+                (sessionUserId && existingSpace.ownerId === sessionUserId) ||
+                (sessionEmail && existingSpace.owner?.email?.trim().toLowerCase() === sessionEmail)
+            );
+
+        if (!isAdmin && !isOwnerOfSpace) {
+            return NextResponse.json(
+                { message: "Forbidden: You do not have permission to delete this space" },
+                { status: 403 }
+            );
+        }
+
+        // Cleanly delete all related records and the space in a transaction
+        await prisma.$transaction(async (tx) => {
+            // Delete reviews linked to space
+            await tx.review.deleteMany({ where: { spaceId: id } });
+
+            // Find all bookings for this space
+            const bookings = await tx.booking.findMany({ where: { spaceId: id }, select: { id: true } });
+            const bookingIds = bookings.map((b) => b.id);
+
+            if (bookingIds.length > 0) {
+                // Delete reviews linked to bookings
+                await tx.review.deleteMany({ where: { bookingId: { in: bookingIds } } });
+                // Delete transactions linked to bookings
+                await tx.transaction.deleteMany({ where: { bookingId: { in: bookingIds } } });
+                // Delete bookings
+                await tx.booking.deleteMany({ where: { id: { in: bookingIds } } });
+            }
+
+            // Delete space photos
+            await tx.spacePhoto.deleteMany({ where: { spaceId: id } });
+
+            // Delete the space
+            await tx.space.delete({ where: { id } });
+        });
+
+        return NextResponse.json({
+            message: "Space deleted successfully",
+            deletedId: id,
+            deletedBy: isAdmin ? "ADMIN" : "OWNER",
+        });
+    } catch (error) {
+        console.error("Delete space error:", error);
+        return NextResponse.json({ message: "Failed to delete space" }, { status: 500 });
+    }
+}

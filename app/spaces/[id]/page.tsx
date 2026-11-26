@@ -20,7 +20,9 @@ import {
     ArrowLeft,
     Pencil,
     Ban,
-    Trash2
+    Trash2,
+    Loader2,
+    AlertTriangle
 } from "lucide-react";
 import Link from "next/link";
 import { expandBookingDateKeys, formatOwnerBlockedPeriods, formatPrice } from "@/lib/utils";
@@ -28,6 +30,14 @@ import MapComponent from "@/components/ui/map-component";
 import { SpaceForm } from "@/components/owner/space-form";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { calculateSpaceCustomerPrice } from "@/lib/pricing";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
 
 interface SpaceDetailed {
     id: string;
@@ -115,6 +125,8 @@ export default function SpaceDetailsPage() {
     const { data: session, status } = useSession();
     const [space, setSpace] = useState<SpaceDetailed | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
     const [bookedDateKeys, setBookedDateKeys] = useState<string[]>([]);
     const [bookedDates, setBookedDates] = useState<Date[]>([]);
@@ -270,6 +282,32 @@ export default function SpaceDetailsPage() {
         );
     const canEditSpace = isOwnerOfThisSpace;
     const isOwnerProfile = isOwnerOfThisSpace;
+    const isAdmin = status === "authenticated" && sessionRole === "ADMIN";
+    const canDeleteSpace = isAdmin || isOwnerOfThisSpace;
+
+    const handleDeleteSpace = async () => {
+        if (!space?.id) return;
+        setIsDeleting(true);
+        try {
+            const res = await fetch(`/api/spaces/${space.id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (res.ok) {
+                toast.success(t("owner.listings.deletedSuccess") || "Spațiul a fost șters cu succes!");
+                setIsDeleteModalOpen(false);
+                if (isAdmin) {
+                    router.push("/admin/dashboard");
+                } else {
+                    router.push("/owner/dashboard/listings");
+                }
+            } else {
+                toast.error(data.message || "Eroare la ștergerea spațiului");
+            }
+        } catch (err) {
+            toast.error("Eroare la conexiunea cu serverul.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
 
     const handleOwnerBlockDates = async () => {
         if (!session) {
@@ -501,15 +539,27 @@ export default function SpaceDetailsPage() {
                         </div>
                     </div>
 
-                    {canEditSpace && (
-                        <Button
-                            onClick={() => setIsEditing((prev) => !prev)}
-                            className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-2xl px-6 h-11 shadow-md"
-                        >
-                            <Pencil className="w-4 h-4 mr-2" />
-                            {t("owner.listings.editSpace")}
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {canEditSpace && (
+                            <Button
+                                onClick={() => setIsEditing((prev) => !prev)}
+                                className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-2xl px-6 h-11 shadow-md"
+                            >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                {t("owner.listings.editSpace")}
+                            </Button>
+                        )}
+                        {canDeleteSpace && (
+                            <Button
+                                variant="outline"
+                                onClick={() => setIsDeleteModalOpen(true)}
+                                className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 font-bold rounded-2xl px-5 h-11 shadow-sm"
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                {t("owner.listings.deleteSpace") || "Șterge Spațiul"}
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Inline Full Space Editor when Owner clicks "Make Changes / Edit Space" */}
@@ -998,6 +1048,64 @@ export default function SpaceDetailsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Dialog for Space Deletion (Admin & Owner) */}
+            <Dialog open={isDeleteModalOpen} onOpenChange={(open) => !open && !isDeleting && setIsDeleteModalOpen(false)}>
+                <DialogContent className="sm:max-w-md bg-white rounded-2xl p-6">
+                    <DialogHeader className="space-y-2">
+                        <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-2">
+                            <AlertTriangle className="w-6 h-6" />
+                        </div>
+                        <DialogTitle className="text-lg font-black text-center text-gray-900">
+                            {t("owner.listings.deleteConfirmTitle") || "Confirmă Ștergerea Spațiului"}
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-center text-gray-500">
+                            {t("owner.listings.deleteConfirmDesc") ||
+                                "Ești sigur că vrei să ștergi acest spațiu de pe platformă? Această acțiune este ireversibilă."}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {space && (
+                        <div className="my-3 p-3 bg-red-50/70 border border-red-200 rounded-xl text-center space-y-1">
+                            <p className="text-sm font-bold text-red-950 truncate">{space.name}</p>
+                            <p className="text-xs text-red-700">{space.city} • {space.address}</p>
+                            {space.owner?.email && (
+                                <p className="text-[11px] font-mono text-red-600">
+                                    Proprietar: {space.owner.email}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="flex sm:justify-between gap-2 pt-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsDeleteModalOpen(false)}
+                            disabled={isDeleting}
+                            className="w-full sm:w-auto font-bold text-xs"
+                        >
+                            {t("common.cancel") || "Anulează"}
+                        </Button>
+                        <Button
+                            onClick={handleDeleteSpace}
+                            disabled={isDeleting}
+                            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-bold text-xs"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                    {t("owner.listings.deletingSpace") || "Se șterge..."}
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                    {t("owner.listings.deleteSpace") || "Șterge Spațiul"}
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

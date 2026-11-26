@@ -22,7 +22,8 @@ import {
     CheckCircle2,
     X,
     Clock,
-    AlertTriangle
+    AlertTriangle,
+    Trash2
 } from "lucide-react";
 import {
     BarChart,
@@ -557,15 +558,42 @@ export default function AdminDashboard() {
                                     </h4>
                                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                         {selectedProfile.ownedSpaces.map((sp) => (
-                                            <Link key={sp.id} href={`/spaces/${sp.id}`}>
-                                                <div className="p-3 rounded-xl bg-white border hover:border-[#008080] transition-colors flex justify-between items-center">
-                                                    <div>
-                                                        <p className="text-xs font-bold text-gray-900">{sp.name}</p>
-                                                        <p className="text-[10px] text-gray-500">{sp.city} • {sp.capacity} {t("explore.ppl")}</p>
-                                                    </div>
+                                            <div key={sp.id} className="p-3 rounded-xl bg-white border hover:border-[#008080] transition-colors flex justify-between items-center group">
+                                                <Link href={`/spaces/${sp.id}`} className="flex-1 min-w-0 pr-2">
+                                                    <p className="text-xs font-bold text-gray-900 truncate">{sp.name}</p>
+                                                    <p className="text-[10px] text-gray-500">{sp.city} • {sp.capacity} {t("explore.ppl")}</p>
+                                                </Link>
+                                                <div className="flex items-center gap-2 shrink-0">
                                                     <span className="text-xs font-black text-[#008080]">{sp.hourlyRate} RON/{t("explore.perHour")}</span>
+                                                    <button
+                                                        onClick={async (e) => {
+                                                            e.stopPropagation();
+                                                            if (!confirm(`Sigur doriți să ștergeți spațiul "${sp.name}"? Această acțiune este ireversibilă.`)) return;
+                                                            try {
+                                                                const res = await fetch(`/api/spaces/${sp.id}`, { method: "DELETE" });
+                                                                if (res.ok) {
+                                                                    toast.success("Spațiul a fost șters cu succes!");
+                                                                    setSelectedProfile((prev: any) => prev ? {
+                                                                        ...prev,
+                                                                        ownedSpaces: prev.ownedSpaces.filter((s: any) => s.id !== sp.id),
+                                                                        spacesCount: Math.max(0, (prev.spacesCount || 1) - 1),
+                                                                    } : null);
+                                                                    fetchAdminStats();
+                                                                } else {
+                                                                    const errData = await res.json();
+                                                                    toast.error(errData.message || "Eroare la ștergerea spațiului.");
+                                                                }
+                                                            } catch {
+                                                                toast.error("Eroare la comunicarea cu serverul.");
+                                                            }
+                                                        }}
+                                                        className="p-1 rounded text-red-400 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                                        title="Șterge Spațiu (Admin)"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                                                    </button>
                                                 </div>
-                                            </Link>
+                                            </div>
                                         ))}
                                     </div>
                                 </div>
