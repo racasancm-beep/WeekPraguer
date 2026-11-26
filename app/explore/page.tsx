@@ -2,6 +2,7 @@ import { SpaceFilters } from "@/components/explore/space-filters";
 import { SpaceGrid } from "@/components/explore/space-grid";
 import { ExploreHeader } from "@/components/explore/explore-header";
 import MapComponent from "@/components/ui/map-component";
+import { PublicChatWidget } from "@/components/support/public-chat-widget";
 import React from "react";
 
 export const dynamic = 'force-dynamic';
@@ -219,6 +220,9 @@ export default async function ExploreSpacesPage({
                     </div>
                 </div>
             </div>
+
+            {/* Public Support & Fraud Report Chat */}
+            <PublicChatWidget />
         </div>
     );
 }

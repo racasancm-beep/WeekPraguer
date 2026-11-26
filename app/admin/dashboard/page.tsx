@@ -23,7 +23,15 @@ import {
     X,
     Clock,
     AlertTriangle,
-    Trash2
+    Trash2,
+    MessageSquare,
+    HelpCircle,
+    ShieldAlert,
+    CreditCard,
+    Mail,
+    Send,
+    Loader2,
+    Check
 } from "lucide-react";
 import {
     BarChart,
@@ -40,6 +48,16 @@ import {
     CartesianGrid
 } from "recharts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
@@ -140,9 +158,81 @@ export default function AdminDashboard() {
     const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null);
     const { t } = useLanguage();
 
+    // Public inquiries & reports state (Visible ONLY to Admin)
+    const [inquiries, setInquiries] = useState<any[]>([]);
+    const [unseenInquiriesCount, setUnseenInquiriesCount] = useState<number>(0);
+    const [replyingInquiry, setReplyingInquiry] = useState<any | null>(null);
+    const [adminReplyText, setAdminReplyText] = useState("");
+    const [sendingReply, setSendingReply] = useState(false);
+
     useEffect(() => {
         fetchStats();
-    }, []);
+        if (isAdmin) {
+            fetchInquiries();
+        }
+    }, [isAdmin]);
+
+    const fetchInquiries = async () => {
+        try {
+            const res = await fetch("/api/support/public-inquiry");
+            if (res.ok) {
+                const d = await res.json();
+                setInquiries(d.inquiries || []);
+                setUnseenInquiriesCount(d.unseenCount || 0);
+            }
+        } catch (e) {
+            console.error("Failed to fetch public inquiries:", e);
+        }
+    };
+
+    const handleMarkAsSeen = async (id: string) => {
+        try {
+            const res = await fetch(`/api/support/public-inquiry/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ isSeen: true }),
+            });
+            if (res.ok) {
+                setInquiries((prev) =>
+                    prev.map((inq) => (inq.id === id ? { ...inq, isSeen: true, seenAt: new Date() } : inq))
+                );
+                setUnseenInquiriesCount((prev) => Math.max(0, prev - 1));
+            }
+        } catch (e) {
+            console.error("Error marking inquiry as seen:", e);
+        }
+    };
+
+    const handleSendReply = async () => {
+        if (!replyingInquiry || !adminReplyText.trim() || sendingReply) return;
+        setSendingReply(true);
+        try {
+            const res = await fetch(`/api/support/public-inquiry/${replyingInquiry.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ replyText: adminReplyText.trim(), isSeen: true }),
+            });
+            if (res.ok) {
+                toast.success("Răspunsul a fost trimis pe adresa de email a utilizatorului!");
+                setInquiries((prev) =>
+                    prev.map((inq) =>
+                        inq.id === replyingInquiry.id
+                            ? { ...inq, replyText: adminReplyText.trim(), repliedAt: new Date(), isSeen: true }
+                            : inq
+                    )
+                );
+                setReplyingInquiry(null);
+                setAdminReplyText("");
+                fetchInquiries();
+            } else {
+                toast.error("Eroare la trimiterea răspunsului.");
+            }
+        } catch {
+            toast.error("Eroare de conexiune.");
+        } finally {
+            setSendingReply(false);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -294,6 +384,169 @@ export default function AdminDashboard() {
                     </Link>
                 </div>
             </section>
+
+            {/* ADMIN ONLY: Public Inquiries & Fraud Reports Chat Box */}
+            {isAdmin && (
+                <Card className="border-2 border-teal-200 shadow-2xl p-6 bg-white dark:bg-gray-950">
+                    <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b">
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-100 text-teal-900 text-[11px] font-black uppercase tracking-wider mb-1.5 border border-teal-300">
+                                <MessageSquare className="w-3.5 h-3.5 text-teal-700" />
+                                <span>Mesaje Suport & Raportări Fraudă (Exclusiv Admin)</span>
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100">
+                                Căsuță Mesaje Vizitatori & Utilizatori
+                            </h2>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                Mesaje transmise din widget-ul public (max. 400 caractere). Răspunsul este trimis direct pe email.
+                            </p>
+                        </div>
+
+                        {/* Unseen count badge */}
+                        <div className="flex items-center gap-2">
+                            <div
+                                className={`px-4 py-2 rounded-2xl border text-right font-black ${
+                                    unseenInquiriesCount > 0
+                                        ? "bg-red-50 border-red-300 text-red-700 animate-pulse"
+                                        : "bg-emerald-50 border-emerald-200 text-emerald-800"
+                                }`}
+                            >
+                                <p className="text-[10px] uppercase tracking-wider">
+                                    {unseenInquiriesCount > 0 ? "Mesaje Necitite" : "Toate Văzute"}
+                                </p>
+                                <p className="text-xl">
+                                    {unseenInquiriesCount} <span className="text-xs font-bold">noi</span>
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={fetchInquiries}
+                                className="h-9 px-2 text-gray-500 hover:text-teal-700"
+                                title="Reîmprospătează"
+                            >
+                                <Activity className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+
+                    {inquiries.length === 0 ? (
+                        <div className="p-8 text-center text-gray-400 space-y-2">
+                            <MessageSquare className="w-10 h-10 mx-auto text-gray-300" />
+                            <p className="text-xs font-semibold">
+                                Nu există niciun mesaj de suport sau raportare trimis de vizitatori.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {inquiries.map((inq) => {
+                                const isFraud = inq.category === "FRAUD_REPORT";
+                                const isPayment = inq.category === "PAYMENT_ISSUES";
+                                return (
+                                    <div
+                                        key={inq.id}
+                                        className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                                            !inq.isSeen
+                                                ? isFraud
+                                                    ? "bg-red-50/70 border-red-300 shadow-md ring-2 ring-red-400/30"
+                                                    : "bg-teal-50/60 border-teal-300 shadow-md ring-2 ring-teal-400/20"
+                                                : "bg-white dark:bg-gray-900 border-gray-200"
+                                        }`}
+                                    >
+                                        <div className="space-y-2.5">
+                                            <div className="flex items-center justify-between gap-1">
+                                                <span
+                                                    className={`text-[9.5px] font-black uppercase px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                                                        isFraud
+                                                            ? "bg-red-100 text-red-800 border border-red-300"
+                                                            : isPayment
+                                                            ? "bg-amber-100 text-amber-800 border border-amber-300"
+                                                            : "bg-blue-100 text-blue-800 border border-blue-300"
+                                                    }`}
+                                                >
+                                                    {isFraud ? (
+                                                        <ShieldAlert className="w-3 h-3 text-red-600" />
+                                                    ) : isPayment ? (
+                                                        <CreditCard className="w-3 h-3 text-amber-600" />
+                                                    ) : (
+                                                        <HelpCircle className="w-3 h-3 text-blue-600" />
+                                                    )}
+                                                    {isFraud
+                                                        ? "c. Raportare Fraudă"
+                                                        : isPayment
+                                                        ? "b. Probleme Plăți"
+                                                        : "a. Cum funcționează"}
+                                                </span>
+
+                                                {!inq.isSeen && (
+                                                    <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-red-600 text-white animate-pulse">
+                                                        NOU
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="text-xs text-gray-900 dark:text-gray-100 font-medium leading-relaxed p-2.5 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-100 dark:border-gray-700 min-h-[70px]">
+                                                "{inq.message}"
+                                            </div>
+
+                                            <div className="space-y-1 text-[11px] text-gray-500">
+                                                <div className="flex items-center gap-1 font-mono text-gray-700 dark:text-gray-300">
+                                                    <Mail className="w-3 h-3 text-teal-600 shrink-0" />
+                                                    <span className="truncate font-bold">{inq.email}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between text-[10px] text-gray-400">
+                                                    <span>{new Date(inq.createdAt).toLocaleString("ro-RO")}</span>
+                                                    {inq.pageUrl && <span>Pagina: {inq.pageUrl}</span>}
+                                                </div>
+                                            </div>
+
+                                            {inq.replyText && (
+                                                <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-950">
+                                                    <p className="font-bold text-[9px] uppercase text-emerald-800">
+                                                        Răspuns trimis pe email:
+                                                    </p>
+                                                    <p className="italic">"{inq.replyText}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="pt-3 mt-3 border-t flex items-center justify-between gap-2">
+                                            {!inq.isSeen ? (
+                                                <Button
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    onClick={() => handleMarkAsSeen(inq.id)}
+                                                    className="h-7 text-[10px] font-bold text-gray-500 hover:text-gray-800"
+                                                >
+                                                    <Check className="w-3 h-3 mr-1" />
+                                                    Marchează văzut
+                                                </Button>
+                                            ) : (
+                                                <span className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                                                    <CheckCircle2 className="w-3 h-3" />
+                                                    Văzut
+                                                </span>
+                                            )}
+
+                                            <Button
+                                                size="sm"
+                                                onClick={() => {
+                                                    setReplyingInquiry(inq);
+                                                    setAdminReplyText("");
+                                                }}
+                                                className="h-7 text-[11px] font-bold bg-[#008080] hover:bg-[#006F6F] text-white"
+                                            >
+                                                <Send className="w-3 h-3 mr-1" />
+                                                Răspunde
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </Card>
+            )}
 
             {/* ADMIN-ONLY: Spaces Pending Approval for More Than 24 Hours Graph & Details */}
             {isAdmin && (
@@ -917,6 +1170,69 @@ export default function AdminDashboard() {
                     </Card>
                 </div>
             </div>
+
+            {/* Admin Reply to Public Inquiry Dialog */}
+            <Dialog open={Boolean(replyingInquiry)} onOpenChange={(open) => !open && !sendingReply && setReplyingInquiry(null)}>
+                <DialogContent className="sm:max-w-lg bg-white rounded-2xl p-6">
+                    <DialogHeader className="space-y-1">
+                        <DialogTitle className="text-lg font-black text-gray-900">
+                            Răspunde utilizatorului pe email
+                        </DialogTitle>
+                        <DialogDescription className="text-xs text-gray-500">
+                            Răspunsul va fi transmis direct pe adresa de email specificată de utilizator:{" "}
+                            <span className="font-mono font-bold text-teal-700">{replyingInquiry?.email}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {replyingInquiry && (
+                        <div className="my-2 p-3 bg-gray-50 rounded-xl border text-xs space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-gray-500">Mesaj inițial:</span>
+                            <p className="text-gray-800 italic">"{replyingInquiry.message}"</p>
+                        </div>
+                    )}
+
+                    <div className="my-3">
+                        <label className="text-xs font-bold text-gray-700 mb-1 block">
+                            Răspunsul tău (transmis pe email):
+                        </label>
+                        <Textarea
+                            value={adminReplyText}
+                            onChange={(e) => setAdminReplyText(e.target.value)}
+                            rows={4}
+                            placeholder="Bună ziua! Vă mulțumim pentru mesaj. În legătură cu sesizarea dumneavoastră..."
+                            className="text-xs"
+                        />
+                    </div>
+
+                    <DialogFooter className="flex sm:justify-between gap-2 pt-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setReplyingInquiry(null)}
+                            disabled={sendingReply}
+                            className="text-xs font-bold"
+                        >
+                            Anulează
+                        </Button>
+                        <Button
+                            onClick={handleSendReply}
+                            disabled={sendingReply || !adminReplyText.trim()}
+                            className="bg-[#008080] hover:bg-[#006F6F] text-white text-xs font-bold"
+                        >
+                            {sendingReply ? (
+                                <>
+                                    <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                    Se trimite răspunsul...
+                                </>
+                            ) : (
+                                <>
+                                    <Send className="w-3.5 h-3.5 mr-1.5" />
+                                    Trimite pe Email
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

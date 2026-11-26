@@ -312,5 +312,23 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
+model PublicInquiry {
+  id          String    @id @default(cuid())
+  category    String    // "HOW_IT_WORKS", "PAYMENT_ISSUES", "FRAUD_REPORT"
+  message     String    // max 400 chars
+  email       String
+  userName    String?
+  pageUrl     String?
+  isSeen      Boolean   @default(false)
+  seenAt      DateTime?
+  replyText   String?
+  repliedAt   DateTime?
+  repliedBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("public_inquiries")
+}
+
 
 

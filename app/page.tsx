@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { ListSpaceModal } from "@/components/owner/list-space-modal";
+import { PublicChatWidget } from "@/components/support/public-chat-widget";
 
 export default function HomePage() {
     const { t } = useLanguage();
@@ -473,6 +474,9 @@ export default function HomePage() {
                     <p>{t("footer.tagline")}</p>
                 </div>
             </footer>
+
+            {/* Public Support & Fraud Report Chat for Users/Visitors */}
+            <PublicChatWidget />
         </div>
     );
 }
