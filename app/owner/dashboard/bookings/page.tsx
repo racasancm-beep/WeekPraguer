@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
-import { Calendar, CalendarClock, Check, ChevronDown, ChevronUp, Mail, Phone, User, X } from "lucide-react";
+import Link from "next/link";
+import { Calendar, CalendarClock, Check, ChevronDown, ChevronUp, Mail, Phone, User, X, MessageSquare } from "lucide-react";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 
 function hasBookingProofOfPayment(booking: any): boolean {
@@ -486,6 +487,14 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     <span className={badgeClassName}>{statusBadgeText}</span>
+                    {isConfirmed && (
+                        <Link href={`/messages?bookingId=${booking.id}`}>
+                            <Button size="sm" variant="outline" className="h-8 text-xs font-bold text-teal-800 border-teal-200 hover:bg-teal-50 shadow-sm">
+                                <MessageSquare className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                                {t("chat.openChatBtn") || "Chat Client"}
+                            </Button>
+                        </Link>
+                    )}
                     {isConfirmed && (
                         <Button
                             variant="outline"

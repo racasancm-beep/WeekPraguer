@@ -18,6 +18,7 @@ import {
     ChevronDown,
     ChevronUp,
     Calendar,
+    MessageSquare,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -542,12 +543,20 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                             </div>
                         </div>
 
-                        {Boolean(booking.space?.accessCode || (booking.accessCode && booking.accessCode !== "OWNER_BLOCK")) && (
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-black text-emerald-900 shadow-sm">
-                                <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
-                                {t("renter.accessCodeLabel")} {booking.space?.accessCode || booking.accessCode}
-                            </div>
-                        )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {Boolean(booking.space?.accessCode || (booking.accessCode && booking.accessCode !== "OWNER_BLOCK")) && (
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-emerald-300 text-xs font-black text-emerald-900 shadow-sm">
+                                    <KeyRound className="w-3.5 h-3.5 text-emerald-600" />
+                                    {t("renter.accessCodeLabel")} {booking.space?.accessCode || booking.accessCode}
+                                </div>
+                            )}
+                            <Link href={`/messages?bookingId=${booking.id}`}>
+                                <Button size="sm" variant="outline" className="h-8 text-xs font-bold text-emerald-950 border-emerald-300 bg-white hover:bg-emerald-100 shadow-sm">
+                                    <MessageSquare className="w-3.5 h-3.5 mr-1.5 text-emerald-700" />
+                                    {t("chat.openChatBtn") || "Chat cu Proprietarul"}
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
                 )}
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut } from "lucide-react";
+import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LanguageSelector } from "@/components/ui/language-selector";
@@ -142,6 +142,14 @@ export function MainNav() {
                                 </Link>
                             </div>
                         </div>
+
+                        <Link
+                            href="/messages"
+                            className="flex items-center gap-1.5 text-sm font-bold text-gray-700 hover:text-[#008080] transition-colors"
+                        >
+                            <MessageSquare className="w-4 h-4 text-[#008080]" />
+                            <span>{t("nav.chat") || "Chat"}</span>
+                        </Link>
 
                         {isAdmin ? (
                             <Link

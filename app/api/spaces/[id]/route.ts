@@ -146,6 +146,14 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
                     body.accessCode !== undefined
                         ? (body.accessCode && String(body.accessCode).trim() ? String(body.accessCode).trim() : null)
                         : existingSpace.accessCode,
+                reminder24hTemplate:
+                    body.reminder24hTemplate !== undefined
+                        ? (body.reminder24hTemplate && String(body.reminder24hTemplate).trim() ? String(body.reminder24hTemplate).trim() : null)
+                        : existingSpace.reminder24hTemplate,
+                reminder12hTemplate:
+                    body.reminder12hTemplate !== undefined
+                        ? (body.reminder12hTemplate && String(body.reminder12hTemplate).trim() ? String(body.reminder12hTemplate).trim() : null)
+                        : existingSpace.reminder12hTemplate,
                 hourlyRate,
                 dailyRate,
                 weekendRate,

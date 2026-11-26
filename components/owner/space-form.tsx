@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { Loader2, MapPin, Plus, X, KeyRound, ShieldCheck } from "lucide-react";
+import { Loader2, MapPin, Plus, X, KeyRound, ShieldCheck, MessageSquare } from "lucide-react";
 import MapComponent from "@/components/ui/map-component";
 import { AMENITIES_OPTIONS } from "@/lib/constants/amenities";
 import { useLanguage } from "@/lib/i18n/language-context";
@@ -113,6 +113,8 @@ const formSchema = z.object({
     capacity: z.coerce.number().int().positive(),
     officeCount: z.coerce.number().int().optional(),
     accessCode: z.string().optional().default(""),
+    reminder24hTemplate: z.string().optional().default(""),
+    reminder12hTemplate: z.string().optional().default(""),
     hourlyRate: z.coerce.number().positive(),
     dailyRate: z.coerce.number().optional(),
     weekendRate: z.coerce.number().optional(),
@@ -190,6 +192,8 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
             capacity: initialData?.capacity ?? 10,
             officeCount: initialData?.officeCount ?? 1,
             accessCode: initialData?.accessCode || "",
+            reminder24hTemplate: initialData?.reminder24hTemplate || "",
+            reminder12hTemplate: initialData?.reminder12hTemplate || "",
             hourlyRate: initialData?.hourlyRate ?? 100,
             dailyRate: initialData?.dailyRate ?? 600,
             weekendRate: initialData?.weekendRate ?? 1100,
@@ -478,6 +482,52 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                     <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-1.5 font-medium">
                         {t("owner.form.accessCodeHint") || "Acest cod este vizibil clienților cu rezervare confirmată și poate fi actualizat oricând de proprietar."}
                     </p>
+                </div>
+            </div>
+
+            {/* Automated Customer Messages Configuration (24h before renting & 12h before check-in) */}
+            <div className="space-y-4 p-4 rounded-xl border border-violet-200 bg-violet-50/50 dark:bg-gray-800 dark:border-violet-900/60 shadow-sm">
+                <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-violet-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <MessageSquare className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                            {t("owner.form.remindersTitle") || "Mesaje Automate în Chat & Email pentru Clienți"}
+                        </h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t("owner.form.remindersDesc") || "Personalizează mesajele automate trimise clientului cu 24h și 12h înainte de start. Când se trimit, vei primi notificare direct în chat."}
+                        </p>
+                    </div>
+                </div>
+
+                <div className="space-y-3 pt-1">
+                    <div>
+                        <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1 block">
+                            {t("owner.form.reminder24hLabel") || "Mesaj automat cu 24 ore înainte de închiriere:"}
+                        </label>
+                        <Textarea
+                            {...form.register("reminder24hTemplate")}
+                            rows={3}
+                            placeholder="Bună ziua, {nume_client}! Vă reamintim că rezervarea dumneavoastră pentru {nume_spatiu} începe în 24 de ore ({ora_inceput}). Cod acces: {cod_acces}."
+                            className="text-xs bg-white dark:bg-gray-900"
+                        />
+                        <p className="text-[10px] text-gray-500 mt-1">
+                            Variabile: <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{nume_client}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{nume_spatiu}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{ora_inceput}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{data_inceput}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{adresa_spatiu}"}</code>, <code className="bg-gray-100 px-1 py-0.5 rounded text-violet-700 font-mono">{"{cod_acces}"}</code>
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-1 block">
+                            {t("owner.form.reminder12hLabel") || "Mesaj automat cu 12 ore înainte de check-in:"}
+                        </label>
+                        <Textarea
+                            {...form.register("reminder12hTemplate")}
+                            rows={3}
+                            placeholder="Bună ziua, {nume_client}! În 12 ore începe check-in-ul pentru spațiul {nume_spatiu}. Vă rugăm să pregătiți codul de acces ({cod_acces})."
+                            className="text-xs bg-white dark:bg-gray-900"
+                        />
+                    </div>
                 </div>
             </div>
 

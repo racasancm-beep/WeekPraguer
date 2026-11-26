@@ -42,6 +42,9 @@ model User {
   usedReferralCode     ReferralCode?    @relation("UsedReferralCode")
   referredUsers        Referral[]       @relation("ReferrerUser")
   referredBy           Referral?        @relation("RefereeUser")
+  ownerConversations    Conversation[]   @relation("ConversationOwner")
+  customerConversations Conversation[]   @relation("ConversationCustomer")
+  sentMessages          ChatMessage[]
 
   @@map("users")
 }
@@ -110,13 +113,16 @@ model Space {
   weekendRate   Float
   active        Boolean      @default(true)
   isClean       Boolean      @default(true)
-  selfCleaning  Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  bookings      Booking[]
-  reviews       Review[]
-  photos        SpacePhoto[]
-  owner         User         @relation("SpaceOwner", fields: [ownerId], references: [id])
+  selfCleaning          Boolean      @default(false)
+  reminder24hTemplate   String?
+  reminder12hTemplate   String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  bookings              Booking[]
+  reviews               Review[]
+  photos                SpacePhoto[]
+  conversations         Conversation[]
+  owner                 User         @relation("SpaceOwner", fields: [ownerId], references: [id])
 
   @@map("spaces")
 }
@@ -151,13 +157,16 @@ model Booking {
   termsAcceptedAt DateTime?
   termsAcceptedIp String?
   proposedStartTime DateTime?
-  proposedEndTime DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  renter          User          @relation("BookingRenter", fields: [renterId], references: [id])
-  space           Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
-  reviews         Review[]
-  transaction     Transaction?
+  proposedEndTime   DateTime?
+  reminder24hSentAt DateTime?
+  reminder12hSentAt DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  renter            User          @relation("BookingRenter", fields: [renterId], references: [id])
+  space             Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  reviews           Review[]
+  transaction       Transaction?
+  conversation      Conversation?
 
   @@map("bookings")
 }
@@ -264,5 +273,44 @@ enum ReferralStatus {
   PENDING
   CONFIRMED
 }
+
+model Conversation {
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  spaceId         String
+  ownerId         String
+  customerId      String
+  status          String        @default("ACTIVE")
+  lastMessageAt   DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  space           Space         @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  owner           User          @relation("ConversationOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  customer        User          @relation("ConversationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  messages        ChatMessage[]
+
+  @@map("conversations")
+}
+
+model ChatMessage {
+  id              String        @id @default(cuid())
+  conversationId  String
+  senderId        String?
+  senderRole      String        // "CUSTOMER", "OWNER", "SYSTEM"
+  content         String
+  isAutomated     Boolean       @default(false)
+  automatedType   String?       // "REMINDER_24H", "REMINDER_12H", "OWNER_NOTIFICATION"
+  readByCustomer  Boolean       @default(false)
+  readByOwner     Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+
+  conversation    Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User?         @relation(fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@map("chat_messages")
+}
+
 
 

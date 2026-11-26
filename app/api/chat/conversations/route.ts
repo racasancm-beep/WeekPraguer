@@ -1,0 +1,183 @@
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { checkAndSendBookingReminders, isChatActive } from "@/lib/chat-reminders";
+
+export async function GET(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ message: "Trebuie să fii autentificat pentru a accesa conversațiile." }, { status: 401 });
+        }
+
+        const userId = (session.user as any)?.id;
+        const userEmail = session.user?.email?.trim().toLowerCase();
+        const userRole = (session.user as any)?.role;
+
+        // Run background reminder checks
+        checkAndSendBookingReminders().catch((e) => console.error("Reminder check error:", e));
+
+        // Find user by id or email to resolve DB user
+        const dbUser = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    userId ? { id: userId } : {},
+                    userEmail ? { email: { equals: userEmail, mode: "insensitive" } } : {},
+                ],
+            },
+            select: { id: true },
+        });
+
+        const activeUserId = dbUser?.id || userId;
+
+        // Auto-create conversations for any confirmed bookings that don't have one yet
+        const pendingBookings = await prisma.booking.findMany({
+            where: {
+                status: { in: ["CONFIRMED", "COMPLETED"] },
+                accessCode: { not: "OWNER_BLOCK" },
+                conversation: null,
+                OR: [
+                    { renterId: activeUserId },
+                    { space: { ownerId: activeUserId } },
+                ],
+            },
+            include: {
+                space: { select: { ownerId: true } },
+            },
+        });
+
+        for (const b of pendingBookings) {
+            await prisma.conversation.upsert({
+                where: { bookingId: b.id },
+                create: {
+                    bookingId: b.id,
+                    spaceId: b.spaceId,
+                    ownerId: b.space.ownerId,
+                    customerId: b.renterId,
+                    status: "ACTIVE",
+                },
+                update: {},
+            });
+        }
+
+        const conversations = await prisma.conversation.findMany({
+            where: userRole === "ADMIN" ? {} : {
+                OR: [
+                    { ownerId: activeUserId },
+                    { customerId: activeUserId },
+                ],
+            },
+            include: {
+                space: {
+                    select: {
+                        id: true,
+                        name: true,
+                        address: true,
+                        city: true,
+                        accessCode: true,
+                        photos: { take: 1, select: { url: true } },
+                    },
+                },
+                booking: {
+                    select: {
+                        id: true,
+                        startTime: true,
+                        endTime: true,
+                        status: true,
+                        totalPrice: true,
+                        accessCode: true,
+                    },
+                },
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                customer: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                    },
+                },
+                messages: {
+                    orderBy: { createdAt: "desc" },
+                    take: 1,
+                },
+            },
+            orderBy: { lastMessageAt: "desc" },
+        });
+
+        const mapped = conversations.map((conv) => {
+            const activeStatus = isChatActive(conv.booking.endTime);
+            const isUserOwner = conv.ownerId === activeUserId;
+            const otherParty = isUserOwner ? conv.customer : conv.owner;
+
+            return {
+                id: conv.id,
+                bookingId: conv.bookingId,
+                space: conv.space,
+                booking: conv.booking,
+                otherParty,
+                isUserOwner,
+                lastMessage: conv.messages[0] || null,
+                activeStatus,
+                status: activeStatus.isExpired ? "CLOSED" : conv.status,
+            };
+        });
+
+        return NextResponse.json({ conversations: mapped });
+    } catch (err: any) {
+        console.error("GET conversations error:", err);
+        return NextResponse.json({ message: "Failed to fetch conversations" }, { status: 500 });
+    }
+}
+
+export async function POST(req: Request) {
+    try {
+        const session = await getServerSession(authOptions);
+        if (!session || !session.user) {
+            return NextResponse.json({ message: "Trebuie să fii autentificat." }, { status: 401 });
+        }
+
+        const { bookingId } = await req.json();
+        if (!bookingId) {
+            return NextResponse.json({ message: "bookingId este obligatoriu" }, { status: 400 });
+        }
+
+        const booking = await prisma.booking.findUnique({
+            where: { id: bookingId },
+            include: {
+                space: { select: { id: true, ownerId: true } },
+            },
+        });
+
+        if (!booking) {
+            return NextResponse.json({ message: "Rezervarea nu a fost găsită" }, { status: 404 });
+        }
+
+        const conversation = await prisma.conversation.upsert({
+            where: { bookingId },
+            create: {
+                bookingId,
+                spaceId: booking.spaceId,
+                ownerId: booking.space.ownerId,
+                customerId: booking.renterId,
+                status: "ACTIVE",
+            },
+            update: {},
+            include: {
+                space: true,
+                booking: true,
+            },
+        });
+
+        return NextResponse.json({ conversation });
+    } catch (err: any) {
+        console.error("POST conversation error:", err);
+        return NextResponse.json({ message: "Failed to create conversation" }, { status: 500 });
+    }
+}
