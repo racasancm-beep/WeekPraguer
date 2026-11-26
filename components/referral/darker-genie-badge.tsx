@@ -41,12 +41,12 @@ export function DarkerGenieBadge({
 
     return (
         <div
-            className={`relative inline-flex items-center justify-center shrink-0 select-none group/badge ${dimension} ${className}`}
+            className={`relative inline-flex items-center justify-center shrink-0 select-none rounded-xl bg-gradient-to-br from-teal-50/80 to-teal-100/40 dark:from-gray-800 dark:to-gray-900 border border-teal-200/60 dark:border-teal-700/60 p-0.5 group/badge ${dimension} ${className}`}
             title={showTooltip ? levelDescriptions[safeLevel] : undefined}
         >
             {/* Ambient Aura */}
             <div
-                className="absolute inset-0 rounded-full blur-md transition-all duration-300 pointer-events-none"
+                className="absolute inset-0 rounded-xl blur-md transition-all duration-300 pointer-events-none"
                 style={{
                     background: isGoldLevel
                         ? "radial-gradient(circle, rgba(218,165,32,0.6) 0%, transparent 70%)"
@@ -61,8 +61,8 @@ export function DarkerGenieBadge({
                 alt="Genie"
                 className="relative w-full h-full object-contain pointer-events-none transition-all duration-300"
                 style={{
-                    opacity: Math.max(0.12, 1 - levelFraction * 0.88),
-                    filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))",
+                    opacity: Math.max(0.2, 1 - levelFraction * 0.8),
+                    filter: "drop-shadow(0 2px 4px rgba(0,128,128,0.25))",
                 }}
             />
 

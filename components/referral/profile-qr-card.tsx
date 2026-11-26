@@ -108,8 +108,8 @@ export function ProfileQrCard({ role }: { role: "OWNER" | "CUSTOMER" }) {
             <div className="p-2.5 m-2 rounded-2xl bg-gradient-to-br from-teal-50/90 via-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-2 border-teal-200/80 dark:border-teal-900/50 shadow-sm">
                 {/* Header with Darker Genie preview */}
                 <div className="flex items-center justify-between gap-1.5 mb-1.5 pb-1.5 border-b border-teal-100 dark:border-gray-700">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                        <DarkerGenieBadge level={level} size="sm" />
+                    <div className="flex items-center gap-2 min-w-0">
+                        <DarkerGenieBadge level={level} size="md" />
                         <div className="min-w-0">
                             <div className="text-[10px] font-black text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
                                 <span>Genie Nivel {level}</span>

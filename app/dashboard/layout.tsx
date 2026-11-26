@@ -26,8 +26,10 @@ export default function RenterLayout({
     useEffect(() => {
         if (status === "unauthenticated") {
             router.push("/login");
+        } else if (status === "authenticated" && (session?.user as any)?.role === "OWNER") {
+            router.push("/owner/dashboard/earnings");
         }
-    }, [status, router]);
+    }, [status, session, router]);
 
     if (status === "loading") {
         return <div className="min-h-screen flex items-center justify-center">{t("common.loading")}</div>;
@@ -108,7 +110,7 @@ export default function RenterLayout({
             </div>
 
             {/* Bottom-Left Corner: Unique Referral QR Code with Darker Genie */}
-            <div className="mt-2 border-t border-gray-200 dark:border-gray-800">
+            <div className="mt-auto border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky bottom-0">
                 <ProfileQrCard role="CUSTOMER" />
             </div>
         </div>

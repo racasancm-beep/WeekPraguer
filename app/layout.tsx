@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { MainNav } from "@/components/layout/main-nav";
 import { FloatingHomeButton } from "@/components/ui/floating-home-button";
+import { BottomLeftProfileGenie } from "@/components/referral/bottom-left-profile-genie";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -28,6 +29,7 @@ export default function RootLayout({
                     <MainNav />
                     {children}
                     <FloatingHomeButton />
+                    <BottomLeftProfileGenie />
                 </Providers>
             </body>
         </html>

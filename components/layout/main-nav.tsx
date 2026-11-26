@@ -52,32 +52,38 @@ export function MainNav() {
                     <div className="flex items-center gap-3 sm:gap-5 min-w-0">
                         {status === "authenticated" && session?.user && (
                             <div className="flex items-center gap-2.5 sm:gap-3 bg-gray-50/90 border border-gray-200/90 rounded-2xl px-2.5 sm:px-3.5 py-1.5 shadow-sm">
-                                <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-sm shrink-0">
-                                    {userInitial}
-                                </div>
-                                <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        <span className="text-sm font-bold text-gray-900 truncate max-w-[110px] sm:max-w-[150px]">
-                                            {userName}
-                                        </span>
-                                        <span
-                                            className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                                                isAdmin
-                                                    ? "bg-amber-100 text-amber-800 border-amber-300"
-                                                    : isOwner
-                                                    ? "bg-violet-100 text-violet-700 border-violet-200"
-                                                    : "bg-[#E6F4F4] text-[#008080] border-[#008080]/20"
-                                            }`}
-                                        >
-                                            {userRoleLabel}
-                                        </span>
+                                <Link
+                                    href={isOwner ? "/owner/dashboard/earnings" : isAdmin ? "/admin/dashboard" : "/dashboard"}
+                                    className="flex items-center gap-2.5 sm:gap-3 hover:opacity-85 transition-opacity min-w-0 cursor-pointer"
+                                    title={isOwner ? "Deschide Panou Proprietar" : "Panou Control"}
+                                >
+                                    <div className="h-9 w-9 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-sm shrink-0">
+                                        {userInitial}
                                     </div>
-                                    {userEmail && (
-                                        <p className="text-[11px] text-gray-500 truncate max-w-[130px] sm:max-w-[180px]">
-                                            {userEmail}
-                                        </p>
-                                    )}
-                                </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                            <span className="text-sm font-bold text-gray-900 truncate max-w-[110px] sm:max-w-[150px]">
+                                                {userName}
+                                            </span>
+                                            <span
+                                                className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                                                    isAdmin
+                                                        ? "bg-amber-100 text-amber-800 border-amber-300"
+                                                        : isOwner
+                                                        ? "bg-violet-100 text-violet-700 border-violet-200"
+                                                        : "bg-[#E6F4F4] text-[#008080] border-[#008080]/20"
+                                                }`}
+                                            >
+                                                {userRoleLabel}
+                                            </span>
+                                        </div>
+                                        {userEmail && (
+                                            <p className="text-[11px] text-gray-500 truncate max-w-[130px] sm:max-w-[180px]">
+                                                {userEmail}
+                                            </p>
+                                        )}
+                                    </div>
+                                </Link>
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -101,12 +107,21 @@ export function MainNav() {
                     </div>
 
                     <div className="hidden lg:flex items-center gap-6">
-                        <Link href="/explore" className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
+                        <Link
+                            href="/explore"
+                            className={`text-sm tracking-wide transition-all ${
+                                isOwner
+                                    ? "opacity-35 hover:opacity-100 font-medium text-gray-400 hover:text-gray-700"
+                                    : "font-bold text-gray-600 hover:text-[#008080]"
+                            }`}
+                        >
                             {t("nav.explore")}
                         </Link>
                         
-                        <div className="relative group">
-                            <div className="flex items-center gap-1 text-sm font-bold text-gray-600 group-hover:text-[#008080] transition-colors tracking-wide outline-none cursor-pointer py-4">
+                        <div className={`relative group ${isOwner ? "opacity-35 hover:opacity-100 transition-opacity" : ""}`}>
+                            <div className={`flex items-center gap-1 text-sm tracking-wide outline-none cursor-pointer py-4 ${
+                                isOwner ? "font-medium text-gray-400 hover:text-gray-700" : "font-bold text-gray-600 group-hover:text-[#008080]"
+                            }`}>
                                 {t("nav.services")} <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
                             </div>
                             <div className="absolute top-full left-0 w-56 p-2 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -126,8 +141,10 @@ export function MainNav() {
                             </div>
                         </div>
 
-                        <div className="relative group">
-                            <div className="flex items-center gap-1 text-sm font-bold text-gray-600 group-hover:text-[#008080] transition-colors tracking-wide outline-none cursor-pointer py-4">
+                        <div className={`relative group ${isOwner ? "opacity-35 hover:opacity-100 transition-opacity" : ""}`}>
+                            <div className={`flex items-center gap-1 text-sm tracking-wide outline-none cursor-pointer py-4 ${
+                                isOwner ? "font-medium text-gray-400 hover:text-gray-700" : "font-bold text-gray-600 group-hover:text-[#008080]"
+                            }`}>
                                 {t("nav.renting")} <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
                             </div>
                             <div className="absolute top-full left-0 w-56 p-2 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
@@ -145,7 +162,11 @@ export function MainNav() {
 
                         <Link
                             href="/messages"
-                            className="flex items-center gap-1.5 text-sm font-bold text-gray-700 hover:text-[#008080] transition-colors"
+                            className={`flex items-center gap-1.5 text-sm transition-all ${
+                                isOwner
+                                    ? "font-black text-[#008080] bg-teal-50 hover:bg-teal-100 border-2 border-[#008080]/30 px-3.5 py-2 rounded-xl shadow-sm hover:scale-105"
+                                    : "font-bold text-gray-700 hover:text-[#008080]"
+                            }`}
                         >
                             <MessageSquare className="w-4 h-4 text-[#008080]" />
                             <span>{t("nav.chat") || "Chat"}</span>
@@ -159,15 +180,27 @@ export function MainNav() {
                                 <ShieldCheck className="w-4 h-4 text-amber-700" />
                                 {t("nav.adminHub")}
                             </Link>
+                        ) : isOwner ? (
+                            <Link
+                                href="/owner/dashboard/earnings"
+                                className="flex items-center gap-1.5 text-sm font-black text-white bg-[#008080] hover:bg-[#006F6F] px-4 py-2 rounded-xl shadow-md shadow-[#008080]/30 border border-[#006F6F] hover:scale-105 transition-all"
+                            >
+                                <LayoutDashboard className="w-4 h-4 text-white" />
+                                <span>{t("nav.dashboard")}</span>
+                            </Link>
                         ) : session ? (
                             <Link
-                                href="/portal"
+                                href="/dashboard"
                                 className="flex items-center gap-1.5 text-sm font-bold text-[#008080] hover:text-[#006F6F] transition-colors"
                             >
                                 <LayoutDashboard className="w-4 h-4" />
                                 {t("nav.dashboard")}
                             </Link>
                         ) : (
+                            <Link href={loginNavHref} className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
+                                {t("nav.login")}
+                            </Link>
+                        )}
                             <Link href={loginNavHref} className="text-sm font-bold text-gray-600 hover:text-[#008080] transition-colors tracking-wide">
                                 {t("nav.login")}
                             </Link>
