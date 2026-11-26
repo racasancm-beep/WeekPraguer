@@ -831,7 +831,7 @@ export default function AdminDashboard() {
                                                                         ownedSpaces: prev.ownedSpaces.filter((s: any) => s.id !== sp.id),
                                                                         spacesCount: Math.max(0, (prev.spacesCount || 1) - 1),
                                                                     } : null);
-                                                                    fetchAdminStats();
+                                                                    fetchStats();
                                                                 } else {
                                                                     const errData = await res.json();
                                                                     toast.error(errData.message || "Eroare la ștergerea spațiului.");

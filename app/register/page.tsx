@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
-import { Calendar, Lock, User, Briefcase, Eye, EyeOff, QrCode, Upload, CheckCircle2, XCircle, Image as ImageIcon } from "lucide-react";
+import { Calendar, Lock, User, Briefcase, Eye, EyeOff, QrCode, Upload, CheckCircle2, XCircle, Image as ImageIcon, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
