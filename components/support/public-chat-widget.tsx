@@ -113,10 +113,16 @@ export function PublicChatWidget() {
         setIsSubmitted(false);
     };
 
+    // When the Back to Home floating button is visible (on any page except "/"),
+    // the Support/Report widget sits cleanly ABOVE it (bottom-24 / 96px from bottom),
+    // ensuring they never overlap each other.
+    const hasHomeButton = pathname !== "/";
+    const bottomPositionClass = hasHomeButton ? "bottom-24" : "bottom-6";
+
     return (
         <aside aria-label="Support & Inquiries Widget">
             {/* Floating Trigger Button */}
-            <div className="fixed bottom-6 right-6 z-50">
+            <div className={`fixed right-6 z-40 transition-all duration-300 ${bottomPositionClass}`}>
                 {!isOpen && (
                     <button
                         onClick={() => setIsOpen(true)}
@@ -133,7 +139,7 @@ export function PublicChatWidget() {
 
             {/* Chat Box Modal / Drawer */}
             {isOpen && (
-                <div className="fixed bottom-6 right-6 z-50 w-[92vw] max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border-2 border-teal-200 dark:border-teal-900/60 overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-5 duration-300">
+                <div className={`fixed right-6 z-50 w-[92vw] max-w-md bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border-2 border-teal-200 dark:border-teal-900/60 overflow-hidden flex flex-col max-h-[82vh] animate-in slide-in-from-bottom-5 duration-300 ${bottomPositionClass}`}>
                     {/* Header */}
                     <div className="p-4 bg-gradient-to-r from-teal-700 to-[#008080] text-white flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-2 min-w-0">
