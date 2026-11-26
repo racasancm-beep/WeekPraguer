@@ -841,6 +841,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.quickHours": "Preseturi rapide",
         "service.noServicesYet": "Nu ai adăugat încă niciun serviciu.",
         "service.noRequestsYet": "Nu există cereri de rezervare pentru servicii încă.",
+        "service.manageServicesSubtitle": "Gestionează serviciile adăugate și disponibilitatea acestora.",
+        "service.addNewServiceBtn": "+ Adaugă Serviciu Nou",
+        "service.editService": "Editează Serviciul",
+        "service.unitSingular": "serviciu",
+        "service.unitPlural": "servicii",
 
 
     },
@@ -1665,6 +1670,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.quickHours": "Quick presets",
         "service.noServicesYet": "You haven't added any services yet.",
         "service.noRequestsYet": "No service booking requests yet.",
+        "service.manageServicesSubtitle": "Manage your listed services and availability.",
+        "service.addNewServiceBtn": "+ Add New Service",
+        "service.editService": "Edit Service",
+        "service.unitSingular": "service",
+        "service.unitPlural": "services",
 
 
     },
@@ -2489,6 +2499,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.quickHours": "Gyors beállítások",
         "service.noServicesYet": "Még nem adtál hozzá szolgáltatást.",
         "service.noRequestsYet": "Még nincsenek szolgáltatás foglalási kérések.",
+        "service.manageServicesSubtitle": "Kezeld a meghirdetett szolgáltatásaidat és azok elérhetőségét.",
+        "service.addNewServiceBtn": "+ Új Szolgáltatás Hozzáadása",
+        "service.editService": "Szolgáltatás szerkesztése",
+        "service.unitSingular": "szolgáltatás",
+        "service.unitPlural": "szolgáltatás",
 
 
     },
@@ -3313,6 +3328,11 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "service.quickHours": "Schnellauswahl",
         "service.noServicesYet": "Sie haben noch keine Dienste hinzugefügt.",
         "service.noRequestsYet": "Noch keine Buchungsanfragen vorhanden.",
+        "service.manageServicesSubtitle": "Verwalten Sie Ihre angebotenen Dienste und deren Verfügbarkeit.",
+        "service.addNewServiceBtn": "+ Neuen Service Hinzufügen",
+        "service.editService": "Dienstleistung bearbeiten",
+        "service.unitSingular": "Dienstleistung",
+        "service.unitPlural": "Dienstleistungen",
 
 
     },
