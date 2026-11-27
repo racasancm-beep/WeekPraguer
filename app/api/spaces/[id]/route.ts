@@ -90,8 +90,23 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
 
         const body = await req.json();
 
+        const isService = body.isService !== undefined ? Boolean(body.isService) : Boolean(existingSpace.isService);
+
+        const hasFlex = isService ? false : (body.hasFlexiblePolicy !== undefined ? Boolean(body.hasFlexiblePolicy) : existingSpace.hasFlexiblePolicy);
+        const priceFlex = hasFlex ? (body.priceFlexible !== undefined && Number(body.priceFlexible) > 0 ? Number(body.priceFlexible) : existingSpace.priceFlexible || Number(body.hourlyRate) || existingSpace.hourlyRate) : null;
+
+        const hasMod = isService ? false : (body.hasModeratePolicy !== undefined ? Boolean(body.hasModeratePolicy) : existingSpace.hasModeratePolicy);
+        const priceMod = hasMod ? (body.priceModerate !== undefined && Number(body.priceModerate) > 0 ? Number(body.priceModerate) : existingSpace.priceModerate) : null;
+
+        const hasNonRef = isService ? false : (body.hasNonRefundablePolicy !== undefined ? Boolean(body.hasNonRefundablePolicy) : existingSpace.hasNonRefundablePolicy);
+        const priceNonRef = hasNonRef ? (body.priceNonRefundable !== undefined && Number(body.priceNonRefundable) > 0 ? Number(body.priceNonRefundable) : existingSpace.priceNonRefundable) : null;
+
+        const activePolicyPrices = [priceFlex, priceMod, priceNonRef].filter((p): p is number => typeof p === "number" && p > 0);
+
         const hourlyRate =
-            body.hourlyRate !== undefined ? Number(body.hourlyRate) : existingSpace.hourlyRate;
+            body.hourlyRate !== undefined
+                ? Number(body.hourlyRate)
+                : (!isService && activePolicyPrices.length > 0 ? Math.min(...activePolicyPrices) : existingSpace.hourlyRate);
         const dailyRate =
             body.dailyRate !== undefined && Number(body.dailyRate) > 0
                 ? Number(body.dailyRate)
@@ -157,6 +172,12 @@ async function handleUpdateSpace(req: Request, { params }: { params: Promise<{ i
                 hourlyRate,
                 dailyRate,
                 weekendRate,
+                hasFlexiblePolicy: hasFlex,
+                priceFlexible: priceFlex,
+                hasModeratePolicy: hasMod,
+                priceModerate: priceMod,
+                hasNonRefundablePolicy: hasNonRef,
+                priceNonRefundable: priceNonRef,
                 hasWifi: body.hasWifi !== undefined ? Boolean(body.hasWifi) : existingSpace.hasWifi,
                 hasProjector:
                     body.hasProjector !== undefined ? Boolean(body.hasProjector) : existingSpace.hasProjector,

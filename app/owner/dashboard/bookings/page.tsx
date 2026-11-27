@@ -442,7 +442,25 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
                             <span>{formatReservationPeriod(booking)}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
+                        {!isService && booking.cancellationPolicy && (
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                                booking.cancellationPolicy === "NON_REFUNDABLE"
+                                    ? "bg-rose-50 text-rose-700 border-rose-200"
+                                    : booking.cancellationPolicy === "MODERATE"
+                                    ? "bg-amber-50 text-amber-700 border-amber-200"
+                                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            }`}>
+                                <span>{booking.cancellationPolicy === "NON_REFUNDABLE" ? "🔴" : booking.cancellationPolicy === "MODERATE" ? "🟡" : "🟢"}</span>
+                                <span>
+                                    {booking.cancellationPolicy === "NON_REFUNDABLE"
+                                        ? (t("policy.nonRefundable.title") || "Nerambursabil")
+                                        : booking.cancellationPolicy === "MODERATE"
+                                        ? (t("policy.moderate.title") || "Moderat")
+                                        : (t("policy.flexible.title") || "Flexibil")}
+                                </span>
+                            </span>
+                        )}
                         <span className={badgeClassName}>{statusBadgeText}</span>
                         <div className="p-1.5 rounded-full bg-gray-100 group-hover:bg-[#008080] group-hover:text-white text-gray-500 transition-colors">
                             <ChevronDown className="w-4 h-4" />

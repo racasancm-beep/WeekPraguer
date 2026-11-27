@@ -187,10 +187,27 @@ export async function POST(req: Request) {
                 }
 
                 const isService = Boolean(space.isService);
+                const chosenPolicy = body.pricingOption || "FLEXIBLE";
+                let effectiveHourlyRate = space.hourlyRate;
+                let effectiveDailyRate = space.dailyRate;
+
+                if (!isService) {
+                    if (chosenPolicy === "NON_REFUNDABLE" && Number((space as any).priceNonRefundable) > 0) {
+                        effectiveHourlyRate = Number((space as any).priceNonRefundable);
+                        effectiveDailyRate = Math.round(effectiveHourlyRate * 8);
+                    } else if (chosenPolicy === "MODERATE" && Number((space as any).priceModerate) > 0) {
+                        effectiveHourlyRate = Number((space as any).priceModerate);
+                        effectiveDailyRate = Math.round(effectiveHourlyRate * 8);
+                    } else if (chosenPolicy === "FLEXIBLE" && Number((space as any).priceFlexible) > 0) {
+                        effectiveHourlyRate = Number((space as any).priceFlexible);
+                        effectiveDailyRate = Math.round(effectiveHourlyRate * 8);
+                    }
+                }
+
                 const pricing = calculatePricing(
                     slot.isFullDay
-                        ? space.dailyRate
-                        : ((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * space.hourlyRate,
+                        ? effectiveDailyRate
+                        : ((end.getTime() - start.getTime()) / (1000 * 60 * 60)) * effectiveHourlyRate,
                     Boolean((space as any).selfCleaning),
                     isService
                 );
@@ -210,6 +227,8 @@ export async function POST(req: Request) {
                         ownerEarnings: pricing.ownerPayout,
                         adminEarnings: pricing.commission,
                         status: "PENDING",
+                        cancellationPolicy: isService ? null : chosenPolicy,
+                        pricingOption: isService ? null : chosenPolicy,
                         termsAcceptedAt: new Date(),
                         termsAcceptedIp: ip,
                     },

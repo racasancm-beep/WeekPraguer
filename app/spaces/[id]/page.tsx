@@ -39,6 +39,11 @@ import {
     DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
+import {
+    getSpaceAvailablePolicies,
+    PricingPolicyType,
+    PRICING_POLICIES,
+} from "@/lib/constants/pricing-policies";
 
 interface SpaceDetailed {
     id: string;
@@ -66,6 +71,12 @@ interface SpaceDetailed {
     hourlyRate: number;
     dailyRate: number;
     weekendRate: number;
+    hasFlexiblePolicy?: boolean;
+    priceFlexible?: number | null;
+    hasModeratePolicy?: boolean;
+    priceModerate?: number | null;
+    hasNonRefundablePolicy?: boolean;
+    priceNonRefundable?: number | null;
     hasWifi: boolean;
     hasAC: boolean;
     hasKitchen: boolean;
@@ -143,6 +154,11 @@ export default function SpaceDetailsPage() {
     const [bookingLoading, setBookingLoading] = useState(false);
     const [unblockingId, setUnblockingId] = useState<string | null>(null);
 
+    // 3 Pricing Options & Cancellation Policies
+    const [selectedPolicy, setSelectedPolicy] = useState<PricingPolicyType>("FLEXIBLE");
+    const [policyModalOpen, setPolicyModalOpen] = useState(false);
+    const [inspectPolicyId, setInspectPolicyId] = useState<PricingPolicyType>("FLEXIBLE");
+
     useEffect(() => {
         if (id) {
             fetchSpace();
@@ -202,6 +218,10 @@ export default function SpaceDetailsPage() {
             if (!res.ok) throw new Error("Space not found");
             const data = await res.json();
             setSpace(data);
+            const avail = getSpaceAvailablePolicies(data);
+            if (avail.length > 0) {
+                setSelectedPolicy((prev) => (avail.some((p) => p.id === prev) ? prev : avail[0].id));
+            }
 
             let combinedBookings: any[] = Array.isArray(data.bookings) ? data.bookings : [];
 
@@ -252,17 +272,21 @@ export default function SpaceDetailsPage() {
         }));
     };
 
+    const availablePolicies = space && !space.isService ? getSpaceAvailablePolicies(space) : [];
+    const activePolicyObj = availablePolicies.find((p) => p.id === selectedPolicy) || availablePolicies[0];
+    const activeHourlyRate = activePolicyObj ? activePolicyObj.hourlyRate : (space?.hourlyRate || 100);
+
     const calculateOwnerBasePrice = () => {
         if (!space) return 0;
         let total = 0;
         Object.values(slots).forEach((slot) => {
             if (slot.isFullDay) {
-                total += space.dailyRate;
+                total += Math.round(activeHourlyRate * 8);
             } else {
                 const startHour = parseInt(slot.startTime.split(":")[0], 10);
                 const endHour = parseInt(slot.endTime.split(":")[0], 10);
                 const hours = Math.max(1, endHour - startHour);
-                total += hours * space.hourlyRate;
+                total += hours * activeHourlyRate;
             }
         });
         return Math.round(total * 100) / 100;
@@ -420,6 +444,7 @@ export default function SpaceDetailsPage() {
                     isOwnerBlock: false,
                     startTime: firstDate,
                     endTime: lastDate,
+                    pricingOption: space?.isService ? undefined : selectedPolicy,
                     totalPrice: calculateTotalPrice(),
                     slots: Object.values(slots).map((s) => ({
                         ...s,
@@ -828,16 +853,99 @@ export default function SpaceDetailsPage() {
                             <div>
                                 <div className="flex justify-between items-baseline mb-1">
                                     <span className="text-3xl font-black text-gray-900">
-                                        {formatPrice(calculateSpaceCustomerPrice(space.hourlyRate))}
+                                        {formatPrice(calculateSpaceCustomerPrice(activeHourlyRate, Boolean(space.isService)))}
                                     </span>
                                     <span className="text-sm text-gray-500 font-medium">{t("space.perHour")}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">
                                     {t("space.or")}{" "}
-                                    <span className="font-bold text-gray-700">{formatPrice(calculateSpaceCustomerPrice(space.dailyRate))}</span>{" "}
+                                    <span className="font-bold text-gray-700">
+                                        {formatPrice(calculateSpaceCustomerPrice(Math.round(activeHourlyRate * 8), Boolean(space.isService)))}
+                                    </span>{" "}
                                     {t("space.perFullDay")}
                                 </p>
                             </div>
+
+                            {/* 3 Pricing Options & Cancellation Policies (Spaces only - Customer can choose one option) */}
+                            {!space.isService && !isOwnerProfile && availablePolicies.length > 0 && (
+                                <div className="space-y-2.5 p-3.5 rounded-2xl bg-gray-50/80 border border-gray-200">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[11px] font-black uppercase tracking-wider text-gray-700">
+                                            {t("policy.customer.choosePolicy") || "Alege opțiunea de preț & politică"}
+                                        </label>
+                                        <span className="text-[10px] font-bold text-gray-400">
+                                            {availablePolicies.length} {availablePolicies.length === 1 ? "opțiune" : "opțiuni"}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {availablePolicies.map((pol) => {
+                                            const isSelected = selectedPolicy === pol.id;
+                                            const custRate = calculateSpaceCustomerPrice(pol.hourlyRate);
+                                            return (
+                                                <div
+                                                    key={pol.id}
+                                                    onClick={() => setSelectedPolicy(pol.id)}
+                                                    className={`p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                                                        isSelected
+                                                            ? `${pol.definition.borderClass} ${pol.definition.bgClass} shadow-md scale-[1.01]`
+                                                            : "border-gray-200 hover:border-gray-300 bg-white"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span className="text-base shrink-0">{pol.definition.icon}</span>
+                                                            <div className="min-w-0">
+                                                                <div className="font-black text-xs text-gray-900 flex items-center gap-1.5 truncate">
+                                                                    <span>{t(pol.definition.titleKey)}</span>
+                                                                    {isSelected && (
+                                                                        <span className="text-[10px] font-extrabold bg-[#008080] text-white px-1.5 py-0.2 rounded-full">
+                                                                            ✓
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <div className="text-[11px] text-gray-500 truncate">
+                                                                    {t(pol.definition.bestForKey)}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="text-right shrink-0">
+                                                            <div className="text-xs font-black text-gray-900">
+                                                                {formatPrice(custRate)}
+                                                            </div>
+                                                            <div className="text-[10px] text-gray-500 font-medium">
+                                                                /{t("space.perHour") || "oră"}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between">
+                                                        <span className="text-[10px] font-semibold text-gray-600 truncate max-w-[190px]">
+                                                            {pol.id === "FLEXIBLE"
+                                                                ? "Rambursare 100% > 24h"
+                                                                : pol.id === "MODERATE"
+                                                                ? "100% cu 7+ zile, 50% 2-6 zile"
+                                                                : "Preț redus • Nerambursabil"}
+                                                        </span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setInspectPolicyId(pol.id);
+                                                                setPolicyModalOpen(true);
+                                                            }}
+                                                            className="text-[11px] font-bold text-violet-600 hover:text-violet-800 hover:underline shrink-0"
+                                                        >
+                                                            {t("policy.customer.viewDetails") || "Vezi condiții"}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
                             {hasOwnerBlocks && (
                                 <div className="p-3 rounded-2xl bg-red-50 border border-red-200 space-y-1.5">
@@ -1179,6 +1287,88 @@ export default function SpaceDetailsPage() {
                             )}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Policy Inspection Dialog */}
+            <Dialog open={policyModalOpen} onOpenChange={setPolicyModalOpen}>
+                <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6">
+                    {(() => {
+                        const def = PRICING_POLICIES[inspectPolicyId] || PRICING_POLICIES.FLEXIBLE;
+                        return (
+                            <div className="space-y-4">
+                                <DialogHeader className="text-left space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-2xl">{def.icon}</span>
+                                        <DialogTitle className="text-lg font-black text-gray-900">
+                                            {t(def.titleKey)}
+                                        </DialogTitle>
+                                    </div>
+                                    <DialogDescription className="text-xs text-gray-500 font-medium">
+                                        {t(def.bestForKey)}
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                {/* What you get */}
+                                <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-2">
+                                    <div className="text-xs font-black text-emerald-950 uppercase tracking-wide">
+                                        {t("policy.common.whatYouGet") || "Ce primești"}
+                                    </div>
+                                    {def.whatYouGetKeys.map((k) => (
+                                        <div key={k} className="flex items-start gap-2 text-xs text-emerald-900 font-medium">
+                                            <span className="text-emerald-600 font-bold">✅</span>
+                                            <span>{t(k)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* What is not refunded */}
+                                <div className="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
+                                    <div className="text-xs font-black text-gray-700 uppercase tracking-wide">
+                                        {t("policy.common.whatNotRefunded") || "Ce nu se rambursează"}
+                                    </div>
+                                    {def.whatNotRefundedKeys.map((k) => (
+                                        <div key={k} className="flex items-start gap-2 text-xs text-gray-600 font-medium">
+                                            <span className="text-red-500 font-bold">❌</span>
+                                            <span>{t(k)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Cancellation Table */}
+                                <div className="border rounded-2xl overflow-hidden">
+                                    <table className="w-full text-xs">
+                                        <thead className="bg-gray-100/80 font-bold text-gray-700">
+                                            <tr>
+                                                <th className="py-2 px-3 text-left">{t("policy.common.cancellationTime") || "Momentul Anulării"}</th>
+                                                <th className="py-2 px-3 text-right">{t("policy.common.refund") || "Rambursare"}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {def.schedule.map((item, idx) => (
+                                                <tr key={idx} className="hover:bg-gray-50">
+                                                    <td className="py-2.5 px-3 font-medium text-gray-800">{t(item.timeKey)}</td>
+                                                    <td className="py-2.5 px-3 text-right font-black text-[#008080]">{t(item.refundKey)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <DialogFooter>
+                                    <Button
+                                        onClick={() => {
+                                            setSelectedPolicy(inspectPolicyId);
+                                            setPolicyModalOpen(false);
+                                        }}
+                                        className="w-full bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl"
+                                    >
+                                        {t("common.save") || "Selectează această opțiune"}
+                                    </Button>
+                                </DialogFooter>
+                            </div>
+                        );
+                    })()}
                 </DialogContent>
             </Dialog>
         </div>

@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -17,6 +17,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 
 export default function NewSpacePage() {
     const router = useRouter();
+
+    useEffect(() => {
+        router.replace("/owner/dashboard/listings/create");
+    }, [router]);
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
 

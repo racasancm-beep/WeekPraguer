@@ -111,6 +111,13 @@ model Space {
   hourlyRate    Float
   dailyRate     Float
   weekendRate   Float
+  // 3 Pricing & Cancellation Policies (Spaces only)
+  hasFlexiblePolicy      Boolean      @default(true)
+  priceFlexible          Float?
+  hasModeratePolicy      Boolean      @default(false)
+  priceModerate          Float?
+  hasNonRefundablePolicy Boolean      @default(false)
+  priceNonRefundable     Float?
   active        Boolean      @default(true)
   isClean       Boolean      @default(true)
   selfCleaning          Boolean      @default(false)
@@ -158,6 +165,8 @@ model Booking {
   status          BookingStatus @default(PENDING)
   accessCode      String?
   paymentId       String?
+  cancellationPolicy String?    @default("FLEXIBLE")
+  pricingOption      String?    @default("FLEXIBLE")
   termsAcceptedAt DateTime?
   termsAcceptedIp String?
   proposedStartTime DateTime?

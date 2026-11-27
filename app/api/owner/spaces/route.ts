@@ -25,6 +25,12 @@ const spaceSchema = z.object({
     hourlyRate: z.coerce.number().positive(),
     dailyRate: z.coerce.number().optional(),
     weekendRate: z.coerce.number().optional(),
+    hasFlexiblePolicy: z.boolean().optional().default(true),
+    priceFlexible: z.coerce.number().optional().nullable(),
+    hasModeratePolicy: z.boolean().optional().default(false),
+    priceModerate: z.coerce.number().optional().nullable(),
+    hasNonRefundablePolicy: z.boolean().optional().default(false),
+    priceNonRefundable: z.coerce.number().optional().nullable(),
     // Amenities
     hasWifi: z.boolean().optional().default(true),
     hasProjector: z.boolean().optional().default(false),
@@ -94,6 +100,18 @@ export async function POST(req: Request) {
         const dailyRate = data.dailyRate && data.dailyRate > 0 ? data.dailyRate : data.hourlyRate * 8;
         const weekendRate = data.weekendRate && data.weekendRate > 0 ? data.weekendRate : data.hourlyRate * 16;
 
+        const isService = Boolean(data.isService || data.listingType === "SERVICE");
+        const hasFlex = isService ? false : (data.hasFlexiblePolicy ?? true);
+        const priceFlex = hasFlex ? (data.priceFlexible && data.priceFlexible > 0 ? data.priceFlexible : data.hourlyRate) : null;
+        const hasMod = isService ? false : Boolean(data.hasModeratePolicy);
+        const priceMod = hasMod && data.priceModerate && data.priceModerate > 0 ? data.priceModerate : null;
+        const hasNonRef = isService ? false : Boolean(data.hasNonRefundablePolicy);
+        const priceNonRef = hasNonRef && data.priceNonRefundable && data.priceNonRefundable > 0 ? data.priceNonRefundable : null;
+
+        // Base hourlyRate: lowest active policy price, or input hourlyRate
+        const activePrices = [priceFlex, priceMod, priceNonRef].filter((p): p is number => typeof p === "number" && p > 0);
+        const effectiveHourlyRate = !isService && activePrices.length > 0 ? Math.min(...activePrices) : data.hourlyRate;
+
         const space = await prisma.space.create({
             data: {
                 ownerId,
@@ -111,9 +129,15 @@ export async function POST(req: Request) {
                 accessCode: data.accessCode?.trim() || null,
                 reminder24hTemplate: data.reminder24hTemplate?.trim() || null,
                 reminder12hTemplate: data.reminder12hTemplate?.trim() || null,
-                hourlyRate: data.hourlyRate,
+                hourlyRate: effectiveHourlyRate,
                 dailyRate,
                 weekendRate,
+                hasFlexiblePolicy: hasFlex,
+                priceFlexible: priceFlex,
+                hasModeratePolicy: hasMod,
+                priceModerate: priceMod,
+                hasNonRefundablePolicy: hasNonRef,
+                priceNonRefundable: priceNonRef,
                 hasWifi: Boolean(data.hasWifi),
                 hasProjector: Boolean(data.hasProjector),
                 hasKitchen: Boolean(data.hasKitchen),

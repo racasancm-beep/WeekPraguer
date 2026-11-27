@@ -132,6 +132,12 @@ const formSchema = z.object({
     hourlyRate: z.coerce.number().positive(),
     dailyRate: z.coerce.number().optional(),
     weekendRate: z.coerce.number().optional(),
+    hasFlexiblePolicy: z.boolean().default(true),
+    priceFlexible: z.coerce.number().optional().nullable(),
+    hasModeratePolicy: z.boolean().default(false),
+    priceModerate: z.coerce.number().optional().nullable(),
+    hasNonRefundablePolicy: z.boolean().default(false),
+    priceNonRefundable: z.coerce.number().optional().nullable(),
     hasWifi: z.boolean().default(true),
     hasProjector: z.boolean().default(false),
     hasKitchen: z.boolean().default(false),
@@ -232,6 +238,12 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
             hourlyRate: initialData?.hourlyRate ?? 100,
             dailyRate: initialData?.dailyRate ?? 600,
             weekendRate: initialData?.weekendRate ?? 1100,
+            hasFlexiblePolicy: initialData?.hasFlexiblePolicy ?? true,
+            priceFlexible: initialData?.priceFlexible ?? initialData?.hourlyRate ?? 100,
+            hasModeratePolicy: Boolean(initialData?.hasModeratePolicy),
+            priceModerate: initialData?.priceModerate ?? (initialData?.hourlyRate ? Math.round(initialData.hourlyRate * 0.9) : 90),
+            hasNonRefundablePolicy: Boolean(initialData?.hasNonRefundablePolicy),
+            priceNonRefundable: initialData?.priceNonRefundable ?? (initialData?.hourlyRate ? Math.round(initialData.hourlyRate * 0.8) : 80),
             hasWifi: initialData?.hasWifi ?? true,
             hasProjector: initialData?.hasProjector ?? false,
             hasKitchen: initialData?.hasKitchen ?? false,
@@ -410,29 +422,74 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                     ? [photoUrl.trim()]
                     : ["https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80"];
 
+            const isServiceListing = listingType === "SERVICE";
+
+            if (!isServiceListing) {
+                const hasFlex = Boolean(values.hasFlexiblePolicy);
+                const hasMod = Boolean(values.hasModeratePolicy);
+                const hasNonRef = Boolean(values.hasNonRefundablePolicy);
+
+                if (!hasFlex && !hasMod && !hasNonRef) {
+                    toast.error(t("policy.owner.atLeastOneRequired") || "Trebuie să selectezi cel puțin o opțiune de preț pentru spațiu.");
+                    setLoading(false);
+                    return;
+                }
+
+                if (hasFlex && (!values.priceFlexible || Number(values.priceFlexible) <= 0)) {
+                    toast.error("Te rugăm să introduci prețul pentru Politica Flexibilă.");
+                    setLoading(false);
+                    return;
+                }
+                if (hasMod && (!values.priceModerate || Number(values.priceModerate) <= 0)) {
+                    toast.error("Te rugăm să introduci prețul pentru Politica Moderată.");
+                    setLoading(false);
+                    return;
+                }
+                if (hasNonRef && (!values.priceNonRefundable || Number(values.priceNonRefundable) <= 0)) {
+                    toast.error("Te rugăm să introduci prețul pentru Preț Special (Nerambursabil).");
+                    setLoading(false);
+                    return;
+                }
+            }
+
             const endpoint = isEditMode ? `/api/spaces/${targetSpaceId}` : "/api/owner/spaces";
             const method = isEditMode ? "PUT" : "POST";
 
-            const isServiceListing = listingType === "SERVICE";
             const resolvedServiceCategory =
                 serviceCategory === "__CUSTOM__" ? customCategory.trim() : serviceCategory;
+
+            const activePrices = !isServiceListing
+                ? [
+                      values.hasFlexiblePolicy ? Number(values.priceFlexible) : null,
+                      values.hasModeratePolicy ? Number(values.priceModerate) : null,
+                      values.hasNonRefundablePolicy ? Number(values.priceNonRefundable) : null,
+                  ].filter((p): p is number => typeof p === "number" && p > 0)
+                : [];
+            const effectiveHourlyRate = !isServiceListing && activePrices.length > 0 ? Math.min(...activePrices) : values.hourlyRate;
 
             const response = await fetch(endpoint, {
                 method,
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...values,
+                    hourlyRate: effectiveHourlyRate,
                     listingType,
                     isService: isServiceListing,
                     serviceCategory: isServiceListing ? (resolvedServiceCategory || "General") : null,
                     availableHours: isServiceListing ? (availableHours.trim() || "09:00 - 18:00") : null,
+                    hasFlexiblePolicy: isServiceListing ? false : Boolean(values.hasFlexiblePolicy),
+                    priceFlexible: isServiceListing ? null : (values.hasFlexiblePolicy ? Number(values.priceFlexible) : null),
+                    hasModeratePolicy: isServiceListing ? false : Boolean(values.hasModeratePolicy),
+                    priceModerate: isServiceListing ? null : (values.hasModeratePolicy ? Number(values.priceModerate) : null),
+                    hasNonRefundablePolicy: isServiceListing ? false : Boolean(values.hasNonRefundablePolicy),
+                    priceNonRefundable: isServiceListing ? null : (values.hasNonRefundablePolicy ? Number(values.priceNonRefundable) : null),
                     size: isServiceListing ? 1 : (Number(values.size) || 1),
                     capacity: isServiceListing ? 1 : (Number(values.capacity) || 1),
                     officeCount: isServiceListing ? 1 : (Number(values.officeCount) || 1),
                     latitude: Number.isFinite(finalLat) ? finalLat : 44.4268,
                     longitude: Number.isFinite(finalLng) ? finalLng : 26.1025,
-                    dailyRate: values.dailyRate || values.hourlyRate * 8,
-                    weekendRate: values.weekendRate || values.hourlyRate * 16,
+                    dailyRate: values.dailyRate || effectiveHourlyRate * 8,
+                    weekendRate: values.weekendRate || effectiveHourlyRate * 16,
                     photos: finalPhotos,
                 }),
             });
@@ -919,22 +976,203 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                         </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <h3 className="text-lg font-medium">{t("owner.form.ratesPricing")}</h3>
-                        <div className="grid grid-cols-3 gap-4">
+                    {/* 3 Pricing Options & Cancellation Policies for Spaces (Not applicable to Services) */}
+                    <div className="space-y-5 p-5 rounded-2xl border-2 border-indigo-100 bg-gradient-to-b from-indigo-50/40 via-white to-purple-50/30 dark:from-gray-800 dark:border-indigo-900/50 shadow-sm">
+                        <div>
+                            <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                <Sparkles className="w-5 h-5 text-indigo-600" />
+                                {t("policy.owner.sectionTitle") || "Opțiuni de Preț și Politici de Anulare"}
+                            </h3>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                {t("policy.owner.sectionDesc") || "Alege oricare dintre cele 3 opțiuni (sau pe toate) și setează prețul/oră pentru fiecare. Clientul va putea alege una dintre opțiunile active. Nu se aplică pentru servicii."}
+                            </p>
+                        </div>
+
+                        {/* Option 1: Flexible Policy */}
+                        <div className={`p-4 rounded-xl border-2 transition-all ${
+                            form.watch("hasFlexiblePolicy")
+                                ? "bg-emerald-50/70 border-emerald-400 dark:bg-emerald-950/30 dark:border-emerald-700 shadow-sm"
+                                : "bg-gray-50/50 border-gray-200 dark:bg-gray-800/40 opacity-70"
+                        }`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="policyFlex"
+                                        checked={Boolean(form.watch("hasFlexiblePolicy"))}
+                                        onCheckedChange={(c) => form.setValue("hasFlexiblePolicy", Boolean(c))}
+                                        className="mt-1 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
+                                    />
+                                    <div>
+                                        <label htmlFor="policyFlex" className="font-black text-sm text-emerald-950 dark:text-emerald-300 flex items-center gap-2 cursor-pointer">
+                                            <span>🟢</span>
+                                            <span>{t("policy.flexible.title") || "1. Politică Flexibilă"}</span>
+                                        </label>
+                                        <p className="text-xs text-emerald-800 dark:text-emerald-400 font-medium mt-0.5">
+                                            <span className="font-bold">{t("policy.common.whatYouGet")}:</span> {t("policy.flexible.bestFor") || "Clienți care doresc flexibilitate maximă."}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="w-full sm:w-44 shrink-0">
+                                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1">
+                                        {t("policy.owner.pricePerHour") || "Preț pe Oră (RON)"}
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        disabled={!form.watch("hasFlexiblePolicy")}
+                                        value={form.watch("priceFlexible") ?? ""}
+                                        onChange={(e) => {
+                                            const val = e.target.value ? parseFloat(e.target.value) : null;
+                                            form.setValue("priceFlexible", val);
+                                            if (val && val > 0) form.setValue("hourlyRate", val);
+                                        }}
+                                        placeholder="120"
+                                        className="h-10 bg-white font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            {form.watch("hasFlexiblePolicy") && (
+                                <div className="mt-3 pt-3 border-t border-emerald-200/80 dark:border-emerald-800/60 text-xs space-y-1.5 text-emerald-900 dark:text-emerald-200">
+                                    <div className="flex items-center gap-1.5 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                        <span>{t("policy.flexible.whatYouGet1")}</span>
+                                    </div>
+                                    <div className="text-[11px] text-gray-500 dark:text-gray-400 pl-5">
+                                        ❌ {t("policy.common.notRefundedPlatform")} • ❌ {t("policy.common.notRefundedProcessing")}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Option 2: Moderate Policy */}
+                        <div className={`p-4 rounded-xl border-2 transition-all ${
+                            form.watch("hasModeratePolicy")
+                                ? "bg-amber-50/70 border-amber-400 dark:bg-amber-950/30 dark:border-amber-700 shadow-sm"
+                                : "bg-gray-50/50 border-gray-200 dark:bg-gray-800/40 opacity-70"
+                        }`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="policyMod"
+                                        checked={Boolean(form.watch("hasModeratePolicy"))}
+                                        onCheckedChange={(c) => form.setValue("hasModeratePolicy", Boolean(c))}
+                                        className="mt-1 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                                    />
+                                    <div>
+                                        <label htmlFor="policyMod" className="font-black text-sm text-amber-950 dark:text-amber-300 flex items-center gap-2 cursor-pointer">
+                                            <span>🟡</span>
+                                            <span>{t("policy.moderate.title") || "2. Politică Moderată"}</span>
+                                        </label>
+                                        <p className="text-xs text-amber-800 dark:text-amber-400 font-medium mt-0.5">
+                                            <span className="font-bold">{t("policy.common.whatYouGet")}:</span> {t("policy.moderate.bestFor") || "Clienți care caută o rezervare cu risc redus și protecție parțială."}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="w-full sm:w-44 shrink-0">
+                                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1">
+                                        {t("policy.owner.pricePerHour") || "Preț pe Oră (RON)"}
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        disabled={!form.watch("hasModeratePolicy")}
+                                        value={form.watch("priceModerate") ?? ""}
+                                        onChange={(e) => {
+                                            const val = e.target.value ? parseFloat(e.target.value) : null;
+                                            form.setValue("priceModerate", val);
+                                        }}
+                                        placeholder="100"
+                                        className="h-10 bg-white font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            {form.watch("hasModeratePolicy") && (
+                                <div className="mt-3 pt-3 border-t border-amber-200/80 dark:border-amber-800/60 text-xs space-y-1 text-amber-900 dark:text-amber-200">
+                                    <div className="flex items-center gap-1.5 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>{t("policy.moderate.whatYouGet1")}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                        <span>{t("policy.moderate.whatYouGet2")}</span>
+                                    </div>
+                                    <div className="text-[11px] text-gray-500 dark:text-gray-400 pl-5">
+                                        ❌ {t("policy.common.notRefundedPlatform")} • ❌ {t("policy.common.notRefundedProcessing")}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Option 3: Special Price (Non-Refundable) */}
+                        <div className={`p-4 rounded-xl border-2 transition-all ${
+                            form.watch("hasNonRefundablePolicy")
+                                ? "bg-rose-50/70 border-rose-400 dark:bg-rose-950/30 dark:border-rose-700 shadow-sm"
+                                : "bg-gray-50/50 border-gray-200 dark:bg-gray-800/40 opacity-70"
+                        }`}>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div className="flex items-start gap-3">
+                                    <Checkbox
+                                        id="policyNonRef"
+                                        checked={Boolean(form.watch("hasNonRefundablePolicy"))}
+                                        onCheckedChange={(c) => form.setValue("hasNonRefundablePolicy", Boolean(c))}
+                                        className="mt-1 data-[state=checked]:bg-rose-600 data-[state=checked]:border-rose-600"
+                                    />
+                                    <div>
+                                        <label htmlFor="policyNonRef" className="font-black text-sm text-rose-950 dark:text-rose-300 flex items-center gap-2 cursor-pointer">
+                                            <span>🔴</span>
+                                            <span>{t("policy.nonRefundable.title") || "3. Preț Special (Nerambursabil)"}</span>
+                                        </label>
+                                        <p className="text-xs text-rose-800 dark:text-rose-400 font-medium mt-0.5">
+                                            <span className="font-bold">{t("policy.common.whatYouGet")}:</span> {t("policy.nonRefundable.bestFor") || "Clienți care caută cel mai mic preț disponibil."}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="w-full sm:w-44 shrink-0">
+                                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-1">
+                                        {t("policy.owner.pricePerHour") || "Preț pe Oră (RON)"}
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        disabled={!form.watch("hasNonRefundablePolicy")}
+                                        value={form.watch("priceNonRefundable") ?? ""}
+                                        onChange={(e) => {
+                                            const val = e.target.value ? parseFloat(e.target.value) : null;
+                                            form.setValue("priceNonRefundable", val);
+                                        }}
+                                        placeholder="80"
+                                        className="h-10 bg-white font-bold"
+                                    />
+                                </div>
+                            </div>
+
+                            {form.watch("hasNonRefundablePolicy") && (
+                                <div className="mt-3 pt-3 border-t border-rose-200/80 dark:border-rose-800/60 text-xs space-y-1 text-rose-900 dark:text-rose-200">
+                                    <div className="flex items-center gap-1.5 font-semibold">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-rose-600 shrink-0" />
+                                        <span>{t("policy.nonRefundable.whatYouGet1")}</span>
+                                    </div>
+                                    <div className="text-[11px] text-gray-500 dark:text-gray-400 pl-5">
+                                        ❌ {t("policy.nonRefundable.notRefundedAll")}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Optional full-day / weekend rate shortcuts */}
+                        <div className="pt-2 grid grid-cols-2 gap-4">
                             <div>
-                                <label className="text-sm font-medium mb-1 block">{t("owner.form.hourlyRate")}</label>
-                                <Input type="number" {...form.register("hourlyRate")} placeholder="100" />
+                                <label className="text-xs font-medium text-gray-500 mb-1 block">{t("owner.form.dailyRate")} ({t("space.perFullDay")})</label>
+                                <Input type="number" {...form.register("dailyRate")} placeholder="600" className="h-9" />
                             </div>
                             <div>
-                                <label className="text-sm font-medium mb-1 block">{t("owner.form.dailyRate")}</label>
-                                <Input type="number" {...form.register("dailyRate")} placeholder="600" />
-                            </div>
-                            <div>
-                                <label className="text-sm font-medium mb-1 block">{t("owner.form.weekendRate")}</label>
-                                <Input type="number" {...form.register("weekendRate")} placeholder="1100" />
+                                <label className="text-xs font-medium text-gray-500 mb-1 block">{t("owner.form.weekendRate")}</label>
+                                <Input type="number" {...form.register("weekendRate")} placeholder="1100" className="h-9" />
                             </div>
                         </div>
+                    </div>
 
                         <div className="pt-6 mt-4 border-t-2 border-dashed border-violet-100 dark:border-violet-900/30">
                             <div className="flex items-start space-x-3 p-4 bg-violet-50 dark:bg-violet-900/10 rounded-2xl border border-violet-100 dark:border-violet-800">
@@ -959,7 +1197,6 @@ export function SpaceForm({ initialData, spaceId, onSuccess, onCancel }: SpaceFo
                                 </div>
                             </div>
                         </div>
-                    </div>
                 </>
             )}
 
