@@ -36,7 +36,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
         // Navigation
         "nav.explore": "Explorează Spații",
-        "nav.services": "Servicii",
+        "nav.services": "Explorează Servicii",
+        "nav.exploreServices": "Explorează Servicii",
         "nav.allServices": "Toate Serviciile",
         "nav.sponsoredCleaning": "SPONSORIZAT: 10% reducere la curățenie",
         "nav.cleaning": "Curățenie",
@@ -882,7 +883,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
         // Navigation
         "nav.explore": "Explore Spaces",
-        "nav.services": "Services",
+        "nav.services": "Explore Services",
+        "nav.exploreServices": "Explore Services",
         "nav.allServices": "All Services",
         "nav.sponsoredCleaning": "SPONSORED: 10% off cleaning services",
         "nav.cleaning": "Cleaning",
@@ -1728,7 +1730,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
         // Navigation
         "nav.explore": "Helyszínek böngészése",
-        "nav.services": "Szolgáltatások",
+        "nav.services": "Szolgáltatások böngészése",
+        "nav.exploreServices": "Szolgáltatások böngészése",
         "nav.allServices": "Minden Szolgáltatás",
         "nav.sponsoredCleaning": "SZPONZORÁLT: 10% kedvezmény takarításra",
         "nav.cleaning": "Takarítás",
@@ -2574,7 +2577,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
         // Navigation
         "nav.explore": "Räume entdecken",
-        "nav.services": "Dienstleistungen",
+        "nav.services": "Dienstleistungen entdecken",
+        "nav.exploreServices": "Dienstleistungen entdecken",
         "nav.allServices": "Alle Dienstleistungen",
         "nav.sponsoredCleaning": "GESPONSERT: 10% Rabatt auf Reinigung",
         "nav.cleaning": "Reinigung",

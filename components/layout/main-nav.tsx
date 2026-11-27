@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Clock, Search, ChevronDown, Package, Shield, Settings, Key, Building, Map, ShieldCheck, LayoutDashboard, LogOut, MessageSquare, Sparkles } from "lucide-react";
+import { Clock, Search, ChevronDown, Package, Shield, Settings, ShieldCheck, LayoutDashboard, LogOut, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { LanguageSelector } from "@/components/ui/language-selector";
@@ -152,25 +152,6 @@ export function MainNav() {
                                 </Link>
                                 <Link href="/explore?type=servicii&category=asistenta" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
                                     <Settings className="w-4 h-4 text-[#008080]" /> {t("nav.itManagement")}
-                                </Link>
-                            </div>
-                        </div>
-
-                        <div className={`relative group ${isOwner ? "opacity-35 hover:opacity-100 transition-opacity" : ""}`}>
-                            <div className={`flex items-center gap-1 text-sm tracking-wide outline-none cursor-pointer py-4 ${
-                                isOwner ? "font-medium text-gray-400 hover:text-gray-700" : "font-bold text-gray-600 group-hover:text-[#008080]"
-                            }`}>
-                                {t("nav.renting")} <ChevronDown className="w-4 h-4 group-hover:rotate-180 transition-transform" />
-                            </div>
-                            <div className="absolute top-full left-0 w-56 p-2 bg-white rounded-lg shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                <Link href="/explore" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Key className="w-4 h-4 text-[#008080]" /> {t("nav.longTerm")}
-                                </Link>
-                                <Link href="/explore" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Building className="w-4 h-4 text-[#008080]" /> {t("nav.commercialSpaces")}
-                                </Link>
-                                <Link href="/explore" className="cursor-pointer flex items-center gap-2 font-medium hover:bg-gray-50 px-2 py-1.5 rounded-md text-sm text-gray-700">
-                                    <Map className="w-4 h-4 text-[#008080]" /> {t("nav.locationsMap")}
                                 </Link>
                             </div>
                         </div>
