@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { ChevronDown, ChevronUp, Calendar, Sparkles, MapPin, Clock, Pencil, ExternalLink, Building2 } from "lucide-react";
@@ -27,6 +27,7 @@ export default function EarningsPage() {
 }
 
 function EarningsPageContent() {
+    const router = useRouter();
     const searchParams = useSearchParams();
     const userId = searchParams?.get("userId");
     const { t } = useLanguage();
@@ -72,7 +73,7 @@ function EarningsPageContent() {
 
                 // If this is a Service Owner without any services created yet, route them directly to create their first service!
                 if (isServiceOwner && !userId && (!data.spaces || data.spaces.length === 0)) {
-                    window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
+                    router.push("/owner/dashboard/listings/create?type=SERVICE");
                     return;
                 }
             }

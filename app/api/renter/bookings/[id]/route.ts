@@ -3,26 +3,7 @@ import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { checkAndQualifyReferralsForBooking } from "@/lib/referral";
-
-async function resolveSessionUserId(session: any): Promise<string | null> {
-    const rawId = (session?.user as any)?.id;
-    const rawEmail = session?.user?.email;
-
-    if (rawId) {
-        const byId = await prisma.user.findUnique({ where: { id: rawId }, select: { id: true } });
-        if (byId) return byId.id;
-    }
-
-    if (rawEmail) {
-        const byEmail = await prisma.user.findFirst({
-            where: { email: { equals: String(rawEmail).trim(), mode: "insensitive" } },
-            select: { id: true },
-        });
-        if (byEmail) return byEmail.id;
-    }
-
-    return null;
-}
+import { resolveAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
@@ -45,7 +26,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             return NextResponse.json({ error: "Booking not found" }, { status: 404 });
         }
 
-        const userId = await resolveSessionUserId(session);
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const userId = resolvedUser?.id || (session.user as any)?.id;
         const isAdmin = (session.user as any)?.role === "ADMIN";
         if (!isAdmin && booking.renterId !== userId && booking.renterId !== (session.user as any).id) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

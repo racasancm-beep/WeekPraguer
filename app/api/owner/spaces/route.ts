@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from "zod";
+import { resolveOwnerId } from "@/lib/auth-helpers";
 
 const DEFAULT_OFFICE_PHOTO = "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80";
 
@@ -48,30 +49,6 @@ const spaceSchema = z.object({
     serviceCategory: z.string().optional().nullable(),
     availableHours: z.string().optional().nullable(),
 });
-
-async function resolveOwnerId(session: any): Promise<string | null> {
-    const sessionUserId = (session?.user as any)?.id;
-    const sessionEmail = session?.user?.email;
-
-    if (sessionUserId) {
-        const byId = await prisma.user.findUnique({ where: { id: sessionUserId }, select: { id: true } });
-        if (byId) return byId.id;
-    }
-
-    if (sessionEmail) {
-        const byEmail = await prisma.user.findFirst({
-            where: { email: { equals: sessionEmail.trim(), mode: "insensitive" } },
-            select: { id: true },
-        });
-        if (byEmail) return byEmail.id;
-    }
-
-    const fallbackOwner = await prisma.user.findFirst({
-        where: { role: { in: ["OWNER", "ADMIN", "SERVICE_OWNER"] } },
-        select: { id: true },
-    });
-    return fallbackOwner?.id || null;
-}
 
 export async function POST(req: Request) {
     try {

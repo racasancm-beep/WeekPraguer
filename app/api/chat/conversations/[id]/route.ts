@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkAndSendBookingReminders, isChatActive } from "@/lib/chat-reminders";
+import { resolveAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -13,20 +14,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             return NextResponse.json({ message: "Trebuie să fii autentificat." }, { status: 401 });
         }
 
-        const userId = (session.user as any)?.id;
-        const userEmail = session.user?.email?.trim().toLowerCase();
-        const userRole = (session.user as any)?.role;
-
-        const orClauses: any[] = [];
-        if (userId) orClauses.push({ id: userId });
-        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
-
-        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
-            where: { OR: orClauses },
-            select: { id: true },
-        }) : null;
-
-        const activeUserId = dbUser?.id || userId;
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const activeUserId = resolvedUser?.id || (session.user as any)?.id;
+        const userRole = resolvedUser?.role || (session.user as any)?.role;
 
         const conversation = await prisma.conversation.findUnique({
             where: { id },
@@ -140,20 +130,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             return NextResponse.json({ message: "Trebuie să fii autentificat pentru a trimite mesaje." }, { status: 401 });
         }
 
-        const userId = (session.user as any)?.id;
-        const userEmail = session.user?.email?.trim().toLowerCase();
-        const userRole = (session.user as any)?.role;
-
-        const orClauses: any[] = [];
-        if (userId) orClauses.push({ id: userId });
-        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
-
-        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
-            where: { OR: orClauses },
-            select: { id: true },
-        }) : null;
-
-        const activeUserId = dbUser?.id || userId;
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const activeUserId = resolvedUser?.id || (session.user as any)?.id;
+        const userRole = resolvedUser?.role || (session.user as any)?.role;
 
         const conversation = await prisma.conversation.findUnique({
             where: { id },

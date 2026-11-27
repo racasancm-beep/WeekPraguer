@@ -43,7 +43,27 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
         if (!space) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-        return NextResponse.json(space);
+        const session = await getServerSession(authOptions);
+        const sessionUserId = (session?.user as any)?.id;
+        const sessionUserRole = (session?.user as any)?.role;
+        const isOwnerOrAdmin =
+            sessionUserRole === "ADMIN" ||
+            (sessionUserId && (space.ownerId === sessionUserId || space.owner?.email === session?.user?.email));
+
+        const sanitizedSpace = {
+            ...space,
+            accessCode: isOwnerOrAdmin ? space.accessCode : null,
+            bookings: space.bookings.map((b) => ({
+                ...b,
+                accessCode: isOwnerOrAdmin
+                    ? b.accessCode
+                    : b.accessCode === "OWNER_BLOCK"
+                    ? "OWNER_BLOCK"
+                    : null,
+            })),
+        };
+
+        return NextResponse.json(sanitizedSpace);
     } catch (error) {
         return NextResponse.json({ error: "Server Error" }, { status: 500 });
     }

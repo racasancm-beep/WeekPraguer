@@ -27,19 +27,17 @@ export default function PortalPage() {
 
         switch (role) {
             case "SERVICE_OWNER":
-                window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
-                break;
             case "OWNER":
-                window.location.href = "/owner/dashboard/earnings";
+                router.replace("/owner/dashboard/bookings");
                 break;
             case "RENTER":
-                window.location.href = "/dashboard";
+                router.replace("/dashboard");
                 break;
             case "ADMIN":
-                window.location.href = "/admin/dashboard";
+                router.replace("/admin/dashboard");
                 break;
             default:
-                window.location.href = "/";
+                router.replace("/");
         }
     }, [session, status, router]);
 

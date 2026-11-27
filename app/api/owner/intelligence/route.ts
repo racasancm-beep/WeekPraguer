@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import { resolveAuthenticatedUser } from "@/lib/auth-helpers";
 import { getBookingBreakdown } from "@/lib/pricing";
 import { startOfMonth, endOfMonth, subMonths, eachWeekendOfInterval } from "date-fns";
 
@@ -17,14 +18,8 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const targetUserId = searchParams.get("userId");
 
-        let resolvedOwnerId = (session.user as any).id;
-        if (role !== "ADMIN" && session.user?.email) {
-            const dbOwner = await prisma.user.findFirst({
-                where: { email: { equals: session.user.email.trim(), mode: "insensitive" } },
-                select: { id: true },
-            });
-            if (dbOwner) resolvedOwnerId = dbOwner.id;
-        }
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const resolvedOwnerId = resolvedUser?.id || (session.user as any).id;
 
         const ownerOrClauses: any[] = [];
         if (resolvedOwnerId) ownerOrClauses.push({ ownerId: resolvedOwnerId });

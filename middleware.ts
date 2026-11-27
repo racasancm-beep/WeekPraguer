@@ -20,13 +20,10 @@ export default withAuth(
             }
         }
 
-        // 3. Renter dashboard: redirect OWNER and SERVICE_OWNER immediately to their owner dashboard
+        // 3. Renter dashboard: redirect OWNER and SERVICE_OWNER immediately to their unified owner dashboard
         if (path === "/dashboard" || path.startsWith("/dashboard")) {
-            if (token?.role === "SERVICE_OWNER") {
-                return NextResponse.redirect(new URL("/owner/dashboard/listings/create?type=SERVICE", req.url));
-            }
-            if (token?.role === "OWNER") {
-                return NextResponse.redirect(new URL("/owner/dashboard/earnings", req.url));
+            if (token?.role === "OWNER" || token?.role === "SERVICE_OWNER") {
+                return NextResponse.redirect(new URL("/owner/dashboard/bookings", req.url));
             }
         }
     },

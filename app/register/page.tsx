@@ -108,18 +108,18 @@ function RegisterForm() {
                 setSocialModalOpen(false);
 
                 if (role === "SERVICE_OWNER") {
-                    window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
+                    router.push("/owner/dashboard/listings/create?type=SERVICE");
                     return;
                 }
                 if (role === "OWNER") {
-                    window.location.href = "/owner/dashboard/listings/create";
+                    router.push("/owner/dashboard/listings/create");
                     return;
                 }
                 if (activeCallback && activeCallback.startsWith("/") && activeCallback !== "/dashboard") {
-                    window.location.href = activeCallback;
+                    router.push(activeCallback);
                     return;
                 }
-                window.location.href = "/portal";
+                router.push("/portal");
             }
         } catch (err: any) {
             console.error("Social auth error:", err);
@@ -223,22 +223,22 @@ function RegisterForm() {
             }
 
             if (userRole === "SERVICE_OWNER") {
-                window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
+                router.push("/owner/dashboard/listings/create?type=SERVICE");
                 return;
             }
             if (userRole === "OWNER") {
-                window.location.href = "/owner/dashboard/listings/create";
+                router.push("/owner/dashboard/listings/create");
                 return;
             }
             if (userRole === "ADMIN") {
-                window.location.href = "/admin/dashboard";
+                router.push("/admin/dashboard");
                 return;
             }
             if (activeCallback && activeCallback.startsWith("/") && activeCallback !== "/dashboard") {
-                window.location.href = activeCallback;
+                router.push(activeCallback);
                 return;
             }
-            window.location.href = "/dashboard";
+            router.push("/dashboard");
         }
     }, [status, session, router, activeCallback]);
 
@@ -276,13 +276,13 @@ function RegisterForm() {
                     }
 
                     if (role === "SERVICE_OWNER") {
-                        window.location.href = "/owner/dashboard/listings/create?type=SERVICE";
+                        router.push("/owner/dashboard/listings/create?type=SERVICE");
                     } else if (role === "OWNER") {
-                        window.location.href = "/owner/dashboard/listings/create";
+                        router.push("/owner/dashboard/listings/create");
                     } else if (activeCallback && activeCallback.startsWith("/") && activeCallback !== "/dashboard") {
-                        window.location.href = activeCallback;
+                        router.push(activeCallback);
                     } else {
-                        window.location.href = "/dashboard";
+                        router.push("/dashboard");
                     }
                 } else {
                     const loginUrl = activeCallback

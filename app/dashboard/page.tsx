@@ -25,6 +25,7 @@ import { useSession } from "next-auth/react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { toast } from "sonner";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
+import { formatReservationPeriod } from "@/lib/date-utils";
 
 function hasBookingProofOfPayment(booking: any): boolean {
     return (
@@ -59,7 +60,7 @@ function RenterDashboardContent() {
 
     useEffect(() => {
         if (status === "authenticated" && isOwnerOrService) {
-            window.location.href = "/owner/dashboard/bookings";
+            router.replace("/owner/dashboard/bookings");
             return;
         }
         if (status !== "loading") {
@@ -344,14 +345,10 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                         </div>
                         <div className="text-sm font-medium text-gray-600 flex items-center gap-1.5">
                             <Calendar className="w-4 h-4 text-gray-400 shrink-0" />
-                            <span>
-                                {new Date(booking.startTime).toLocaleDateString()} •{" "}
-                                {new Date(booking.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
-                                {new Date(booking.endTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </span>
+                            <span>{formatReservationPeriod(booking)}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
+                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
                         {!isService && booking.cancellationPolicy && (
                             <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
                                 booking.cancellationPolicy === "NON_REFUNDABLE"
@@ -413,7 +410,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                         </p>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-between sm:justify-end">
                     <Badge
                         className={
                             isServiceConfirmed
@@ -567,7 +564,7 @@ function BookingClientCard({ booking, onUpdate }: { booking: any; onUpdate: () =
                                 <CreditCard className="w-4 h-4 text-blue-700" />
                                 {t("renter.proceedPaymentTitle")}
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-between sm:justify-end">
                                 <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white text-blue-800 border border-blue-200">
                                     {t("renter.paymentGatewayReady")}
                                 </span>

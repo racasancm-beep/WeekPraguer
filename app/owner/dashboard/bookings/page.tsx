@@ -23,32 +23,13 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
+import { formatReservationPeriod, toDateTimeLocalValue } from "@/lib/date-utils";
 
 function hasBookingProofOfPayment(booking: any): boolean {
     return (
         Boolean(booking?.paymentId && String(booking.paymentId).trim().length > 0) ||
         booking?.transaction?.paymentStatus === "COMPLETED"
     );
-}
-
-function formatReservationPeriod(booking: any): string {
-    const start = new Date(booking.startTime);
-    const end = new Date(booking.endTime);
-    if (booking?.accessCode === "OWNER_BLOCK" || booking?.isHourly === false) {
-        return `${start.toLocaleDateString()} - ${end.toLocaleDateString()}`;
-    }
-    return `${start.toLocaleString()} - ${end.toLocaleString()}`;
-}
-
-function toDateTimeLocalValue(dateStrOrObj: string | Date): string {
-    const d = new Date(dateStrOrObj);
-    if (isNaN(d.getTime())) return "";
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 
 export default function BookingsPage() {
@@ -485,7 +466,7 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
                             <span>{formatReservationPeriod(booking)}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
+                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
                         {!isService && booking.cancellationPolicy && (
                             <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
                                 booking.cancellationPolicy === "NON_REFUNDABLE"
@@ -593,7 +574,7 @@ function OwnerBookingHistoryItem({ booking }: { booking: any }) {
                         </p>
                     )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-0 border-gray-100">
                     <span className={badgeClassName}>{statusBadgeText}</span>
                     {isConfirmed && (
                         <Link href={`/messages?bookingId=${booking.id}`}>
@@ -749,7 +730,7 @@ function OwnerCustomerBookingCard({ booking, onUpdate }: { booking: any; onUpdat
                             <span>{formatReservationPeriod(booking)}</span>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
+                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
                         {!isService && booking.cancellationPolicy && (
                             <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
                                 booking.cancellationPolicy === "NON_REFUNDABLE"
@@ -858,7 +839,7 @@ function OwnerCustomerBookingCard({ booking, onUpdate }: { booking: any; onUpdat
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto justify-between sm:justify-end pt-2 sm:pt-0 border-t sm:border-0 border-teal-100">
                         {!isService && booking.cancellationPolicy && (
                             <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
                                 booking.cancellationPolicy === "NON_REFUNDABLE"

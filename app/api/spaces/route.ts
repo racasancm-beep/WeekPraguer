@@ -2,48 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
-import { spaceSchema } from "@/lib/schemas/space";
+import { POST as ownerSpacesPOST } from "@/app/api/owner/spaces/route";
 
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role;
-
-    if (!session || (role !== "OWNER" && role !== "ADMIN" && role !== "SERVICE_OWNER")) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    try {
-        const json = await req.json();
-        const body = spaceSchema.parse(json);
-
-        const space = await prisma.space.create({
-            data: {
-                ownerId: session.user.id,
-                name: body.name,
-                description: body.description,
-                address: body.address,
-                city: body.city,
-                size: body.size,
-                capacity: body.capacity,
-                accessCode: body.accessCode ? body.accessCode.trim() : null,
-                hourlyRate: body.hourlyRate,
-                dailyRate: body.dailyRate,
-                weekendRate: body.weekendRate,
-                amenitiesList: JSON.stringify(body.amenities || (body as any).amenitiesList || []),
-                listingType: (json as any).listingType || ((json as any).isService ? "SERVICE" : "SPACE"),
-                isService: Boolean((json as any).isService || (json as any).listingType === "SERVICE"),
-                serviceCategory: (json as any).serviceCategory || null,
-                availableHours: (json as any).availableHours || "09:00 - 18:00",
-                latitude: typeof (json as any).latitude === "number" ? (json as any).latitude : 44.4268,
-                longitude: typeof (json as any).longitude === "number" ? (json as any).longitude : 26.1025,
-            },
-        });
-
-        return NextResponse.json({ success: true, spaceId: space.id });
-    } catch (error) {
-        console.error("Create space error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-    }
+    // Delegated to unified owner spaces creation logic
+    return ownerSpacesPOST(req);
 }
 
 export async function GET(req: Request) {
@@ -112,7 +75,15 @@ export async function GET(req: Request) {
                 },
             }
         });
-        return NextResponse.json(spaces);
+        const sanitizedSpaces = spaces.map((s) => ({
+            ...s,
+            accessCode: null,
+            bookings: s.bookings.map((b) => ({
+                ...b,
+                accessCode: b.accessCode === "OWNER_BLOCK" ? "OWNER_BLOCK" : null,
+            })),
+        }));
+        return NextResponse.json(sanitizedSpaces);
     } catch (error) {
         console.error("Fetch spaces error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

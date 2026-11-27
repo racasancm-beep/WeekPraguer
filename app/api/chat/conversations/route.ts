@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checkAndSendBookingReminders, isChatActive } from "@/lib/chat-reminders";
+import { resolveAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function GET(req: Request) {
     try {
@@ -11,24 +12,12 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: "Trebuie să fii autentificat pentru a accesa conversațiile." }, { status: 401 });
         }
 
-        const userId = (session.user as any)?.id;
-        const userEmail = session.user?.email?.trim().toLowerCase();
-        const userRole = (session.user as any)?.role;
-
         // Run background reminder checks
         checkAndSendBookingReminders().catch((e) => console.error("Reminder check error:", e));
 
-        // Find user by id or email to resolve DB user
-        const orClauses: any[] = [];
-        if (userId) orClauses.push({ id: userId });
-        if (userEmail) orClauses.push({ email: { equals: userEmail, mode: "insensitive" } });
-
-        const dbUser = orClauses.length > 0 ? await prisma.user.findFirst({
-            where: { OR: orClauses },
-            select: { id: true },
-        }) : null;
-
-        const activeUserId = dbUser?.id || userId;
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const activeUserId = resolvedUser?.id || (session.user as any)?.id;
+        const userRole = resolvedUser?.role || (session.user as any)?.role;
 
         // Auto-create conversations for any bookings (PENDING, OWNER_PROPOSED, CONFIRMED, COMPLETED)
         // that don't have a conversation yet, excluding owner blocks.

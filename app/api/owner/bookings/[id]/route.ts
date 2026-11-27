@@ -4,26 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { checkAndQualifyReferralsForBooking } from "@/lib/referral";
 import { sendEmail } from "@/lib/email-service";
-
-async function resolveOwnerUserId(session: any): Promise<string | null> {
-    const rawId = (session?.user as any)?.id;
-    const rawEmail = session?.user?.email;
-
-    if (rawId) {
-        const byId = await prisma.user.findUnique({ where: { id: rawId }, select: { id: true } });
-        if (byId) return byId.id;
-    }
-
-    if (rawEmail) {
-        const byEmail = await prisma.user.findFirst({
-            where: { email: { equals: String(rawEmail).trim(), mode: "insensitive" } },
-            select: { id: true },
-        });
-        if (byEmail) return byEmail.id;
-    }
-
-    return null;
-}
+import { resolveAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const session = await getServerSession(authOptions);
@@ -59,7 +40,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             return NextResponse.json({ error: "Not found" }, { status: 404 });
         }
 
-        const ownerUserId = await resolveOwnerUserId(session);
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const ownerUserId = resolvedUser?.id || (session.user as any)?.id;
         const sessionEmail = session.user.email?.trim().toLowerCase();
         const isSpaceOwner =
             Boolean(ownerUserId && booking.space.ownerId === ownerUserId) ||

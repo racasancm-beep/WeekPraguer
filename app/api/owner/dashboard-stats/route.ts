@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
 import { startOfMonth, endOfMonth, format, addMonths, subDays } from "date-fns";
 import { getBookingBreakdown } from "@/lib/pricing";
+import { resolveAuthenticatedUser } from "@/lib/auth-helpers";
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions);
@@ -18,14 +19,8 @@ export async function GET(req: Request) {
         const targetUserId = searchParams.get("userId");
 
         // If ADMIN is viewing without a specific userId, show aggregated stats across ALL owners/spaces
-        let resolvedOwnerId = (session.user as any).id;
-        if (role !== "ADMIN" && session.user?.email) {
-            const dbOwner = await prisma.user.findFirst({
-                where: { email: { equals: session.user.email.trim(), mode: "insensitive" } },
-                select: { id: true },
-            });
-            if (dbOwner) resolvedOwnerId = dbOwner.id;
-        }
+        const resolvedUser = await resolveAuthenticatedUser(session);
+        const resolvedOwnerId = resolvedUser?.id || (session.user as any).id;
 
         const ownerOrClauses: any[] = [];
         if (resolvedOwnerId) ownerOrClauses.push({ ownerId: resolvedOwnerId });

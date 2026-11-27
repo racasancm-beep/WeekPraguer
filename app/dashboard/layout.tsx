@@ -27,13 +27,11 @@ export default function RenterLayout({
 
     useEffect(() => {
         if (status === "unauthenticated") {
-            window.location.href = "/login";
+            router.push("/login");
         } else if (status === "authenticated" && isOwnerOrService) {
-            window.location.href = userRole === "SERVICE_OWNER"
-                ? "/owner/dashboard/listings/create?type=SERVICE"
-                : "/owner/dashboard/earnings";
+            router.replace("/owner/dashboard/bookings");
         }
-    }, [status, isOwnerOrService, userRole]);
+    }, [status, isOwnerOrService, router]);
 
     if (status === "loading" || (status === "authenticated" && isOwnerOrService)) {
         return (

@@ -7,6 +7,7 @@ import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, ChevronDown, Che
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
+import { formatReservationPeriod } from "@/lib/date-utils";
 import { BookingPriceBreakdown } from "@/components/booking/booking-price-breakdown";
 import { toast } from "sonner";
 import {
@@ -445,7 +446,7 @@ function OwnerConfirmedReservationItem({ bk, space }: { bk: any; space: any }) {
         >
             <div className="flex items-center justify-between gap-1">
                 <div className="font-bold text-gray-800">
-                    {new Date(bk.startTime).toLocaleDateString()} - {new Date(bk.endTime).toLocaleDateString()}
+                    {formatReservationPeriod(bk)}
                 </div>
                 <div className="flex items-center gap-1">
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 uppercase">
