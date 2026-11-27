@@ -293,6 +293,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "register.orContinueWith": "Sau continuă cu",
         "register.alreadyHaveAccount": "Ai deja un cont?",
         "register.signIn": "Autentificare",
+        "register.socialRoleNotice": "Contul va fi creat pe baza opțiunii tale de profil:",
+        "register.socialAccountEmail": "Adresă de email asociată",
+        "register.socialAccountName": "Nume complet",
 
         // Admin Hub (/admin/*)
         "admin.loadingHub": "Se încarcă Panoul de Comandă ADMIN...",
@@ -1136,6 +1139,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "register.orContinueWith": "Or continue with",
         "register.alreadyHaveAccount": "Already have an account?",
         "register.signIn": "Sign in",
+        "register.socialRoleNotice": "Your account will be created based on your selected profile:",
+        "register.socialAccountEmail": "Associated email address",
+        "register.socialAccountName": "Full name",
 
         // Admin Hub (/admin/*)
         "admin.loadingHub": "Loading Admin Super Control Center...",
@@ -1979,6 +1985,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "register.orContinueWith": "Vagy folytasd ezzel",
         "register.alreadyHaveAccount": "Már van fiókod?",
         "register.signIn": "Bejelentkezés",
+        "register.socialRoleNotice": "A fiók a kiválasztott profil alapján jön létre:",
+        "register.socialAccountEmail": "Társított e-mail cím",
+        "register.socialAccountName": "Teljes név",
 
         // Admin Hub (/admin/*)
         "admin.loadingHub": "ADMIN Vezérlőközpont betöltése...",
@@ -2822,6 +2831,9 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
         "register.orContinueWith": "Oder weiter mit",
         "register.alreadyHaveAccount": "Bereits ein Konto?",
         "register.signIn": "Anmelden",
+        "register.socialRoleNotice": "Das Konto wird basierend auf deinem ausgewählten Profil erstellt:",
+        "register.socialAccountEmail": "Verknüpfte E-Mail-Adresse",
+        "register.socialAccountName": "Vollständiger Name",
 
         // Admin Hub (/admin/*)
         "admin.loadingHub": "ADMIN-Kommandozentrale wird geladen...",
