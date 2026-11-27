@@ -39,7 +39,18 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
         where.latitude = { gte: lat - latOffset, lte: lat + latOffset };
         where.longitude = { gte: lng - lngOffset, lte: lng + lngOffset };
     } else if (city) {
-        where.city = { contains: city, mode: 'insensitive' };
+        const trimmedCity = city.trim();
+        const normalizedCity = trimmedCity.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const cityFilter = [
+            { city: { contains: trimmedCity, mode: 'insensitive' } },
+            { city: { contains: normalizedCity, mode: 'insensitive' } }
+        ];
+        if (where.OR) {
+            where.AND = [{ OR: where.OR }, { OR: cityFilter }];
+            delete where.OR;
+        } else {
+            where.OR = cityFilter;
+        }
     }
 
     if (category && category.toLowerCase() !== "servicii") {
@@ -184,13 +195,68 @@ async function getSpaces(searchParams: { [key: string]: string | string[] | unde
     return spacesWithHours;
 }
 
+async function getTopCities(isService: boolean): Promise<string[]> {
+    const spaces = await prisma.space.findMany({
+        where: { active: true, isService },
+        select: { city: true }
+    });
+
+    const displayMap: Record<string, string> = {
+        "bucuresti": "București",
+        "bucurești": "București",
+        "cluj": "Cluj-Napoca",
+        "cluj-napoca": "Cluj-Napoca",
+        "timisoara": "Timișoara",
+        "timișoara": "Timișoara",
+        "iasi": "Iași",
+        "iași": "Iași",
+        "brasov": "Brașov",
+        "brașov": "Brașov",
+        "constanta": "Constanța",
+        "constanța": "Constanța",
+        "craiova": "Craiova",
+        "sibiu": "Sibiu",
+        "oradea": "Oradea",
+        "galati": "Galați",
+        "galați": "Galați",
+        "prague": "Prague",
+        "praha": "Prague",
+        "berlin": "Berlin",
+        "corbeanca": "Corbeanca"
+    };
+
+    const counts: Record<string, { displayName: string; count: number }> = {};
+    for (const item of spaces) {
+        if (!item.city) continue;
+        const raw = item.city.trim();
+        if (!raw) continue;
+        const normKey = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        if (!counts[normKey]) {
+            const pretty = displayMap[raw.toLowerCase()] || displayMap[normKey] || (
+                raw.split(/[\s-]+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ")
+            );
+            counts[normKey] = { displayName: pretty, count: 0 };
+        }
+        counts[normKey].count++;
+    }
+
+    return Object.values(counts)
+        .sort((a, b) => b.count - a.count)
+        .map(c => c.displayName)
+        .slice(0, 5);
+}
+
 export default async function ExploreSpacesPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
     const params = await searchParams;
-    const spaces = await getSpaces(params);
+    const [spaces, topSpaceCities, topServiceCities] = await Promise.all([
+        getSpaces(params),
+        getTopCities(false),
+        getTopCities(true)
+    ]);
     const selectedCity = params.city as string | undefined;
     const isServiceMode =
         params.type === "servicii" ||
@@ -210,6 +276,9 @@ export default async function ExploreSpacesPage({
         "Galați": [45.4353, 28.0080],
         "Oradea": [47.0465, 21.9189],
         "Brăila": [45.2692, 27.9575],
+        "Berlin": [52.5200, 13.4050],
+        "Prague": [50.0755, 14.4378],
+        "Corbeanca": [44.5975, 26.0467],
     };
 
     let defaultLat = 44.4268;
@@ -249,11 +318,13 @@ export default async function ExploreSpacesPage({
                         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm sticky top-8 overflow-visible">
                             <React.Suspense fallback={<div className="h-96 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />}>
                                 <SpaceFilters
-    initialType={params.type as string}
-    initialCategory={params.category as string}
-    initialQuery={params.q as string}
-    initialCity={params.city as string}
-/>
+                                    initialType={params.type as string}
+                                    initialCategory={params.category as string}
+                                    initialQuery={params.q as string}
+                                    initialCity={params.city as string}
+                                    topSpaceCities={topSpaceCities}
+                                    topServiceCities={topServiceCities}
+                                />
                             </React.Suspense>
                         </div>
                     </div>

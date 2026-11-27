@@ -57,9 +57,18 @@ interface SpaceFiltersProps {
     initialCategory?: string;
     initialQuery?: string;
     initialCity?: string;
+    topSpaceCities?: string[];
+    topServiceCities?: string[];
 }
 
-export function SpaceFilters({ initialType, initialCategory, initialQuery, initialCity }: SpaceFiltersProps = {}) {
+export function SpaceFilters({
+    initialType,
+    initialCategory,
+    initialQuery,
+    initialCity,
+    topSpaceCities = [],
+    topServiceCities = []
+}: SpaceFiltersProps = {}) {
     const { t, translateAmenity } = useLanguage();
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -141,6 +150,10 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
         if (mode === "services") {
             params.set("type", "servicii");
             params.delete("category");
+            params.delete("amenities");
+            params.delete("capacity");
+            setSelectedAmenities([]);
+            setCapacity("");
             if (params.get("q")?.toLowerCase() === "servicii") params.delete("q");
         } else {
             params.set("type", "spaces");
@@ -168,9 +181,9 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
             params.set("type", "spaces");
         }
         if (priceRange[1] < 200) params.set("maxPrice", priceRange[1].toString());
-        if (capacity) params.set("capacity", capacity);
-        if (sort && priceRange[1] < 200) params.set("sort", sort);
-        if (selectedAmenities.length > 0) params.set("amenities", selectedAmenities.join(","));
+        if (!isServiceMode && capacity) params.set("capacity", capacity);
+        if (sort) params.set("sort", sort);
+        if (!isServiceMode && selectedAmenities.length > 0) params.set("amenities", selectedAmenities.join(","));
 
         router.push(`${pathname}?${params.toString()}`);
     };
@@ -190,13 +203,17 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
         }
     };
 
+    const availableTopCities = isServiceMode
+        ? (topServiceCities && topServiceCities.length > 0 ? topServiceCities : ["Berlin", "Iași"])
+        : (topSpaceCities && topSpaceCities.length > 0 ? topSpaceCities : ["București", "Constanța", "Brașov", "Prague", "Corbeanca"]);
+
     return (
         <div className="space-y-6">
             <div>
                 {/* Header & Clear */}
                 <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-3 flex items-center justify-between">
                     <span>{t("filters.title")}</span>
-                    {(mounted && (city || category || query || capacity || selectedAmenities.length > 0 || priceRange[1] < 200)) && (
+                    {(mounted && (city || category || query || capacity || selectedAmenities.length > 0 || priceRange[1] < 200 || sort)) && (
                         <button onClick={clearFilters} className="text-xs text-[#008080] hover:underline font-normal">
                             {t("filters.clear")}
                         </button>
@@ -292,47 +309,60 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                             className="text-sm"
                         />
                         <div className="flex flex-wrap gap-1.5 pt-1.5">
-                            {POPULAR_CITIES.slice(0, 6).map((c) => (
-                                <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => {
-                                        const newCity = c === city ? "" : c;
-                                        setCity(newCity);
-                                        const params = new URLSearchParams(searchParams.toString());
-                                        if (newCity) {
-                                            params.set("city", newCity);
-                                            params.delete("lat");
-                                            params.delete("lng");
-                                        } else params.delete("city");
-                                        router.push(`${pathname}?${params.toString()}`);
-                                    }}
-                                    className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
-                                        (!mounted ? false : city === c)
-                                            ? "bg-[#008080] text-white shadow-sm"
-                                            : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
-                                    }`}
-                                >
-                                    {c}
-                                </button>
-                            ))}
+                            {availableTopCities.slice(0, 5).map((c) => {
+                                const isSelected = mounted && Boolean(
+                                    city && (
+                                        city.toLowerCase().trim() === c.toLowerCase().trim() ||
+                                        city.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() ===
+                                        c.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+                                    )
+                                );
+                                return (
+                                    <button
+                                        key={c}
+                                        type="button"
+                                        onClick={() => {
+                                            const newCity = isSelected ? "" : c;
+                                            setCity(newCity);
+                                            const params = new URLSearchParams(searchParams.toString());
+                                            if (newCity) {
+                                                params.set("city", newCity);
+                                                params.delete("lat");
+                                                params.delete("lng");
+                                            } else {
+                                                params.delete("city");
+                                            }
+                                            router.push(`${pathname}?${params.toString()}`);
+                                        }}
+                                        className={`px-2 py-0.5 rounded-full text-[11px] font-medium transition-colors ${
+                                            isSelected
+                                                ? "bg-[#008080] text-white shadow-sm font-bold"
+                                                : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300"
+                                        }`}
+                                    >
+                                        {c}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
-                    {/* Capacity */}
-                    <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            {t("filters.capacity")}
-                        </Label>
-                        <Input
-                            type="number"
-                            placeholder={t("filters.capacityPlaceholder")}
-                            value={capacity}
-                            onChange={(e) => setCapacity(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-                            className="text-sm"
-                        />
-                    </div>
+                    {/* Capacity (Only for Spaces) */}
+                    {!isServiceMode && (
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                {t("filters.capacity")}
+                            </Label>
+                            <Input
+                                type="number"
+                                placeholder={t("filters.capacityPlaceholder")}
+                                value={capacity}
+                                onChange={(e) => setCapacity(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && applyFilters()}
+                                className="text-sm"
+                            />
+                        </div>
+                    )}
 
                     {/* Price Range */}
                     <div className="space-y-2">
@@ -352,53 +382,64 @@ export function SpaceFilters({ initialType, initialCategory, initialQuery, initi
                             onValueChange={(val) => setPriceRange([0, val[0]])}
                             className="py-2"
                         />
-                        {mounted && priceRange[1] < 200 && (
-                            <div className="pt-2">
-                                <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500 block mb-1">
-                                    {t("filters.sortByPrice")}
-                                </Label>
-                                <select
-                                    value={sort}
-                                    onChange={(e) => setSort(e.target.value)}
-                                    className="w-full text-xs p-1.5 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800"
-                                >
-                                    <option value="">{t("filters.sortDefault")}</option>
-                                    <option value="price_asc">{t("filters.sortPriceAsc")}</option>
-                                    <option value="price_desc">{t("filters.sortPriceDesc")}</option>
-                                </select>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Amenities */}
-                    <div className="space-y-2 relative z-30">
+                    {/* Sort by Price (Always available, works on selected service/space category) */}
+                    <div className="space-y-1.5">
                         <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            {t("filters.amenities")}
+                            {t("filters.sortByPrice")}
                         </Label>
-                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                            {AMENITIES_OPTIONS.map((amenity) => (
-                                <div key={amenity} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={amenity}
-                                        checked={selectedAmenities.includes(amenity)}
-                                        onCheckedChange={(checked) => {
-                                            if (checked) {
-                                                setSelectedAmenities([...selectedAmenities, amenity]);
-                                            } else {
-                                                setSelectedAmenities(selectedAmenities.filter((a) => a !== amenity));
-                                            }
-                                        }}
-                                    />
-                                    <label
-                                        htmlFor={amenity}
-                                        className="text-xs text-gray-600 dark:text-gray-300 font-normal cursor-pointer select-none"
-                                    >
-                                        {translateAmenity(amenity)}
-                                    </label>
-                                </div>
-                            ))}
-                        </div>
+                        <select
+                            value={sort}
+                            onChange={(e) => {
+                                const newSort = e.target.value;
+                                setSort(newSort);
+                                const params = new URLSearchParams(searchParams.toString());
+                                if (newSort) params.set("sort", newSort);
+                                else params.delete("sort");
+                                if (category) params.set("category", category);
+                                if (isServiceMode) params.set("type", "servicii");
+                                router.push(`${pathname}?${params.toString()}`);
+                            }}
+                            className="w-full h-10 px-3 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#008080]"
+                        >
+                            <option value="">{t("filters.sortDefault")}</option>
+                            <option value="price_asc">{t("filters.sortPriceAsc")}</option>
+                            <option value="price_desc">{t("filters.sortPriceDesc")}</option>
+                        </select>
                     </div>
+
+                    {/* Amenities (Only for Spaces - Completely removed for Services) */}
+                    {!isServiceMode && (
+                        <div className="space-y-2 relative z-30">
+                            <Label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                {t("filters.amenities")}
+                            </Label>
+                            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                                {AMENITIES_OPTIONS.map((amenity) => (
+                                    <div key={amenity} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={amenity}
+                                            checked={selectedAmenities.includes(amenity)}
+                                            onCheckedChange={(checked) => {
+                                                if (checked) {
+                                                    setSelectedAmenities([...selectedAmenities, amenity]);
+                                                } else {
+                                                    setSelectedAmenities(selectedAmenities.filter((a) => a !== amenity));
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor={amenity}
+                                            className="text-xs text-gray-600 dark:text-gray-300 font-normal cursor-pointer select-none"
+                                        >
+                                            {translateAmenity(amenity)}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="pt-2 flex flex-col gap-2">
                         <Button onClick={applyFilters} className="w-full bg-[#008080] hover:bg-[#006F6F] text-white">
