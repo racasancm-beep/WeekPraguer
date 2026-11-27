@@ -150,6 +150,36 @@ export async function GET(req: Request) {
             if (d.isProjection) d.total = avgRevenue;
         });
 
+        // Fetch bookings where the current owner is the CUSTOMER (booked another space/service)
+        const customerOrClauses: any[] = [];
+        if (resolvedOwnerId) customerOrClauses.push({ renterId: resolvedOwnerId });
+        if (session.user?.email) customerOrClauses.push({ renter: { email: { equals: session.user.email.trim(), mode: "insensitive" } } });
+
+        const rawCustomerBookings = customerOrClauses.length > 0 ? await (prisma as any).booking.findMany({
+            where: {
+                OR: customerOrClauses,
+                space: { ownerId: { not: resolvedOwnerId } },
+                AND: [
+                    {
+                        OR: [{ accessCode: null }, { accessCode: { not: "OWNER_BLOCK" } }],
+                    },
+                ],
+            },
+            include: {
+                space: {
+                    include: {
+                        owner: { select: { id: true, name: true, email: true, phone: true } },
+                        photos: true,
+                    },
+                },
+                transaction: true,
+                conversation: { select: { id: true } },
+            },
+            orderBy: { createdAt: "desc" },
+        }) : [];
+
+        const normalizedCustomerBookings = rawCustomerBookings.map(normalizeBookingWithPlatformFee);
+
         return NextResponse.json({
             revenue: totalRevenue,
             revenueThisMonth,
@@ -162,6 +192,7 @@ export async function GET(req: Request) {
             bookings: [...normalizedRawBookings].sort((a: any, b: any) =>
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             ),
+            myCustomerBookings: normalizedCustomerBookings,
             chartData,
             spaces
         });

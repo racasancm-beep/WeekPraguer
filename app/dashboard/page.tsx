@@ -59,9 +59,7 @@ function RenterDashboardContent() {
 
     useEffect(() => {
         if (status === "authenticated" && isOwnerOrService) {
-            window.location.href = userRole === "SERVICE_OWNER"
-                ? "/owner/dashboard/listings/create?type=SERVICE"
-                : "/owner/dashboard/earnings";
+            window.location.href = "/owner/dashboard/bookings";
             return;
         }
         if (status !== "loading") {
