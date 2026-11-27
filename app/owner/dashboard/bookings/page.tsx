@@ -134,9 +134,7 @@ export default function BookingsPage() {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-                    {sessionRole === "SERVICE_OWNER"
-                        ? (t("service.serviceRequests") || "Cereri Servicii")
-                        : t("owner.bookings.title")}
+                    {t("owner.bookings.title") || "Rezervări Spații & Cereri Servicii"}
                 </h1>
             </div>
 
@@ -144,9 +142,7 @@ export default function BookingsPage() {
             {pendingBookings.length > 0 ? (
                 <div className="mb-8">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">
-                        {sessionRole === "SERVICE_OWNER"
-                            ? (t("service.pendingServiceRequests") || t("owner.bookings.pendingTitle"))
-                            : t("owner.bookings.pendingTitle")}
+                        {t("owner.bookings.pendingTitle") || "Cereri în Așteptare (Spații & Servicii)"}
                     </h2>
                     <div className="grid gap-4">
                         {pendingBookings.map((booking) => {
@@ -380,9 +376,7 @@ export default function BookingsPage() {
 
             <div className="mt-8">
                 <h2 className="text-lg font-bold text-gray-900 mb-4">
-                    {sessionRole === "SERVICE_OWNER"
-                        ? (t("service.confirmedServiceHistory") || t("owner.bookings.historyTitle"))
-                        : t("owner.bookings.historyTitle")}
+                    {t("owner.bookings.historyTitle") || "Istoric Rezervări Confirmate (Spații & Servicii)"}
                 </h2>
                 <div className="grid gap-4">
                     {recentBookings.map((booking) => (

@@ -184,8 +184,21 @@ export async function GET(req: Request) {
             ownerIdFilter = (await resolveOwnerId(session)) || (session.user as any).id;
         }
 
+        const ownerOrClauses: any[] = [];
+        if (ownerIdFilter) ownerOrClauses.push({ ownerId: ownerIdFilter });
+        if ((session.user as any)?.id && (session.user as any).id !== ownerIdFilter) {
+            ownerOrClauses.push({ ownerId: (session.user as any).id });
+        }
+        if (session.user?.email) {
+            ownerOrClauses.push({ owner: { email: { equals: session.user.email.trim(), mode: "insensitive" } } });
+        }
+
+        const spaceWhere = role === "ADMIN"
+            ? (targetUserId ? { ownerId: targetUserId } : {})
+            : { OR: ownerOrClauses };
+
         const spaces = await prisma.space.findMany({
-            where: ownerIdFilter ? { ownerId: ownerIdFilter } : {},
+            where: spaceWhere,
             include: {
                 photos: true,
                 owner: { select: { id: true, name: true, email: true } },

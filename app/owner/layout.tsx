@@ -41,20 +41,22 @@ export default function OwnerLayout({
 
     const navigation = [
         {
-            name: isServiceOwner ? (t("service.dashboardTab") || "Panou Servicii") : t("owner.nav.earningsGraphs"),
+            name: t("owner.nav.earningsGraphs"),
             href: "/owner/dashboard/earnings",
             icon: DollarSign,
         },
-        ...(!isServiceOwner
-            ? [{ name: t("owner.nav.aiIntelligence"), href: "/owner/intelligence", icon: Activity }]
-            : []),
         {
-            name: isServiceOwner ? (t("service.myServices") || "Serviciile Mele") : t("owner.nav.myListings"),
+            name: t("owner.nav.aiIntelligence"),
+            href: "/owner/intelligence",
+            icon: Activity,
+        },
+        {
+            name: t("owner.nav.myListings"),
             href: "/owner/dashboard/listings",
             icon: Building2,
         },
         {
-            name: isServiceOwner ? (t("service.serviceRequests") || "Cereri Servicii") : t("owner.nav.bookings"),
+            name: t("owner.nav.bookings"),
             href: "/owner/dashboard/bookings",
             icon: Calendar,
         },

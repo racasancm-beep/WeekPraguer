@@ -27,12 +27,21 @@ export async function GET(req: Request) {
             if (dbOwner) resolvedOwnerId = dbOwner.id;
         }
 
+        const ownerOrClauses: any[] = [];
+        if (resolvedOwnerId) ownerOrClauses.push({ ownerId: resolvedOwnerId });
+        if ((session.user as any)?.id && (session.user as any).id !== resolvedOwnerId) {
+            ownerOrClauses.push({ ownerId: (session.user as any).id });
+        }
+        if (session.user?.email) {
+            ownerOrClauses.push({ owner: { email: { equals: session.user.email.trim(), mode: "insensitive" } } });
+        }
+
         const spaceFilter =
             role === "ADMIN"
                 ? targetUserId
                     ? { ownerId: targetUserId }
                     : {}
-                : { ownerId: resolvedOwnerId };
+                : { OR: ownerOrClauses };
 
         const spaces = await (prisma as any).space.findMany({
             where: spaceFilter,

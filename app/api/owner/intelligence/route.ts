@@ -17,15 +17,35 @@ export async function GET(req: Request) {
         const { searchParams } = new URL(req.url);
         const targetUserId = searchParams.get("userId");
 
+        let resolvedOwnerId = (session.user as any).id;
+        if (role !== "ADMIN" && session.user?.email) {
+            const dbOwner = await prisma.user.findFirst({
+                where: { email: { equals: session.user.email.trim(), mode: "insensitive" } },
+                select: { id: true },
+            });
+            if (dbOwner) resolvedOwnerId = dbOwner.id;
+        }
+
+        const ownerOrClauses: any[] = [];
+        if (resolvedOwnerId) ownerOrClauses.push({ ownerId: resolvedOwnerId });
+        if ((session.user as any)?.id && (session.user as any).id !== resolvedOwnerId) {
+            ownerOrClauses.push({ ownerId: (session.user as any).id });
+        }
+        if (session.user?.email) {
+            ownerOrClauses.push({ owner: { email: { equals: session.user.email.trim(), mode: "insensitive" } } });
+        }
+
         const spaceFilter =
             role === "ADMIN"
                 ? targetUserId
                     ? { ownerId: targetUserId }
                     : {}
-                : { ownerId: (session.user as any).id };
+                : { OR: ownerOrClauses };
 
         const spaces = await prisma.space.findMany({ where: spaceFilter });
         const spaceIds = spaces.map(s => s.id);
+        const spacesOnlyCount = spaces.filter(s => !s.isService).length;
+        const servicesOnlyCount = spaces.filter(s => Boolean(s.isService)).length;
 
         const now = new Date();
         const start = startOfMonth(now);
@@ -69,7 +89,9 @@ export async function GET(req: Request) {
             utilization: Math.round(utilizationRate),
             forecast: Math.round(nextMonthForecast),
             history: revenueHistory,
-            spacesCount: spaceIds.length
+            spacesCount: spaceIds.length,
+            spacesOnlyCount,
+            servicesOnlyCount,
         });
 
     } catch (error) {

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, ChevronDown, ChevronUp, KeyRound, Trash2, Loader2, AlertTriangle, Sparkles, Clock, CheckCircle2 } from "lucide-react";
+import { Plus, MapPin, Users, Ruler, Pencil, Mail, Phone, User, ChevronDown, ChevronUp, KeyRound, Trash2, Loader2, AlertTriangle, Sparkles, Clock, CheckCircle2, Building2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
 import { formatOwnerBlockedPeriods } from "@/lib/utils";
@@ -28,6 +28,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
     const { data: session, status } = useSession();
 
     const [spaceList, setSpaceList] = useState<any[]>(spaces);
+    const [filterType, setFilterType] = useState<"ALL" | "SPACES" | "SERVICES">("ALL");
     const [spaceToDelete, setSpaceToDelete] = useState<any | null>(null);
     const [deleting, setDeleting] = useState(false);
 
@@ -40,7 +41,14 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
     const sessionRole = (session?.user as any)?.role;
     const isAdmin = status === "authenticated" && sessionRole === "ADMIN";
     const isOwnerProfile = status === "authenticated" && (sessionRole === "OWNER" || sessionRole === "SERVICE_OWNER");
-    const isServiceOwner = sessionRole === "SERVICE_OWNER" || (spaceList.length > 0 && spaceList.every((s) => s.isService));
+
+    const spacesCount = spaceList.filter((s) => !s.isService).length;
+    const servicesCount = spaceList.filter((s) => Boolean(s.isService)).length;
+    const filteredSpaces = spaceList.filter((s) => {
+        if (filterType === "SPACES") return !s.isService;
+        if (filterType === "SERVICES") return Boolean(s.isService);
+        return true;
+    });
 
     const todayUtcStart = new Date();
     todayUtcStart.setUTCHours(0, 0, 0, 0);
@@ -54,11 +62,11 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
             });
             const data = await res.json();
             if (res.ok) {
-                toast.success(t("owner.listings.deletedSuccess") || "Spațiul a fost șters cu succes!");
+                toast.success(t("owner.listings.deletedSuccess") || "Listarea a fost ștearsă cu succes!");
                 setSpaceList((prev) => prev.filter((s) => s.id !== spaceToDelete.id));
                 setSpaceToDelete(null);
             } else {
-                toast.error(data.message || "Eroare la ștergerea spațiului.");
+                toast.error(data.message || "Eroare la ștergerea listării.");
             }
         } catch (err) {
             console.error("Delete error:", err);
@@ -69,68 +77,101 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex items-center justify-between">
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                        {isServiceOwner
-                            ? (t("service.myServices") || "Serviciile Mele")
-                            : (isAdminAllView ? t("owner.listings.adminAllTitle") : t("owner.listings.title"))}
+                    <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-gray-100">
+                        {isAdminAllView
+                            ? t("owner.listings.adminAllTitle")
+                            : (t("owner.listings.title") || "Listările Mele (Spații & Servicii)")}
                     </h1>
-                    <p className="text-gray-500 mt-2">
-                        {isServiceOwner
-                            ? `${t("service.manageServicesSubtitle") || "Gestionează serviciile adăugate și disponibilitatea acestora."} (${spaceList.length} ${spaceList.length === 1 ? (t("service.unitSingular") || "serviciu") : (t("service.unitPlural") || "servicii")}).`
-                            : `${t("owner.listings.subtitle")} (${spaceList.length} ${t("admin.spacesLower")}).`}
+                    <p className="text-gray-500 mt-1 text-sm font-medium">
+                        {`${t("owner.listings.subtitle") || "Gestionează spațiile și serviciile tale de pe platformă."} (${spaceList.length} total • ${spacesCount} ${t("admin.spacesLower") || "spații"}, ${servicesCount} ${t("service.unitPlural") || "servicii"}).`}
                     </p>
                 </div>
                 {isOwnerProfile && (
-                    <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
-                        <Button className={isServiceOwner ? "bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl shadow-md" : ""}>
-                            {isServiceOwner ? (
-                                <>
-                                    <Sparkles className="mr-2 h-4 w-4" />
-                                    {t("service.addNewServiceBtn") || t("service.addNewService") || "+ Add New Service"}
-                                </>
-                            ) : (
-                                <>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    {t("owner.listings.addNewSpace")}
-                                </>
-                            )}
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <Link href="/owner/dashboard/listings/create">
+                            <Button variant="outline" className="border-teal-300 text-teal-800 hover:bg-teal-50 font-bold rounded-xl shadow-xs text-xs h-9">
+                                <Building2 className="mr-1.5 h-4 w-4 text-teal-600" />
+                                {t("owner.listings.addNewSpace") || "+ Adaugă Spațiu"}
+                            </Button>
+                        </Link>
+                        <Link href="/owner/dashboard/listings/create?type=SERVICE">
+                            <Button className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl shadow-md text-xs h-9">
+                                <Sparkles className="mr-1.5 h-4 w-4" />
+                                {t("service.addNewServiceBtn") || t("service.addNewService") || "+ Adaugă Serviciu"}
+                            </Button>
+                        </Link>
+                    </div>
                 )}
             </div>
 
-            {spaceList.length === 0 ? (
-                <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-dashed">
-                    <div className="mx-auto w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                        {isServiceOwner ? (
-                            <Sparkles className="w-6 h-6 text-[#008080]" />
-                        ) : (
-                            <Plus className="w-6 h-6 text-gray-500" />
-                        )}
+            {/* Filter Tabs between All, Spaces, and Services */}
+            {spaceList.length > 0 && (
+                <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+                    <button
+                        onClick={() => setFilterType("ALL")}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            filterType === "ALL"
+                                ? "bg-gray-900 text-white shadow-xs"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        }`}
+                    >
+                        {t("common.all") || "Toate"} ({spaceList.length})
+                    </button>
+                    <button
+                        onClick={() => setFilterType("SPACES")}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            filterType === "SPACES"
+                                ? "bg-[#008080] text-white shadow-xs"
+                                : "bg-teal-50 text-teal-800 hover:bg-teal-100"
+                        }`}
+                    >
+                        <Building2 className="w-3.5 h-3.5" />
+                        {t("admin.spaces") || "Spații"} ({spacesCount})
+                    </button>
+                    <button
+                        onClick={() => setFilterType("SERVICES")}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                            filterType === "SERVICES"
+                                ? "bg-[#008080] text-white shadow-xs"
+                                : "bg-teal-50 text-teal-800 hover:bg-teal-100"
+                        }`}
+                    >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        {t("service.services") || "Servicii"} ({servicesCount})
+                    </button>
+                </div>
+            )}
+
+            {filteredSpaces.length === 0 ? (
+                <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                    <div className="mx-auto w-12 h-12 bg-teal-50 text-[#008080] rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+                        <Sparkles className="w-6 h-6 text-[#008080]" />
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-                        {isServiceOwner ? (t("service.noServicesYet") || "Nu ai adăugat încă niciun serviciu.") : t("owner.listings.noSpacesTitle")}
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                        {filterType === "SPACES"
+                            ? (t("owner.listings.noSpacesTitle") || "Nu ai adăugat încă niciun spațiu.")
+                            : filterType === "SERVICES"
+                            ? (t("service.noServicesYet") || "Nu ai adăugat încă niciun serviciu.")
+                            : (t("owner.listings.noListingsYet") || "Nu ai nicio listare încă.")}
                     </h3>
                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                        {isServiceOwner
-                            ? (t("service.createSubtitle") || "Completează detaliile serviciului tău, categoria, locația și tariful orar.")
-                            : t("owner.listings.noSpacesDesc")}
+                        {t("owner.listings.createFirstListingDesc") || "Poți adăuga atât spații fizice cât și servicii profesionale sub același profil de proprietar."}
                     </p>
                     {isOwnerProfile && (
-                        <div className="mt-6">
-                            <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
-                                <Button className={isServiceOwner ? "bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl shadow-md" : ""}>
-                                    {isServiceOwner ? (
-                                        <>
-                                            <Sparkles className="mr-2 h-4 w-4" />
-                                            {t("service.addNewServiceBtn") || t("service.addNewService") || "+ Add New Service"}
-                                        </>
-                                    ) : (
-                                        t("owner.listings.addListing")
-                                    )}
+                        <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
+                            <Link href="/owner/dashboard/listings/create">
+                                <Button variant="outline" className="border-teal-300 text-teal-800 font-bold rounded-xl">
+                                    <Building2 className="mr-1.5 h-4 w-4" />
+                                    {t("owner.listings.addNewSpace") || "+ Adaugă Spațiu"}
+                                </Button>
+                            </Link>
+                            <Link href="/owner/dashboard/listings/create?type=SERVICE">
+                                <Button className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl shadow-md">
+                                    <Sparkles className="mr-1.5 h-4 w-4" />
+                                    {t("service.addNewServiceBtn") || t("service.addNewService") || "+ Adaugă Serviciu"}
                                 </Button>
                             </Link>
                         </div>
@@ -138,7 +179,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                 </div>
             ) : (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {spaceList.map((space) => {
+                    {filteredSpaces.map((space) => {
                         const activeOwnerBlocks = (space.bookings || []).filter(
                             (bk: any) => bk.accessCode === "OWNER_BLOCK" && new Date(bk.endTime) >= todayUtcStart
                         );
@@ -151,7 +192,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                 (bk.status === "CONFIRMED" || bk.status === "COMPLETED")
                         );
 
-                        // Strictly only the specific owner of this space (with role === "OWNER") can edit it
+                        // Strictly only the specific owner of this space (with role === "OWNER" or "SERVICE_OWNER") can edit it
                         const canMakeChangesToThisSpace =
                             isOwnerProfile &&
                             Boolean(
@@ -163,9 +204,9 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                         const canDeleteThisSpace = isAdmin || canMakeChangesToThisSpace;
 
                         return (
-                            <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-xl overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+                            <div key={space.id} className="group relative bg-white dark:bg-gray-800 border rounded-2xl overflow-hidden hover:shadow-lg transition-all flex flex-col">
                                 <div className="aspect-video w-full bg-gray-200 relative">
-                                    {space.photos[0] ? (
+                                    {space.photos?.[0] ? (
                                         <img
                                             src={space.photos[0].url}
                                             alt={space.name}
@@ -176,12 +217,18 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                             {t("owner.listings.noImage")}
                                         </div>
                                     )}
-                                    {space.isService && (
-                                        <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#008080] text-white shadow-md">
-                                            ★ {space.serviceCategory || "Serviciu"}
+                                    {space.isService ? (
+                                        <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#008080] text-white shadow-md flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3" />
+                                            <span>★ {space.serviceCategory || "Serviciu"}</span>
+                                        </div>
+                                    ) : (
+                                        <div className="absolute top-2 left-2 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-teal-800 text-white shadow-md flex items-center gap-1">
+                                            <Building2 className="w-3 h-3" />
+                                            <span>🏢 {space.category || "Spațiu"}</span>
                                         </div>
                                     )}
-                                    <div className={`absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${space.isClean
+                                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${space.isClean
                                         ? "bg-green-100/90 text-green-700 dark:bg-green-900/90 dark:text-green-300"
                                         : "bg-red-100/90 text-red-700 dark:bg-red-900/90 dark:text-red-300"
                                         }`}>
@@ -190,14 +237,14 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                 </div>
 
                                 <div className="p-4 flex-1 flex flex-col">
-                                    <h3 className="font-semibold text-lg truncate mb-1">{space.name}</h3>
+                                    <h3 className="font-bold text-lg truncate mb-1 text-gray-900 dark:text-gray-100">{space.name}</h3>
                                     <div className="flex items-center justify-between text-sm text-gray-500 mb-3">
                                         <span className="flex items-center">
-                                            <MapPin className="w-4 h-4 mr-1" />
+                                            <MapPin className="w-4 h-4 mr-1 text-[#008080]" />
                                             {space.city}
                                         </span>
                                         {space.owner?.email && (
-                                            <span className="text-[11px] font-mono text-violet-600 truncate max-w-[140px]">
+                                            <span className="text-[11px] font-mono text-teal-700 truncate max-w-[140px]">
                                                 {space.owner.email}
                                             </span>
                                         )}
@@ -278,7 +325,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                     )}
 
                                     <div className="flex items-center justify-between pt-4 border-t gap-2 mt-auto">
-                                        <span className="font-bold text-lg">
+                                        <span className="font-bold text-lg text-gray-900 dark:text-gray-100">
                                             {space.hourlyRate} RON
                                             <span className="text-sm font-normal text-gray-500">/{t("explore.perHour")}</span>
                                         </span>
@@ -291,7 +338,7 @@ export function OwnerListingsView({ spaces, isAdminAllView }: OwnerListingsViewP
                                                     </Button>
                                                 </Link>
                                             )}
-                                            <Link href={`/spaces/${space.id}`}>
+                                            <Link href={space.isService ? `/services/${space.id}` : `/spaces/${space.id}`}>
                                                 <Button variant="outline" size="sm" className="h-8 text-xs">
                                                     {space.isService ? (t("card.viewService") || "Vezi Serviciul") : t("owner.listings.viewSpace")}
                                                 </Button>

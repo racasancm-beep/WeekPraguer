@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
 import { useLanguage } from "@/lib/i18n/language-context";
 import { useSession } from "next-auth/react";
-import { ChevronDown, ChevronUp, Calendar, Sparkles, MapPin, Clock, Pencil, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, Calendar, Sparkles, MapPin, Clock, Pencil, ExternalLink, Building2 } from "lucide-react";
 
 interface StatItem {
     name: string;
@@ -108,17 +108,25 @@ function EarningsPageContent() {
                 </div>
             )}
 
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-                    {isServiceOwner ? (t("service.dashboardTitle") || "Panou Servicii & Rezervări") : t("owner.earnings.title")}
+                    {t("owner.earnings.title") || "Panou Câștiguri & Grafice"}
                 </h1>
                 {isOwnerRole && (
-                    <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
-                        <Button className={`${isServiceOwner ? "bg-[#008080] hover:bg-[#006F6F]" : "bg-violet-600 hover:bg-violet-700"} text-white rounded-xl shadow-lg font-bold flex items-center gap-1.5`}>
-                            {isServiceOwner && <Sparkles className="w-4 h-4" />}
-                            {isServiceOwner ? (t("service.addNewService") || "Adaugă Serviciu Nou") : t("owner.earnings.listNewSpace")}
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <Link href="/owner/dashboard/listings/create">
+                            <Button variant="outline" className="border-teal-300 text-teal-800 hover:bg-teal-50 font-bold rounded-xl shadow-xs text-xs h-9">
+                                <Building2 className="w-3.5 h-3.5 mr-1.5 text-teal-600" />
+                                {t("owner.earnings.listNewSpace") || "+ Adaugă Spațiu"}
+                            </Button>
+                        </Link>
+                        <Link href="/owner/dashboard/listings/create?type=SERVICE">
+                            <Button className="bg-[#008080] hover:bg-[#006F6F] text-white rounded-xl shadow-md font-bold text-xs h-9 flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                {t("service.addNewService") || "+ Adaugă Serviciu"}
+                            </Button>
+                        </Link>
+                    </div>
                 )}
             </div>
 
@@ -255,38 +263,52 @@ function EarningsPageContent() {
                         </div>
                         <div>
                             <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 tracking-tight">
-                                {isServiceOwner
-                                    ? (t("service.myServicesOnPlatform") || "Serviciile Mele Adăugate pe Platformă")
-                                    : (t("owner.mySpacesOnPlatform") || "Spațiile & Serviciile Mele")}
+                                {t("owner.mySpacesOnPlatform") || "Spațiile & Serviciile Mele Adăugate"}
                             </h2>
                             <p className="text-xs text-gray-500">
-                                {spaces.length} {spaces.length === 1 ? "listare activă" : "listări active"} pe platformă
+                                {spaces.length} {spaces.length === 1 ? "listare activă" : "listări active"} ({spaces.filter((s: any) => !s.isService).length} spații, {spaces.filter((s: any) => s.isService).length} servicii)
                             </p>
                         </div>
                     </div>
-                    <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
-                        <Button size="sm" className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl text-xs h-9 px-4 flex items-center gap-1.5 shadow-sm">
-                            <Sparkles className="w-3.5 h-3.5" />
-                            {isServiceOwner ? (t("service.addNewService") || "Adaugă Serviciu Nou") : t("owner.earnings.listNewSpace")}
-                        </Button>
-                    </Link>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Link href="/owner/dashboard/listings/create">
+                            <Button size="sm" variant="outline" className="border-teal-300 text-teal-800 hover:bg-teal-50 font-bold rounded-xl text-xs h-9 px-3.5 flex items-center gap-1.5 shadow-xs">
+                                <Building2 className="w-3.5 h-3.5 text-teal-600" />
+                                {t("owner.earnings.listNewSpace") || "+ Adaugă Spațiu"}
+                            </Button>
+                        </Link>
+                        <Link href="/owner/dashboard/listings/create?type=SERVICE">
+                            <Button size="sm" className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl text-xs h-9 px-3.5 flex items-center gap-1.5 shadow-sm">
+                                <Sparkles className="w-3.5 h-3.5" />
+                                {t("service.addNewService") || "+ Adaugă Serviciu"}
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {spaces.length === 0 ? (
                     <Card className="p-8 text-center rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-white/50">
                         <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                         <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
-                            {t("service.noServicesYet") || "Nu ai adăugat încă niciun serviciu."}
+                            {t("owner.listings.noListingsYet") || "Nu ai adăugat încă nicio listare."}
                         </p>
                         <p className="text-xs text-gray-500 mb-4 mt-1">
-                            Adaugă primul tău serviciu pentru a începe să primești rezervări de la clienți.
+                            Adaugă primul tău spațiu sau serviciu pentru a începe să primești rezervări de la clienți.
                         </p>
-                        <Link href={isServiceOwner ? "/owner/dashboard/listings/create?type=SERVICE" : "/owner/dashboard/listings/create"}>
-                            <Button className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl text-xs">
-                                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                                {isServiceOwner ? (t("service.addNewService") || "Adaugă Serviciu Nou") : t("owner.earnings.listNewSpace")}
-                            </Button>
-                        </Link>
+                        <div className="flex items-center justify-center gap-3 flex-wrap">
+                            <Link href="/owner/dashboard/listings/create">
+                                <Button variant="outline" className="border-teal-300 text-teal-800 font-bold rounded-xl text-xs">
+                                    <Building2 className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                                    {t("owner.earnings.listNewSpace") || "+ Adaugă Spațiu"}
+                                </Button>
+                            </Link>
+                            <Link href="/owner/dashboard/listings/create?type=SERVICE">
+                                <Button className="bg-[#008080] hover:bg-[#006F6F] text-white font-bold rounded-xl text-xs">
+                                    <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                    {t("service.addNewService") || "+ Adaugă Serviciu"}
+                                </Button>
+                            </Link>
+                        </div>
                     </Card>
                 ) : (
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -300,9 +322,17 @@ function EarningsPageContent() {
                                             <Sparkles className="w-8 h-8 opacity-40" />
                                         </div>
                                     )}
-                                    <span className="absolute top-2.5 left-2.5 bg-[#008080] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
-                                        {space.serviceCategory || space.category || "Serviciu"}
-                                    </span>
+                                    {space.isService ? (
+                                        <span className="absolute top-2.5 left-2.5 bg-[#008080] text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                            <Sparkles className="w-3 h-3" />
+                                            <span>★ {space.serviceCategory || space.category || "Serviciu"}</span>
+                                        </span>
+                                    ) : (
+                                        <span className="absolute top-2.5 left-2.5 bg-teal-800 text-white text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                            <Building2 className="w-3 h-3" />
+                                            <span>🏢 {space.category || "Spațiu"}</span>
+                                        </span>
+                                    )}
                                     <span className={`absolute top-2.5 right-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${
                                         space.active !== false ? "bg-emerald-500 text-white" : "bg-gray-500 text-white"
                                     }`}>
@@ -332,7 +362,7 @@ function EarningsPageContent() {
                                                 <Pencil className="w-3 h-3 mr-1" /> Modifică
                                             </Button>
                                         </Link>
-                                        <Link href={`/spaces/${space.id}`} className="flex-1">
+                                        <Link href={space.isService ? `/services/${space.id}` : `/spaces/${space.id}`} className="flex-1">
                                             <Button size="sm" className="w-full bg-[#1A2020] hover:bg-[#008080] text-white text-xs font-semibold h-8 rounded-lg transition-colors">
                                                 <ExternalLink className="w-3 h-3 mr-1" /> Vezi
                                             </Button>

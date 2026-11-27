@@ -63,17 +63,19 @@ export default function OwnerIntelligencePage() {
                     </CardContent>
                 </Card>
 
-                {/* Active Spaces */}
+                {/* Active Listings (Spaces & Services) */}
                 <Card className="border-t-4 border-t-purple-500 shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("admin.kpi.activeSpaces")}</CardTitle>
+                        <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t("owner.intelligence.activeListings") || "Listări Active (Spații & Servicii)"}</CardTitle>
                         <CardDescription>{t("owner.intelligence.contributing")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="text-4xl font-bold text-gray-900 dark:text-white">
                             {data.spacesCount}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-2">{t("owner.intelligence.spacesListed")}</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            {data.spacesOnlyCount ?? 0} {t("admin.spacesLower") || "spații"} • {data.servicesOnlyCount ?? 0} {t("service.unitPlural") || "servicii"}
+                        </p>
                     </CardContent>
                 </Card>
             </div>
